@@ -5,7 +5,11 @@ import {
   getProductByIdHandler,
   updateProductHandler,
   getCategoriesHandler,
+  getCategoryByIdHandler,
   createCategoryHandler,
+  updateCategoryHandler,
+  deleteCategoryHandler,
+  upsertCategoryDiscountPolicyHandler,
   getPriceListsHandler,
   getPriceListByIdHandler,
   createPriceListHandler,
@@ -35,10 +39,34 @@ productRoutes.get(
   getCategoriesHandler,
 );
 
+productRoutes.get(
+  '/categories/:id',
+  requirePermission(Permissions.PRODUCT_VIEW),
+  getCategoryByIdHandler,
+);
+
 productRoutes.post(
   '/categories',
   requireRole(['ADMIN', 'SALES_MANAGER']),
   createCategoryHandler,
+);
+
+productRoutes.patch(
+  '/categories/:id',
+  requireRole(['ADMIN', 'SALES_MANAGER']),
+  updateCategoryHandler,
+);
+
+productRoutes.delete(
+  '/categories/:id',
+  requireRole(['ADMIN', 'SALES_MANAGER']),
+  deleteCategoryHandler,
+);
+
+productRoutes.post(
+  '/categories/:id/discount-policy',
+  requireRole(['ADMIN', 'SALES_MANAGER']),
+  upsertCategoryDiscountPolicyHandler,
 );
 
 // Attributes & Attribute Values

@@ -7,15 +7,22 @@ import { generateAccessToken } from '../auth/token.js';
 vi.mock('@dealflow360/db', () => {
   const productsMap = new Map<string, any>();
   const categoriesMap = new Map<string, any>([
-    ['cat-1', { id: 'cat-1', name: 'Hardware', code: 'HARDWARE' }],
-    ['cat-2', { id: 'cat-2', name: 'Software License', code: 'SOFTWARE_LICENSE' }],
+    ['cat-1', { id: 'cat-1', name: 'Hardware', code: 'HARDWARE', description: 'Physical hardware' }],
+    ['cat-2', { id: 'cat-2', name: 'Software License', code: 'SOFTWARE_LICENSE', description: 'Software licenses' }],
   ]);
   const priceListsMap = new Map<string, any>();
+  const discountPoliciesMap = new Map<string, any>();
 
   return {
     db: {
       category: {
-        findMany: vi.fn(async () => Array.from(categoriesMap.values())),
+        findMany: vi.fn(async () =>
+          Array.from(categoriesMap.values()).map((c) => ({
+            ...c,
+            _count: { products: 1 },
+            products: [],
+          })),
+        ),
         findUnique: vi.fn(async ({ where }: { where: { id?: string; code?: string } }) => {
           if (where.code) {
             for (const c of categoriesMap.values()) {
@@ -25,10 +32,39 @@ vi.mock('@dealflow360/db', () => {
           }
           return categoriesMap.get(where.id || '') || null;
         }),
+        findFirst: vi.fn(async ({ where }: { where: any }) => {
+          const list = Array.from(categoriesMap.values());
+          if (where?.OR) {
+            for (const cond of where.OR) {
+              if (cond.id) {
+                const found = categoriesMap.get(cond.id);
+                if (found) return { ...found, products: [] };
+              }
+              if (cond.code) {
+                for (const c of list) {
+                  if (c.code.toUpperCase() === cond.code.toUpperCase()) return { ...c, products: [] };
+                }
+              }
+            }
+          }
+          return list[0] ? { ...list[0], products: [] } : null;
+        }),
         create: vi.fn(async ({ data }: { data: any }) => {
           const newCat = { id: `cat-${Date.now()}`, ...data };
           categoriesMap.set(newCat.id, newCat);
           return newCat;
+        }),
+        update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+          const existing = categoriesMap.get(where.id);
+          if (!existing) return null;
+          const updated = { ...existing, ...data };
+          categoriesMap.set(where.id, updated);
+          return updated;
+        }),
+        delete: vi.fn(async ({ where }: { where: { id: string } }) => {
+          const existing = categoriesMap.get(where.id);
+          categoriesMap.delete(where.id);
+          return existing;
         }),
         upsert: vi.fn(async ({ where, create }: { where: { code: string }; create: any }) => {
           for (const c of categoriesMap.values()) {
@@ -37,6 +73,21 @@ vi.mock('@dealflow360/db', () => {
           const newCat = { id: `cat-${Date.now()}`, ...create };
           categoriesMap.set(newCat.id, newCat);
           return newCat;
+        }),
+      },
+      discountPolicyRule: {
+        findMany: vi.fn(async () => Array.from(discountPoliciesMap.values())),
+        findFirst: vi.fn(async () => Array.from(discountPoliciesMap.values())[0] || null),
+        create: vi.fn(async ({ data }: { data: any }) => {
+          const newRule = { id: `rule-${Date.now()}`, ...data };
+          discountPoliciesMap.set(newRule.id, newRule);
+          return newRule;
+        }),
+        update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+          const existing = discountPoliciesMap.get(where.id);
+          const updated = { ...existing, ...data };
+          discountPoliciesMap.set(where.id, updated);
+          return updated;
         }),
       },
       product: {
@@ -284,5 +335,69 @@ describe('Product Catalog, Price Lists & Variants API (Developer A Phase A2)', (
     expect(getRes.body.data.sku).toBe('SUP-ENT-003');
     expect(getRes.body.data.primaryCategory).toBeDefined();
     expect(getRes.body.data.categories).toHaveLength(1);
+  });
+
+  it('AC-7: retrieves category interior flow details via GET /api/v1/products/categories/:id', async () => {
+    const res = await request(app)
+      .get('/api/v1/products/categories/cat-1')
+      .set('Authorization', `Bearer ${salesRepToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.id).toBe('cat-1');
+    expect(res.body.data.name).toBe('Hardware');
+    expect(Array.isArray(res.body.data.products)).toBe(true);
+    expect(Array.isArray(res.body.data.discountPolicies)).toBe(true);
+  });
+
+  it('AC-8: updates category details via PATCH /api/v1/products/categories/:id', async () => {
+    const res = await request(app)
+      .patch('/api/v1/products/categories/cat-1')
+      .set('Authorization', `Bearer ${salesManagerToken}`)
+      .send({
+        name: 'Hardware Equipment & Infrastructure',
+        description: 'Physical enterprise data center equipment',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.name).toBe('Hardware Equipment & Infrastructure');
+    expect(res.body.data.description).toBe('Physical enterprise data center equipment');
+  });
+
+  it('AC-9: upserts category-wise discount governance policy via POST /api/v1/products/categories/:id/discount-policy', async () => {
+    const res = await request(app)
+      .post('/api/v1/products/categories/cat-1/discount-policy')
+      .set('Authorization', `Bearer ${salesManagerToken}`)
+      .send({
+        maxDiscountPercent: 12.0,
+        minMarginPercent: 35.0,
+        requiredApprovalRole: 'FINANCE_OPERATIONS',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.maxDiscountPercent).toBe(12.0);
+    expect(res.body.data.minMarginPercent).toBe(35.0);
+    expect(res.body.data.requiredApprovalRole).toBe('FINANCE_OPERATIONS');
+  });
+
+  it('AC-10: deletes a category via DELETE /api/v1/products/categories/:id', async () => {
+    const createRes = await request(app)
+      .post('/api/v1/products/categories')
+      .set('Authorization', `Bearer ${salesManagerToken}`)
+      .send({
+        name: 'Temporary Category',
+        code: 'TEMP_CAT',
+      });
+
+    const tempId = createRes.body.data.id;
+
+    const delRes = await request(app)
+      .delete(`/api/v1/products/categories/${tempId}`)
+      .set('Authorization', `Bearer ${salesManagerToken}`);
+
+    expect(delRes.status).toBe(200);
+    expect(delRes.body.success).toBe(true);
   });
 });

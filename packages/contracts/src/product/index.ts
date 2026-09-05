@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { CustomerTierEnum } from '../customer/index.js';
+import { RoleEnum } from '../auth/index.js';
+
 export const ProductCategoryEnum = z.enum([
   'HARDWARE',
   'SOFTWARE_LICENSE',
@@ -21,6 +24,8 @@ export const CategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   code: z.string(),
+  description: z.string().nullable().optional(),
+  productCount: z.number().int().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -30,9 +35,27 @@ export type CategoryDto = z.infer<typeof CategorySchema>;
 export const CreateCategorySchema = z.object({
   name: z.string().min(2, 'Category name is required'),
   code: z.string().min(2, 'Category code is required'),
+  description: z.string().optional(),
 });
 
 export type CreateCategoryRequest = z.infer<typeof CreateCategorySchema>;
+
+export const UpdateCategorySchema = z.object({
+  name: z.string().min(2, 'Category name must be at least 2 characters').optional(),
+  code: z.string().min(2, 'Category code must be at least 2 characters').optional(),
+  description: z.string().optional().nullable(),
+});
+
+export type UpdateCategoryRequest = z.infer<typeof UpdateCategorySchema>;
+
+export const UpsertCategoryDiscountPolicySchema = z.object({
+  maxDiscountPercent: z.number().min(0, 'Max discount cannot be negative').max(100, 'Max discount cannot exceed 100%'),
+  minMarginPercent: z.number().min(0, 'Min margin cannot be negative').max(100).optional().nullable(),
+  requiredApprovalRole: RoleEnum.optional().default('SALES_MANAGER'),
+  customerTier: CustomerTierEnum.optional().nullable(),
+});
+
+export type UpsertCategoryDiscountPolicyRequest = z.infer<typeof UpsertCategoryDiscountPolicySchema>;
 
 export const CategoryReferenceSchema = z.object({
   id: z.string(),

@@ -5,6 +5,8 @@ import {
   ProductFilterQuerySchema,
   CreatePriceListSchema,
   CreateCategorySchema,
+  UpdateCategorySchema,
+  UpsertCategoryDiscountPolicySchema,
   CreateAttributeSchema,
   AddAttributeValueSchema,
   UpdateVariantSchema,
@@ -116,11 +118,121 @@ export async function getCategoriesHandler(
 ): Promise<void> {
   try {
     await categoryRepository.ensureDefaultCategories();
-    const categories = await categoryRepository.findAll();
+    const categories = await categoryRepository.findAllWithStats();
     res.json({
       success: true,
       data: categories,
       message: null,
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getCategoryByIdHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const category = await categoryRepository.findByIdWithDetails(id);
+    if (!category) {
+      res.status(404).json({
+        success: false,
+        data: null,
+        message: 'Category not found',
+        meta: null,
+      });
+      return;
+    }
+    res.json({
+      success: true,
+      data: category,
+      message: null,
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createCategoryHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { name, code, description } = CreateCategorySchema.parse(req.body);
+    const category = await categoryRepository.create({
+      name,
+      code: code.toUpperCase(),
+      description,
+    });
+    res.status(201).json({
+      success: true,
+      data: category,
+      message: 'Category created successfully.',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateCategoryHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const validated = UpdateCategorySchema.parse(req.body);
+    const category = await categoryRepository.update(id, validated);
+    res.json({
+      success: true,
+      data: category,
+      message: 'Category updated successfully.',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteCategoryHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    await categoryRepository.delete(id);
+    res.json({
+      success: true,
+      data: null,
+      message: 'Category deleted successfully.',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function upsertCategoryDiscountPolicyHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const validated = UpsertCategoryDiscountPolicySchema.parse(req.body);
+    const policy = await categoryRepository.upsertCategoryDiscountPolicy(id, validated);
+    res.json({
+      success: true,
+      data: policy,
+      message: 'Category discount policy updated successfully.',
       meta: null,
     });
   } catch (error) {
@@ -195,24 +307,7 @@ export async function createPriceListHandler(
 }
 
 
-export async function createCategoryHandler(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const { name, code } = CreateCategorySchema.parse(req.body);
-    const category = await categoryRepository.create({ name, code: code.toUpperCase() });
-    res.status(201).json({
-      success: true,
-      data: category,
-      message: 'Category created successfully.',
-      meta: null,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
+
 
 export async function getAttributesHandler(
   _req: Request,

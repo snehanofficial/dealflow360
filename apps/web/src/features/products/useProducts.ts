@@ -7,6 +7,8 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
   CategoryDto,
+  UpdateCategoryRequest,
+  UpsertCategoryDiscountPolicyRequest,
   PriceListDto,
   CreatePriceListRequest,
 } from '@dealflow360/contracts';
@@ -36,12 +38,24 @@ export function useProduct(id?: string, tier?: string, currency?: string) {
 }
 
 export function useCategories() {
-  return useQuery<CategoryDto[]>({
+  return useQuery<any[]>({
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await api.get('/products/categories');
       return response.data.data;
     },
+  });
+}
+
+export function useCategoryDetail(id?: string) {
+  return useQuery<any>({
+    queryKey: ['categories', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Category ID is required');
+      const response = await api.get(`/products/categories/${id}`);
+      return response.data.data;
+    },
+    enabled: !!id,
   });
 }
 
@@ -129,13 +143,71 @@ export function useCreateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; code: string }) => {
+    mutationFn: async (data: { name: string; code: string; description?: string }) => {
       const response = await api.post('/products/categories', data);
       return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name?: string; code?: string; description?: string } }) => {
+      const response = await api.patch(`/products/categories/${id}`, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['categories', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/products/categories/${id}`);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpsertCategoryDiscountPolicy() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        maxDiscountPercent: number;
+        minMarginPercent?: number | null;
+        requiredApprovalRole?: string;
+        customerTier?: string | null;
+      };
+    }) => {
+      const response = await api.post(`/products/categories/${id}/discount-policy`, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['categories', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['discount-policies'] });
     },
   });
 }
