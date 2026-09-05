@@ -1,15 +1,24 @@
+import { roundMoney } from '../margin/marginEngine.js';
+
 export interface LineCalculationInput {
   listPrice: number;
+  unitPrice?: number;
   standardCost: number;
   quantity: number;
   proposedDiscountPercent: number;
+  taxRate?: number;
 }
 
 export interface LineCalculationResult {
   listPrice: number;
+  unitPrice: number;
   quantity: number;
+  grossAmount: number;
   proposedDiscountPercent: number;
   discountAmount: number;
+  taxableAmount: number;
+  taxRate: number;
+  taxAmount: number;
   netLinePrice: number;
   lineCost: number;
   lineMarginPercent: number;
@@ -22,6 +31,8 @@ export interface QuoteTotalsInput {
 export interface QuoteTotalsResult {
   subtotal: number;
   totalDiscount: number;
+  taxableAmount: number;
+  taxAmount: number;
   netValue: number;
   totalCost: number;
   grossMarginPercent: number;
@@ -36,26 +47,39 @@ export interface RiskEvaluationResult {
 }
 
 /**
- * Calculates line level financial metrics (net price, discount amount, margin %)
+ * Calculates line level financial metrics (net price, discount amount, tax amount, margin %)
  */
 export function calculateLinePricing(input: LineCalculationInput): LineCalculationResult {
   const qty = Math.max(input.quantity, 1);
   const discountPct = Math.min(Math.max(input.proposedDiscountPercent, 0), 100);
+  const unitPrice = input.unitPrice !== undefined ? Math.max(0, input.unitPrice) : Math.max(0, input.listPrice);
+  const taxRate = input.taxRate !== undefined ? Math.min(100, Math.max(0, input.taxRate)) : 0;
 
-  const listPriceTotal = input.listPrice * qty;
-  const discountAmount = Math.round(listPriceTotal * (discountPct / 100) * 100) / 100;
-  const netLinePrice = Math.round((listPriceTotal - discountAmount) * 100) / 100;
-  const lineCost = Math.round(input.standardCost * qty * 100) / 100;
+  const grossAmount = roundMoney(unitPrice * qty);
+  const taxableAmount = roundMoney(grossAmount);
+  const taxAmount = roundMoney(taxableAmount * (taxRate / 100));
+  const totalWithTax = roundMoney(grossAmount + taxAmount);
+  const discountAmount = roundMoney(totalWithTax * (discountPct / 100));
+  const netLinePrice = roundMoney(totalWithTax - discountAmount);
+  const lineCost = roundMoney(input.standardCost * qty);
+
+  const netRevenueExclTax = roundMoney(grossAmount * (1 - discountPct / 100));
+  const marginAmount = roundMoney(netRevenueExclTax - lineCost);
   const lineMarginPercent =
-    netLinePrice > 0
-      ? Math.round(((netLinePrice - lineCost) / netLinePrice) * 10000) / 100
+    netRevenueExclTax > 0
+      ? roundMoney((marginAmount / netRevenueExclTax) * 100)
       : 0;
 
   return {
     listPrice: input.listPrice,
+    unitPrice,
     quantity: qty,
+    grossAmount,
     proposedDiscountPercent: discountPct,
     discountAmount,
+    taxableAmount,
+    taxRate,
+    taxAmount,
     netLinePrice,
     lineCost,
     lineMarginPercent,
@@ -63,34 +87,45 @@ export function calculateLinePricing(input: LineCalculationInput): LineCalculati
 }
 
 /**
- * Calculates quote header aggregate financials (subtotal, total discount, net value, gross margin %)
+ * Calculates quote header aggregate financials (subtotal, total discount, taxable amount, tax amount, net value, gross margin %)
  */
 export function calculateQuoteTotals(lines: LineCalculationResult[]): QuoteTotalsResult {
   let subtotal = 0;
   let totalDiscount = 0;
+  let taxableAmount = 0;
+  let taxAmount = 0;
   let netValue = 0;
   let totalCost = 0;
 
   for (const line of lines) {
-    subtotal += line.listPrice * line.quantity;
+    subtotal += line.grossAmount;
     totalDiscount += line.discountAmount;
+    taxableAmount += line.taxableAmount;
+    taxAmount += line.taxAmount;
     netValue += line.netLinePrice;
     totalCost += line.lineCost;
   }
 
-  subtotal = Math.round(subtotal * 100) / 100;
-  totalDiscount = Math.round(totalDiscount * 100) / 100;
-  netValue = Math.round(netValue * 100) / 100;
-  totalCost = Math.round(totalCost * 100) / 100;
+  subtotal = roundMoney(subtotal);
+  totalDiscount = roundMoney(totalDiscount);
+  taxableAmount = roundMoney(taxableAmount);
+  taxAmount = roundMoney(taxAmount);
+  netValue = roundMoney(netValue);
+  totalCost = roundMoney(totalCost);
 
+  const totalGrossWithTax = subtotal + taxAmount;
+  const netRevenueExclTax = roundMoney(subtotal * (1 - (totalGrossWithTax > 0 ? totalDiscount / totalGrossWithTax : 0)));
+  const marginAmount = roundMoney(netRevenueExclTax - totalCost);
   const grossMarginPercent =
-    netValue > 0 ? Math.round(((netValue - totalCost) / netValue) * 10000) / 100 : 0;
+    netRevenueExclTax > 0 ? roundMoney((marginAmount / netRevenueExclTax) * 100) : 0;
   const avgDiscountPercent =
-    subtotal > 0 ? Math.round((totalDiscount / subtotal) * 10000) / 100 : 0;
+    totalGrossWithTax > 0 ? roundMoney((totalDiscount / totalGrossWithTax) * 100) : 0;
 
   return {
     subtotal,
     totalDiscount,
+    taxableAmount,
+    taxAmount,
     netValue,
     totalCost,
     grossMarginPercent,
