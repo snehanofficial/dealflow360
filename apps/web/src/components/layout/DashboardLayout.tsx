@@ -60,9 +60,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         { name: 'Quotations', icon: FileText, path: '/quotations', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Customers', icon: Users, path: '/customers', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Products', icon: Box, path: '/products', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
-        { name: 'Price Lists', icon: Tag, path: '/pricelists', allowedRoles: ['ADMIN', 'SALES_MANAGER'] },
+        { name: 'Price Lists', icon: Tag, path: '/price-lists', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
+
     {
       title: 'RISK & APPROVALS',
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'],

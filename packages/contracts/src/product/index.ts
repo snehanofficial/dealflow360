@@ -27,6 +27,13 @@ export const CategorySchema = z.object({
 
 export type CategoryDto = z.infer<typeof CategorySchema>;
 
+export const CreateCategorySchema = z.object({
+  name: z.string().min(2, 'Category name is required'),
+  code: z.string().min(2, 'Category code is required'),
+});
+
+export type CreateCategoryRequest = z.infer<typeof CreateCategorySchema>;
+
 export const CategoryReferenceSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -67,14 +74,49 @@ export const CreateVariantSchema = z.object({
 
 export type CreateVariantRequest = z.infer<typeof CreateVariantSchema>;
 
+export const ProductAttributeValueSchema = z.object({
+  id: z.string(),
+  attributeId: z.string(),
+  value: z.string(),
+});
+
+export type ProductAttributeValueDto = z.infer<typeof ProductAttributeValueSchema>;
+
+export const ProductAttributeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  values: z.array(ProductAttributeValueSchema).default([]),
+});
+
+export type ProductAttributeDto = z.infer<typeof ProductAttributeSchema>;
+
+export const CreateAttributeSchema = z.object({
+  name: z.string().min(1, 'Attribute name is required'),
+  values: z.array(z.string()).default([]),
+});
+
+export type CreateAttributeRequest = z.infer<typeof CreateAttributeSchema>;
+
 export const PriceListEntrySchema = z.object({
   id: z.string(),
   priceListId: z.string(),
   productId: z.string(),
   unitPrice: z.number(),
+  product: z
+    .object({
+      id: z.string(),
+      sku: z.string(),
+      name: z.string(),
+      category: z.string().optional(),
+      unitPrice: z.number().optional(),
+      listPrice: z.number().optional(),
+    })
+    .optional()
+    .nullable(),
 });
 
 export type PriceListEntryDto = z.infer<typeof PriceListEntrySchema>;
+
 
 export const PriceListSchema = z.object({
   id: z.string(),
@@ -101,6 +143,39 @@ export const CreatePriceListSchema = z.object({
 });
 
 export type CreatePriceListRequest = z.infer<typeof CreatePriceListSchema>;
+
+export const UpdatePriceListSchema = z.object({
+  name: z.string().min(2).optional(),
+  customerTier: z.enum(['ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3']).optional().nullable(),
+  currency: z.string().optional(),
+  isDefault: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdatePriceListRequest = z.infer<typeof UpdatePriceListSchema>;
+
+export const UpsertPriceListEntrySchema = z.object({
+  productId: z.string().min(1, 'Product ID is required'),
+  unitPrice: z.number().positive('Price must be positive'),
+});
+
+export type UpsertPriceListEntryRequest = z.infer<typeof UpsertPriceListEntrySchema>;
+
+export const AddAttributeValueSchema = z.object({
+  value: z.string().min(1, 'Attribute value is required'),
+});
+
+export type AddAttributeValueRequest = z.infer<typeof AddAttributeValueSchema>;
+
+export const UpdateVariantSchema = z.object({
+  sku: z.string().min(2).optional(),
+  name: z.string().min(2).optional(),
+  extraPrice: z.number().optional(),
+  isActive: z.boolean().optional(),
+  attributeValueIds: z.array(z.string()).optional(),
+});
+
+export type UpdateVariantRequest = z.infer<typeof UpdateVariantSchema>;
 
 export const ProductSchema = z.object({
   id: z.string(),

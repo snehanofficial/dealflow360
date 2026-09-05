@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { useProducts, useCreateProduct, useUpdateProduct } from './useProducts.js';
+import { useNavigate } from 'react-router-dom';
+import { useProducts, useCreateProduct } from './useProducts.js';
 import { ProductFormModal } from './ProductFormModal.js';
 import { ProductDetailModal } from './ProductDetailPage.js';
+import { CategoryManagementModal } from './CategoryManagementModal.js';
+import { PriceListManagementModal } from './PriceListManagementModal.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { Badge, Button, SearchInput } from '../../components/ui/index.js';
 import {
@@ -13,6 +16,8 @@ import {
   Edit2,
   Eye,
   Layers,
+  Tag,
+  DollarSign,
 } from 'lucide-react';
 import {
   ProductDto,
@@ -23,6 +28,7 @@ import {
 } from '@dealflow360/contracts';
 
 export const ProductListPage: React.FC = () => {
+  const navigate = useNavigate();
   const { role } = useAuth();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -31,8 +37,11 @@ export const ProductListPage: React.FC = () => {
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<ProductDto | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isPriceListModalOpen, setIsPriceListModalOpen] = useState(false);
+
   const [selectedProduct, setSelectedProduct] = useState<ProductDto | null>(null);
+  const [initialDetailTab, setInitialDetailTab] = useState<'general' | 'pricing' | 'categories' | 'variants' | 'price-lists' | 'inspector'>('general');
   const [formError, setFormError] = useState<string | null>(null);
 
   const queryParams = {
@@ -45,56 +54,38 @@ export const ProductListPage: React.FC = () => {
 
   const { data, isLoading, isError, error } = useProducts(queryParams);
   const createProductMutation = useCreateProduct();
-  const updateProductMutation = useUpdateProduct();
 
   const isManagerOrAdmin = role === 'ADMIN' || role === 'SALES_MANAGER';
 
   const handleOpenCreateModal = () => {
-    setEditingProduct(null);
     setFormError(null);
     setIsFormModalOpen(true);
   };
 
-  const handleOpenEditModal = (product: ProductDto) => {
-    setEditingProduct(product);
-    setFormError(null);
-    setIsFormModalOpen(true);
-  };
-
-  const handleOpenDetailModal = (product: ProductDto) => {
+  const handleOpenManageModal = (product: ProductDto, tab: 'general' | 'pricing' = 'general') => {
     setSelectedProduct(product);
+    setInitialDetailTab(tab);
     setIsDetailModalOpen(true);
   };
 
   const handleFormSubmit = async (formData: CreateProductRequest) => {
     setFormError(null);
     try {
-      if (editingProduct) {
-        await updateProductMutation.mutateAsync({
-          id: editingProduct.id,
-          data: {
-            name: formData.name,
-            description: formData.description,
-            category: formData.category,
-            type: formData.type,
-            unit: formData.unit,
-            taxRate: formData.taxRate,
-            unitPrice: formData.unitPrice,
-            costPrice: formData.costPrice,
-            maxAllowedDiscount: formData.maxAllowedDiscount,
-            isActive: formData.isActive,
-          },
-        });
-      } else {
-        await createProductMutation.mutateAsync(formData);
-      }
+      const createdProduct = await createProductMutation.mutateAsync(formData);
       setIsFormModalOpen(false);
+      
+      // Auto-open detail management page for newly created product
+      if (createdProduct) {
+        setSelectedProduct(createdProduct);
+        setInitialDetailTab('general');
+        setIsDetailModalOpen(true);
+      }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const responseData = (err as { response?: { data?: { message?: string } } }).response?.data;
-        setFormError(responseData?.message || 'An error occurred while saving the product.');
+        setFormError(responseData?.message || 'An error occurred while creating product.');
       } else {
-        setFormError('Failed to save product specification. Please try again.');
+        setFormError('Failed to create product specification. Please try again.');
       }
     }
   };
@@ -122,10 +113,22 @@ export const ProductListPage: React.FC = () => {
         </div>
 
         {isManagerOrAdmin && (
-          <Button onClick={handleOpenCreateModal} variant="primary" className="sm:self-start">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Product
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 sm:self-start">
+            <Button onClick={() => setIsCategoryModalOpen(true)} variant="outline" size="sm">
+              <Tag className="w-4 h-4 mr-1.5" />
+              Categories
+            </Button>
+
+            <Button onClick={() => navigate('/price-lists')} variant="outline" size="sm">
+              <DollarSign className="w-4 h-4 mr-1.5" />
+              Price Lists
+            </Button>
+
+            <Button onClick={handleOpenCreateModal} variant="primary" size="sm">
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add Product
+            </Button>
+          </div>
         )}
       </div>
 
@@ -224,7 +227,7 @@ export const ProductListPage: React.FC = () => {
                       <div>
                         <div>{product.name}</div>
                         {product.description && (
-                          <div className="text-xs text-slate-400 truncate max-w-xs">{product.description}</div>
+                          <div className="text-xs text-[#714B67] truncate max-w-xs">{product.description}</div>
                         )}
                       </div>
                     </td>
@@ -250,19 +253,19 @@ export const ProductListPage: React.FC = () => {
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => handleOpenDetailModal(product)}
+                          onClick={() => handleOpenManageModal(product, 'general')}
                           className="inline-flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-900 font-medium p-1.5 rounded-md hover:bg-slate-100 transition-colors"
-                          title="View Product Specs"
+                          title="View & Manage Product"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>View</span>
+                          <span>Manage</span>
                         </button>
 
                         {isManagerOrAdmin && (
                           <button
-                            onClick={() => handleOpenEditModal(product)}
+                            onClick={() => handleOpenManageModal(product, 'pricing')}
                             className="inline-flex items-center space-x-1 text-xs text-[#714B67] hover:text-[#55364e] font-medium p-1.5 rounded-md hover:bg-[#F3E9F1] transition-colors"
-                            title="Edit Product Base Pricing"
+                            title="Edit Product Pricing & Governance"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                             <span>Edit</span>
@@ -312,8 +315,7 @@ export const ProductListPage: React.FC = () => {
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         onSubmit={handleFormSubmit}
-        initialData={editingProduct}
-        isLoading={createProductMutation.isPending || updateProductMutation.isPending}
+        isLoading={createProductMutation.isPending}
         apiError={formError}
       />
 
@@ -321,8 +323,18 @@ export const ProductListPage: React.FC = () => {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         product={selectedProduct}
-        onEdit={handleOpenEditModal}
+        initialTab={initialDetailTab}
         isManagerOrAdmin={isManagerOrAdmin}
+      />
+
+      <CategoryManagementModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+      />
+
+      <PriceListManagementModal
+        isOpen={isPriceListModalOpen}
+        onClose={() => setIsPriceListModalOpen(false)}
       />
     </div>
   );
