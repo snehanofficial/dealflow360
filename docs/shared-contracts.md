@@ -20,7 +20,7 @@ export const CustomerReferenceSchema = z.object({
   id: z.string(),
   code: z.string(),
   name: z.string(),
-  tier: CustomerTierEnum, // 'ENTERPRISE' | 'TIER_1' | 'TIER_2' | 'TIER_3'
+  tier: CustomerTierEnum, // 'ENTERPRISE' | 'GOLD' | 'SILVER' | 'BRONZE'
 });
 
 export type CustomerReferenceDto = z.infer<typeof CustomerReferenceSchema>;
@@ -96,7 +96,7 @@ Error responses:
   "success": false,
   "error": {
     "code": "POLICY_VIOLATION",
-    "message": "Discount exceeds threshold for TIER_2 customer",
+    "message": "Discount exceeds threshold for SILVER customer",
     "details": { ... }
   }
 }

@@ -119,9 +119,9 @@ export const PriceListPage: React.FC = () => {
 
   const tierBadgeMap: Record<string, string> = {
     ENTERPRISE: 'bg-amber-100 text-amber-800 border-amber-300',
-    TIER_1: 'bg-purple-100 text-purple-800 border-purple-300',
-    TIER_2: 'bg-blue-100 text-blue-800 border-blue-300',
-    TIER_3: 'bg-slate-100 text-slate-800 border-slate-300',
+    GOLD: 'bg-purple-100 text-purple-800 border-purple-300',
+    SILVER: 'bg-blue-100 text-blue-800 border-blue-300',
+    BRONZE: 'bg-slate-100 text-slate-800 border-slate-300',
   };
 
   return (
@@ -172,9 +172,9 @@ export const PriceListPage: React.FC = () => {
               <option value="">All Tiers</option>
               <option value="GLOBAL">Global Tier (No Tier)</option>
               <option value="ENTERPRISE">ENTERPRISE</option>
-              <option value="TIER_1">TIER_1</option>
-              <option value="TIER_2">TIER_2</option>
-              <option value="TIER_3">TIER_3</option>
+              <option value="GOLD">GOLD</option>
+              <option value="SILVER">SILVER</option>
+              <option value="BRONZE">BRONZE</option>
             </select>
           </div>
 
@@ -311,11 +311,10 @@ export const PriceListPage: React.FC = () => {
 
                               <button
                                 onClick={() => handleToggleActive(list)}
-                                className={`inline-flex items-center p-1.5 rounded-md text-xs font-medium transition-colors ${
-                                  list.isActive
-                                    ? 'text-amber-600 hover:bg-amber-50'
-                                    : 'text-emerald-600 hover:bg-emerald-50'
-                                }`}
+                                className={`inline-flex items-center p-1.5 rounded-md text-xs font-medium transition-colors ${list.isActive
+                                  ? 'text-amber-600 hover:bg-amber-50'
+                                  : 'text-emerald-600 hover:bg-emerald-50'
+                                  }`}
                                 title={list.isActive ? 'Deactivate' : 'Activate'}
                               >
                                 <Power className="w-3.5 h-3.5" />

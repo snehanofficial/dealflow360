@@ -667,7 +667,7 @@ model Customer {
   code      String          @unique
   name      String
   email     String
-  tier      CustomerTier    @default(TIER_2)
+  tier      CustomerTier    @default(BRONZE)
   status    CustomerStatus  @default(ACTIVE)
   creditLimit Float         @default(50000)
   quotations Quotation[]     // One customer has many quotes

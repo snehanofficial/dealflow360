@@ -70,13 +70,13 @@ export const PriceListEntrySchema = z.object({
     unitPrice: z.number(),
     product: z
         .object({
-        id: z.string(),
-        sku: z.string(),
-        name: z.string(),
-        category: z.string().optional(),
-        unitPrice: z.number().optional(),
-        listPrice: z.number().optional(),
-    })
+            id: z.string(),
+            sku: z.string(),
+            name: z.string(),
+            category: z.string().optional(),
+            unitPrice: z.number().optional(),
+            listPrice: z.number().optional(),
+        })
         .optional()
         .nullable(),
 });
@@ -91,7 +91,7 @@ export const PriceListSchema = z.object({
 });
 export const CreatePriceListSchema = z.object({
     name: z.string().min(2, 'Price list name is required'),
-    customerTier: z.enum(['ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3']).optional().nullable(),
+    customerTier: z.enum(['ENTERPRISE', 'GOLD', 'SILVER', 'BRONZE']).optional().nullable(),
     currency: z.string().default('USD'),
     isDefault: z.boolean().default(false),
     isActive: z.boolean().default(true),
@@ -102,7 +102,7 @@ export const CreatePriceListSchema = z.object({
 });
 export const UpdatePriceListSchema = z.object({
     name: z.string().min(2).optional(),
-    customerTier: z.enum(['ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3']).optional().nullable(),
+    customerTier: z.enum(['ENTERPRISE', 'GOLD', 'SILVER', 'BRONZE']).optional().nullable(),
     currency: z.string().optional(),
     isDefault: z.boolean().optional(),
     isActive: z.boolean().optional(),

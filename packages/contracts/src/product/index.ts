@@ -132,7 +132,7 @@ export type PriceListDto = z.infer<typeof PriceListSchema>;
 
 export const CreatePriceListSchema = z.object({
   name: z.string().min(2, 'Price list name is required'),
-  customerTier: z.enum(['ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3']).optional().nullable(),
+  customerTier: z.enum(['ENTERPRISE', 'GOLD', 'SILVER', 'BRONZE']).optional().nullable(),
   currency: z.string().default('USD'),
   isDefault: z.boolean().default(false),
   isActive: z.boolean().default(true),
@@ -146,7 +146,7 @@ export type CreatePriceListRequest = z.infer<typeof CreatePriceListSchema>;
 
 export const UpdatePriceListSchema = z.object({
   name: z.string().min(2).optional(),
-  customerTier: z.enum(['ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3']).optional().nullable(),
+  customerTier: z.enum(['ENTERPRISE', 'GOLD', 'SILVER', 'BRONZE']).optional().nullable(),
   currency: z.string().optional(),
   isDefault: z.boolean().optional(),
   isActive: z.boolean().optional(),

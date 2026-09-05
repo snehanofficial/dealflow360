@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "CustomerTier" AS ENUM ('ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3');
+CREATE TYPE "CustomerTier" AS ENUM ('ENTERPRISE', 'GOLD', 'SILVER', 'BRONZE');
 
 -- CreateEnum
 CREATE TYPE "CustomerStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
@@ -11,7 +11,7 @@ CREATE TABLE "Customer" (
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT,
-    "tier" "CustomerTier" NOT NULL DEFAULT 'TIER_2',
+    "tier" "CustomerTier" NOT NULL DEFAULT 'SILVER',
     "status" "CustomerStatus" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

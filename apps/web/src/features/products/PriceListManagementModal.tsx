@@ -145,9 +145,9 @@ export const PriceListManagementModal: React.FC<PriceListManagementModalProps> =
               >
                 <option value="">All Tiers (Standard)</option>
                 <option value="ENTERPRISE">ENTERPRISE</option>
-                <option value="TIER_1">TIER_1</option>
-                <option value="TIER_2">TIER_2</option>
-                <option value="TIER_3">TIER_3</option>
+                <option value="GOLD">GOLD</option>
+                <option value="SILVER">SILVER</option>
+                <option value="BRONZE">BRONZE</option>
               </select>
             </div>
             <div>
@@ -201,9 +201,8 @@ export const PriceListManagementModal: React.FC<PriceListManagementModalProps> =
                     <div
                       key={list.id}
                       onClick={() => setSelectedList(list)}
-                      className={`p-2.5 flex items-center justify-between cursor-pointer transition-colors ${
-                        isSelected ? 'bg-[#F3E9F1] border-l-4 border-[#714B67]' : 'hover:bg-slate-50'
-                      }`}
+                      className={`p-2.5 flex items-center justify-between cursor-pointer transition-colors ${isSelected ? 'bg-[#F3E9F1] border-l-4 border-[#714B67]' : 'hover:bg-slate-50'
+                        }`}
                     >
                       <div>
                         <div className="font-semibold text-slate-900">{list.name}</div>

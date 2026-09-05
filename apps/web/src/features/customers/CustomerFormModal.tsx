@@ -40,7 +40,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       name: initialData?.name || '',
       email: initialData?.email || '',
       phone: initialData?.phone || '',
-      tier: (initialData?.tier as CustomerTier) || 'TIER_2',
+      tier: (initialData?.tier as CustomerTier) || 'SILVER',
       status: (initialData?.status as CustomerStatus) || 'ACTIVE',
     },
   });
@@ -61,7 +61,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         name: '',
         email: '',
         phone: '',
-        tier: 'TIER_2',
+        tier: 'SILVER',
         status: 'ACTIVE',
       });
     }
@@ -163,9 +163,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67] bg-white"
               >
                 <option value="ENTERPRISE">Enterprise</option>
-                <option value="TIER_1">Tier 1</option>
-                <option value="TIER_2">Tier 2</option>
-                <option value="TIER_3">Tier 3</option>
+                <option value="GOLD">Tier 1</option>
+                <option value="SILVER">Tier 2</option>
+                <option value="BRONZE">Tier 3</option>
               </select>
             </div>
 
