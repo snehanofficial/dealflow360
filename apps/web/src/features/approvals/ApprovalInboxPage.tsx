@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
 import { api } from '../../lib/api/client.js';
@@ -17,9 +17,13 @@ import {
   RefreshCw,
   Loader2,
   UserCheck,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge.js';
 import { Button } from '../../components/ui/Button.js';
+import { KanbanBoard, KanbanColumn } from '../../components/kanban/index.js';
+import { ApprovalKanbanCard } from './components/ApprovalKanbanCard.js';
 
 export const ApprovalInboxPage: React.FC = () => {
   const { role } = useAuth();
@@ -32,6 +36,7 @@ export const ApprovalInboxPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('PENDING');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'LIST' | 'KANBAN'>('LIST');
 
   // Modal State for Quick Approve / Reject
   const [activeModal, setActiveModal] = useState<{
@@ -160,10 +165,53 @@ export const ApprovalInboxPage: React.FC = () => {
   const pendingCount = approvals.filter((a) => a.status === 'PENDING').length;
   const highRiskCount = approvals.filter((a) => a.riskLevel === 'HIGH' || a.riskLevel === 'CRITICAL').length;
 
+  // Group into Kanban Columns
+  const kanbanColumns = useMemo<KanbanColumn<ApprovalRequestDto>[]>(() => {
+    const pendingItems = approvals.filter((a) => a.status === 'PENDING');
+    const approvedItems = approvals.filter((a) => a.status === 'APPROVED');
+    const rejectedItems = approvals.filter((a) => a.status === 'REJECTED');
+    const supersededItems = approvals.filter((a) => a.status === 'SUPERSEDED');
+
+    return [
+      {
+        id: 'PENDING',
+        title: 'Pending Action',
+        items: pendingItems,
+        badgeVariant: 'amber',
+        accentColor: 'border-amber-500',
+        emptyText: 'No pending approvals',
+      },
+      {
+        id: 'APPROVED',
+        title: 'Approved',
+        items: approvedItems,
+        badgeVariant: 'emerald',
+        accentColor: 'border-emerald-500',
+        emptyText: 'No approved requests',
+      },
+      {
+        id: 'REJECTED',
+        title: 'Rejected',
+        items: rejectedItems,
+        badgeVariant: 'rose',
+        accentColor: 'border-rose-500',
+        emptyText: 'No rejected requests',
+      },
+      {
+        id: 'SUPERSEDED',
+        title: 'Superseded',
+        items: supersededItems,
+        badgeVariant: 'slate',
+        accentColor: 'border-slate-400',
+        emptyText: 'No superseded requests',
+      },
+    ];
+  }, [approvals]);
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <CheckSquare className="w-7 h-7 text-[#714B67]" />
@@ -173,7 +221,36 @@ export const ApprovalInboxPage: React.FC = () => {
             Governance control room for commercial deal exceptions, discount overrides, and margin policy routing.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <button
+              onClick={() => {
+                setViewMode('LIST');
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                viewMode === 'LIST'
+                  ? 'bg-white text-[#714B67] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" /> List View
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('KANBAN');
+                if (statusFilter !== 'ALL') setStatusFilter('ALL');
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                viewMode === 'KANBAN'
+                  ? 'bg-white text-[#714B67] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" /> Workflow Board
+            </button>
+          </div>
+
           <Button variant="outline" size="sm" onClick={fetchApprovals} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -270,14 +347,40 @@ export const ApprovalInboxPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main List Table / Cards */}
+      {/* Main View Area */}
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
           {error}
         </div>
       )}
 
-      {loading ? (
+      {viewMode === 'KANBAN' ? (
+        <KanbanBoard<ApprovalRequestDto>
+          columns={kanbanColumns}
+          isLoading={loading}
+          error={error}
+          onRetry={fetchApprovals}
+          keyExtractor={(item) => item.id}
+          onCardClick={(item) => navigate(`/approvals/${item.id}`)}
+          renderCard={(item) => (
+            <ApprovalKanbanCard
+              approval={item}
+              canAction={isUserAuthorizedForAction(item)}
+              onApprove={(appr) => {
+                setActiveModal({ type: 'APPROVE', approval: appr });
+                setDecisionComment('');
+                setModalError(null);
+              }}
+              onReject={(appr) => {
+                setActiveModal({ type: 'REJECT', approval: appr });
+                setDecisionComment('');
+                setModalError(null);
+              }}
+              onViewDetails={(id) => navigate(`/approvals/${id}`)}
+            />
+          )}
+        />
+      ) : loading ? (
         <div className="bg-white p-12 rounded-xl border border-slate-200 text-center flex flex-col items-center justify-center space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-[#714B67]" />
           <p className="text-sm font-medium text-slate-600">Loading approval requests...</p>
@@ -306,7 +409,7 @@ export const ApprovalInboxPage: React.FC = () => {
                 {/* Left Section: Details */}
                 <div className="space-y-3 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-base text-slate-900">
+                    <span className="font-bold text-base text-slate-900 font-mono">
                       {item.quoteNumber ? item.quoteNumber : `Approval #${item.id.substring(0, 8)}`}
                     </span>
                     {item.customerName && (
@@ -327,11 +430,11 @@ export const ApprovalInboxPage: React.FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <div>
                       <span className="text-slate-400 block font-medium">Net Value</span>
-                      <span className="font-bold text-slate-800">${item.netTotal.toLocaleString()}</span>
+                      <span className="font-bold text-slate-800 font-mono">${item.netTotal.toLocaleString()}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 block font-medium">Gross Margin</span>
-                      <span className={`font-bold ${item.marginPercentage < 20 ? 'text-red-600' : 'text-slate-800'}`}>
+                      <span className={`font-bold font-mono ${item.marginPercentage < 20 ? 'text-red-600' : 'text-slate-800'}`}>
                         {item.marginPercentage.toFixed(1)}% (${item.marginAmount.toLocaleString()})
                       </span>
                     </div>
