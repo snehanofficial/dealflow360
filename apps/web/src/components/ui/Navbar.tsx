@@ -48,6 +48,14 @@ export const Navbar: React.FC = () => {
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   Workspace Shell
                 </Link>
+                {(role === 'ADMIN' || role === 'SALES_MANAGER' || role === 'SALES_REP' || role === 'FINANCE_OPERATIONS') && (
+                  <Link
+                    to="/customers"
+                    className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+                  >
+                    Customers
+                  </Link>
+                )}
                 <Link
                   to="/profile"
                   className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5"
