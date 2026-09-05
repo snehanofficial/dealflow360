@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { useCustomers, useCreateCustomer, useUpdateCustomer } from './useCustomers.js';
 import { CustomerFormModal } from './CustomerFormModal.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { Badge } from '../../components/ui/Badge.js';
-import { Button } from '../../components/ui/Button.js';
+import { Badge, Button, SearchInput } from '../../components/ui/index.js';
 import {
   Users,
   Plus,
-  Search,
   Filter,
   ChevronLeft,
   ChevronRight,
@@ -119,17 +117,16 @@ export const CustomerListPage: React.FC = () => {
 
       {/* Search & Filter Controls */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
+        <div className="w-full md:w-80">
+          <SearchInput
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+            onDebouncedChange={(val) => {
+              setSearch(val);
               setPage(1);
             }}
+            isLoading={isLoading}
             placeholder="Search code, name, email..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#714B67] focus:border-[#714B67] transition-colors"
+            aria-label="Search customers by code, name, or email"
           />
         </div>
 
