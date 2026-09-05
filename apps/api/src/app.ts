@@ -6,7 +6,11 @@ import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/authRoutes.js';
 import { customerRoutes } from './routes/customerRoutes.js';
 import { productRoutes } from './routes/productRoutes.js';
+import { priceListRoutes } from './routes/priceListRoutes.js';
 import { quoteRoutes } from './routes/quoteRoutes.js';
+import { portalRoutes } from './routes/portalRoutes.js';
+import { fulfillmentRoutes } from './routes/fulfillmentRoutes.js';
+import { billingRoutes } from './routes/billingRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
 
@@ -40,17 +44,28 @@ app.get('/api/v1/health', (_req, res) => {
   });
 });
 
+import discountPolicyRoutes from './routes/discountPolicyRoutes.js';
+import commercialEvaluationRoutes from './routes/commercialEvaluationRoutes.js';
+
 // Auth & Business Module Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/customers', customerRoutes);
+app.use('/api/v1/quotes', quoteRoutes);
 app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/price-lists', priceListRoutes);
+app.use('/api/v1/discount-policies', discountPolicyRoutes);
+app.use('/api/v1/commercial-evaluations', commercialEvaluationRoutes);
 
 // Quotation & Recommendation Routes
 app.use('/api/v1/quotations', quoteRoutes);
+app.use('/api/v1/portal', portalRoutes);
+app.use('/api/v1/fulfillment', fulfillmentRoutes);
+app.use('/api/v1/quotes', fulfillmentRoutes);
+app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/quotes', billingRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);
-
 
 const PORT = env.PORT;
 

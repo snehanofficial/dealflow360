@@ -1,27 +1,43 @@
 import { db, PriceList, PriceListEntry, CustomerTier } from '@dealflow360/db';
 import { CreatePriceListRequest } from '@dealflow360/contracts';
 
+const defaultEntriesInclude = {
+  entries: {
+    include: {
+      product: true,
+    },
+  },
+};
+
 export class PriceListRepository {
-  async findMany(): Promise<(PriceList & { entries: PriceListEntry[] })[]> {
+  async findMany(): Promise<any[]> {
     return db.priceList.findMany({
-      include: { entries: true },
+      include: defaultEntriesInclude,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findById(id: string): Promise<(PriceList & { entries: PriceListEntry[] }) | null> {
+  async findById(id: string): Promise<any | null> {
     return db.priceList.findUnique({
       where: { id },
-      include: { entries: true },
+      include: defaultEntriesInclude,
     });
   }
 
-  async create(data: CreatePriceListRequest): Promise<PriceList & { entries: PriceListEntry[] }> {
+  async create(data: CreatePriceListRequest): Promise<any> {
+    const currency = data.currency || 'USD';
+    if (data.isDefault) {
+      await db.priceList.updateMany({
+        where: { currency, isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+
     return db.priceList.create({
       data: {
         name: data.name,
         customerTier: data.customerTier as CustomerTier | null,
-        currency: data.currency || 'USD',
+        currency,
         isDefault: data.isDefault ?? false,
         isActive: data.isActive ?? true,
         entries: data.entries
@@ -33,7 +49,7 @@ export class PriceListRepository {
             }
           : undefined,
       },
-      include: { entries: true },
+      include: defaultEntriesInclude,
     });
   }
 
@@ -50,6 +66,7 @@ export class PriceListRepository {
           currency,
           isActive: true,
         },
+        orderBy: { createdAt: 'desc' },
         include: {
           entries: {
             where: { productId },
@@ -82,6 +99,73 @@ export class PriceListRepository {
 
     return null;
   }
+
+  async update(id: string, data: {
+    name?: string;
+    customerTier?: CustomerTier | null;
+    currency?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+  }): Promise<any> {
+    const existing = await db.priceList.findUnique({ where: { id } });
+    const targetCurrency = data.currency || existing?.currency || 'USD';
+
+    if (data.isDefault) {
+      await db.priceList.updateMany({
+        where: {
+          currency: targetCurrency,
+          isDefault: true,
+          NOT: { id },
+        },
+        data: { isDefault: false },
+      });
+    }
+
+    return db.priceList.update({
+      where: { id },
+      data,
+      include: defaultEntriesInclude,
+    });
+  }
+
+  async delete(id: string): Promise<void> {
+    await db.priceList.delete({
+      where: { id },
+    });
+  }
+
+  async upsertEntry(priceListId: string, productId: string, unitPrice: number): Promise<any> {
+    return db.priceListEntry.upsert({
+      where: {
+        priceListId_productId: {
+          priceListId,
+          productId,
+        },
+      },
+      update: {
+        unitPrice,
+      },
+      create: {
+        priceListId,
+        productId,
+        unitPrice,
+      },
+      include: {
+        product: true,
+      },
+    });
+  }
+
+
+  async deleteEntry(priceListId: string, productId: string): Promise<void> {
+    await db.priceListEntry.deleteMany({
+      where: {
+        priceListId,
+        productId,
+      },
+    });
+  }
 }
 
 export const priceListRepository = new PriceListRepository();
+

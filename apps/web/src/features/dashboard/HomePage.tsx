@@ -74,7 +74,7 @@ export const HomePage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <a
-              href="/app/quotes/quote-sample-001"
+              href="/quotations/quote-sample-001"
               className="px-4 py-2 text-sm font-medium text-[#714B67] bg-purple-50 border border-purple-200 hover:bg-purple-100 rounded-md transition-colors flex items-center gap-2"
             >
               <FileText className="w-4 h-4" /> Open Sample Quote (QT-2026-0001)

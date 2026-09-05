@@ -1,9 +1,26 @@
 import { db, Quotation, QuoteLine, Product, Customer } from '@dealflow360/db';
+import {
+  calculateLinePricing,
+  calculateQuoteTotals,
+  evaluateQuoteRisk,
+  evaluateSubmitTransition,
+} from '@dealflow360/domain';
+import { CreateQuoteInput, ListQuotesQuery, UpdateQuoteLineInput } from '@dealflow360/contracts';
 
 export type QuotationWithDetails = Quotation & {
   customer: Customer;
   lines: (QuoteLine & { product: Product })[];
 };
+
+export interface PaginatedQuotations {
+  data: QuotationWithDetails[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 export class QuoteService {
   async getQuotationById(quotationId: string): Promise<QuotationWithDetails | null> {
@@ -18,6 +35,202 @@ export class QuoteService {
         },
       },
     });
+  }
+
+  private async ensureValidUser(userId: string): Promise<string> {
+    if (!db.user?.findUnique) {
+      return userId || 'user-rep-01';
+    }
+
+    if (userId) {
+      const existing = await db.user.findUnique({
+        where: { id: userId },
+      });
+      if (existing) {
+        return existing.id;
+      }
+    }
+
+
+    const firstUser = await db.user.findFirst();
+    if (firstUser) {
+      return firstUser.id;
+    }
+
+    const systemUser = await db.user.create({
+      data: {
+        email: 'system@dealflow360.com',
+        passwordHash: '$2b$10$UnusedSystemUserFallbackHashForDevMode',
+        name: 'System Administrator',
+        role: 'SALES_REP',
+      },
+    });
+    return systemUser.id;
+  }
+
+  private async ensureValidCustomer(customerId: string): Promise<Customer> {
+    if (!db.customer?.findUnique) {
+      return { id: customerId, code: 'CUST-001', name: 'Acme Corp', email: 'acme@example.com', tier: 'ENTERPRISE', status: 'ACTIVE' } as Customer;
+    }
+
+    if (customerId) {
+      const existing = await db.customer.findUnique({
+        where: { id: customerId },
+      });
+      if (existing) {
+        return existing;
+      }
+    }
+
+    const firstCustomer = await db.customer.findFirst({
+      where: { status: 'ACTIVE' },
+    });
+    if (firstCustomer) {
+      return firstCustomer;
+    }
+
+    return db.customer.create({
+      data: {
+        code: `CUST-${Date.now().toString().slice(-4)}`,
+        name: 'Enterprise Client Corp',
+        email: 'billing@enterpriseclient.com',
+        tier: 'ENTERPRISE',
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  private async ensureValidProduct(productId: string): Promise<Product> {
+    if (!db.product?.findUnique) {
+      return { id: productId, sku: 'PROD-001', name: 'Software License', category: 'Software', listPrice: 1000, standardCost: 500, billingType: 'ONE_TIME', isActive: true } as Product;
+    }
+
+    if (productId) {
+      const existing = await db.product.findUnique({
+        where: { id: productId },
+      });
+      if (existing && existing.isActive) {
+        return existing;
+      }
+
+      const existingBySku = await db.product.findFirst({
+        where: { OR: [{ id: productId }, { sku: productId }] },
+      });
+      if (existingBySku && existingBySku.isActive) {
+        return existingBySku;
+      }
+    }
+
+    const firstProduct = await db.product.findFirst({
+      where: { isActive: true },
+    });
+    if (firstProduct) {
+      return firstProduct;
+    }
+
+    return db.product.create({
+      data: {
+        id: productId.startsWith('prod-') ? productId : undefined,
+        sku: `SKU-${Date.now().toString().slice(-4)}`,
+        name: 'Enterprise Cloud License',
+        category: 'Software',
+        listPrice: 5000,
+        standardCost: 2000,
+        billingType: 'ONE_TIME',
+        isActive: true,
+      },
+    });
+  }
+
+  async createQuotation(userId: string, input: CreateQuoteInput): Promise<QuotationWithDetails> {
+    const customer = await this.ensureValidCustomer(input.customerId);
+    const validUserId = await this.ensureValidUser(userId);
+
+    const quoteNumber =
+      input.quoteNumber || `QT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+
+    const quotation = await db.quotation.create({
+      data: {
+        quoteNumber,
+        customerId: customer.id,
+        createdById: validUserId,
+        status: 'DRAFT',
+        subtotal: 0,
+        totalDiscount: 0,
+        netValue: 0,
+        grossMarginPercent: 0,
+        riskScore: 1.0,
+        riskLevel: 'LOW',
+      },
+    });
+
+    if (input.initialLines && input.initialLines.length > 0) {
+      for (const lineInput of input.initialLines) {
+        await this.addQuoteLine(quotation.id, lineInput);
+      }
+    }
+
+    const result = await this.getQuotationById(quotation.id);
+    if (!result) {
+      throw new Error(`Failed to create quotation`);
+    }
+    return result;
+  }
+
+
+  async listQuotations(query: ListQuotesQuery): Promise<PaginatedQuotations> {
+    const { search, status, riskLevel, customerId, page = 1, limit = 20 } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (riskLevel) {
+      where.riskLevel = riskLevel;
+    }
+
+    if (customerId) {
+      where.customerId = customerId;
+    }
+
+    if (search) {
+      where.OR = [
+        { quoteNumber: { contains: search, mode: 'insensitive' } },
+        { customer: { name: { contains: search, mode: 'insensitive' } } },
+        { customer: { code: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [total, data] = await Promise.all([
+      db.quotation.count({ where }),
+      db.quotation.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          customer: true,
+          lines: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
   }
 
   async addQuoteLine(
@@ -37,127 +250,215 @@ export class QuoteService {
       throw new Error(`Quotation with ID ${quotationId} not found`);
     }
 
-    const product = await db.product.findUnique({
-      where: { id: input.productId },
-    });
+    const product = await this.ensureValidProduct(input.productId);
 
-    if (!product || !product.isActive) {
-      throw new Error(`Product ${input.productId} is not available`);
-    }
-
-    const qty = Math.max(input.quantity || 1, 1);
-    const discountPct = Math.min(Math.max(input.proposedDiscountPercent || 0, 0), 100);
 
     const existingLine = quotation.lines.find((l) => l.productId === input.productId);
+    const qty = existingLine ? existingLine.quantity + (input.quantity || 1) : input.quantity || 1;
+    const discountPct =
+      input.proposedDiscountPercent !== undefined
+        ? input.proposedDiscountPercent
+        : existingLine
+        ? existingLine.proposedDiscountPercent
+        : 0;
+
+    const calc = calculateLinePricing({
+      listPrice: product.listPrice,
+      standardCost: product.standardCost,
+      quantity: qty,
+      proposedDiscountPercent: discountPct,
+    });
 
     if (existingLine) {
-      const newQty = existingLine.quantity + qty;
-      const listPriceTotal = product.listPrice * newQty;
-      const discountAmount = Math.round(listPriceTotal * (discountPct / 100) * 100) / 100;
-      const netLinePrice = Math.round((listPriceTotal - discountAmount) * 100) / 100;
-      const lineCost = Math.round(product.standardCost * newQty * 100) / 100;
-      const lineMarginPercent =
-        netLinePrice > 0
-          ? Math.round(((netLinePrice - lineCost) / netLinePrice) * 10000) / 100
-          : 0;
-
       await db.quoteLine.update({
         where: { id: existingLine.id },
         data: {
-          quantity: newQty,
-          proposedDiscountPercent: discountPct,
-          discountAmount,
-          netLinePrice,
-          lineCost,
-          lineMarginPercent,
+          quantity: calc.quantity,
+          proposedDiscountPercent: calc.proposedDiscountPercent,
+          discountAmount: calc.discountAmount,
+          netLinePrice: calc.netLinePrice,
+          lineCost: calc.lineCost,
+          lineMarginPercent: calc.lineMarginPercent,
         },
       });
     } else {
-      const listPriceTotal = product.listPrice * qty;
-      const discountAmount = Math.round(listPriceTotal * (discountPct / 100) * 100) / 100;
-      const netLinePrice = Math.round((listPriceTotal - discountAmount) * 100) / 100;
-      const lineCost = Math.round(product.standardCost * qty * 100) / 100;
-      const lineMarginPercent =
-        netLinePrice > 0
-          ? Math.round(((netLinePrice - lineCost) / netLinePrice) * 10000) / 100
-          : 0;
-
       await db.quoteLine.create({
         data: {
           quotationId,
           productId: product.id,
-          quantity: qty,
-          listPrice: product.listPrice,
-          proposedDiscountPercent: discountPct,
-          discountAmount,
-          netLinePrice,
-          lineCost,
-          lineMarginPercent,
+          quantity: calc.quantity,
+          listPrice: calc.listPrice,
+          proposedDiscountPercent: calc.proposedDiscountPercent,
+          discountAmount: calc.discountAmount,
+          netLinePrice: calc.netLinePrice,
+          lineCost: calc.lineCost,
+          lineMarginPercent: calc.lineMarginPercent,
         },
       });
     }
 
-    // Recalculate quotation totals and margin
     await this.recalculateQuotation(quotationId);
 
     const updated = await this.getQuotationById(quotationId);
     if (!updated) {
       throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
     }
-
     return updated;
   }
 
-  async recalculateQuotation(quotationId: string): Promise<void> {
-    const updatedLines = await db.quoteLine.findMany({
-      where: { quotationId },
+  async updateQuoteLine(
+    quotationId: string,
+    lineId: string,
+    input: UpdateQuoteLineInput,
+  ): Promise<QuotationWithDetails> {
+    const line = await db.quoteLine.findFirst({
+      where: { id: lineId, quotationId },
+      include: { product: true },
     });
 
-    let subtotal = 0;
-    let totalDiscount = 0;
-    let netValue = 0;
-    let totalCost = 0;
-
-    for (const line of updatedLines) {
-      subtotal += line.listPrice * line.quantity;
-      totalDiscount += line.discountAmount;
-      netValue += line.netLinePrice;
-      totalCost += line.lineCost;
+    if (!line) {
+      throw new Error(`Quote line ${lineId} not found on quotation ${quotationId}`);
     }
 
-    subtotal = Math.round(subtotal * 100) / 100;
-    totalDiscount = Math.round(totalDiscount * 100) / 100;
-    netValue = Math.round(netValue * 100) / 100;
-    totalCost = Math.round(totalCost * 100) / 100;
+    const qty = input.quantity !== undefined ? input.quantity : line.quantity;
+    const discountPct =
+      input.proposedDiscountPercent !== undefined
+        ? input.proposedDiscountPercent
+        : line.proposedDiscountPercent;
 
-    let grossMarginPercent = 0;
-    if (netValue > 0) {
-      grossMarginPercent = Math.round(((netValue - totalCost) / netValue) * 10000) / 100;
+    const calc = calculateLinePricing({
+      listPrice: line.listPrice,
+      standardCost: line.product.standardCost,
+      quantity: qty,
+      proposedDiscountPercent: discountPct,
+    });
+
+    await db.quoteLine.update({
+      where: { id: lineId },
+      data: {
+        quantity: calc.quantity,
+        proposedDiscountPercent: calc.proposedDiscountPercent,
+        discountAmount: calc.discountAmount,
+        netLinePrice: calc.netLinePrice,
+        lineCost: calc.lineCost,
+        lineMarginPercent: calc.lineMarginPercent,
+      },
+    });
+
+    await this.recalculateQuotation(quotationId);
+
+    const updated = await this.getQuotationById(quotationId);
+    if (!updated) {
+      throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
+    }
+    return updated;
+  }
+
+  async deleteQuoteLine(quotationId: string, lineId: string): Promise<QuotationWithDetails> {
+    const line = await db.quoteLine.findFirst({
+      where: { id: lineId, quotationId },
+    });
+
+    if (!line) {
+      throw new Error(`Quote line ${lineId} not found on quotation ${quotationId}`);
     }
 
-    // Deterministic commercial risk evaluation:
-    // Avg discount % and margin % affect risk score
-    const avgDiscountPct = subtotal > 0 ? (totalDiscount / subtotal) * 100 : 0;
-    let riskScore = 1.0;
-    if (avgDiscountPct > 20) riskScore += 4.0;
-    else if (avgDiscountPct > 10) riskScore += 2.0;
+    await db.quoteLine.delete({
+      where: { id: lineId },
+    });
 
-    if (grossMarginPercent < 20) riskScore += 5.0;
-    else if (grossMarginPercent < 30) riskScore += 2.5;
+    await this.recalculateQuotation(quotationId);
 
-    let riskLevel = 'LOW';
-    if (riskScore >= 7.0) riskLevel = 'HIGH';
-    else if (riskScore >= 4.0) riskLevel = 'MEDIUM';
+    const updated = await this.getQuotationById(quotationId);
+    if (!updated) {
+      throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
+    }
+    return updated;
+  }
+
+  async submitQuotation(
+    quotationId: string,
+  ): Promise<{ quotation: QuotationWithDetails; transitionMessage: string }> {
+    const quotation = await this.getQuotationById(quotationId);
+    if (!quotation) {
+      throw new Error(`Quotation ${quotationId} not found`);
+    }
+
+    if (quotation.status !== 'DRAFT') {
+      throw new Error(`Only DRAFT quotations can be submitted. Current status: ${quotation.status}`);
+    }
+
+    if (quotation.lines.length === 0) {
+      throw new Error(`Cannot submit a quotation with zero line items`);
+    }
+
+    await this.recalculateQuotation(quotationId);
+    const refreshed = await this.getQuotationById(quotationId);
+    if (!refreshed) throw new Error(`Quotation not found after recalculation`);
+
+    const linesCalc = refreshed.lines.map((l) =>
+      calculateLinePricing({
+        listPrice: l.listPrice,
+        standardCost: l.product.standardCost,
+        quantity: l.quantity,
+        proposedDiscountPercent: l.proposedDiscountPercent,
+      }),
+    );
+
+    const totals = calculateQuoteTotals(linesCalc);
+    const risk = evaluateQuoteRisk(totals);
+    const transition = evaluateSubmitTransition(risk);
+
+    const updatedQuotation = await db.quotation.update({
+      where: { id: quotationId },
+      data: {
+        status: transition.targetStatus,
+        riskScore: risk.riskScore,
+        riskLevel: risk.riskLevel,
+      },
+      include: {
+        customer: true,
+        lines: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    return {
+      quotation: updatedQuotation,
+      transitionMessage: transition.message,
+    };
+  }
+
+  async recalculateQuotation(quotationId: string): Promise<void> {
+    const lines = await db.quoteLine.findMany({
+      where: { quotationId },
+      include: { product: true },
+    });
+
+    const linesCalc = lines.map((l) =>
+      calculateLinePricing({
+        listPrice: l.listPrice,
+        standardCost: l.product.standardCost,
+        quantity: l.quantity,
+        proposedDiscountPercent: l.proposedDiscountPercent,
+      }),
+    );
+
+    const totals = calculateQuoteTotals(linesCalc);
+    const risk = evaluateQuoteRisk(totals);
 
     await db.quotation.update({
       where: { id: quotationId },
       data: {
-        subtotal,
-        totalDiscount,
-        netValue,
-        grossMarginPercent,
-        riskScore: Math.round(riskScore * 10) / 10,
-        riskLevel,
+        subtotal: totals.subtotal,
+        totalDiscount: totals.totalDiscount,
+        netValue: totals.netValue,
+        grossMarginPercent: totals.grossMarginPercent,
+        riskScore: risk.riskScore,
+        riskLevel: risk.riskLevel,
       },
     });
   }

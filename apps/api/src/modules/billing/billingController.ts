@@ -1,0 +1,42 @@
+import { Request, Response, NextFunction } from 'express';
+import { billingService } from './billingService.js';
+
+export class BillingController {
+  async getBillingSchedule(req: Request, res: Response, next: NextFunction) {
+    try {
+      const quotationId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : req.params.id || (req.query.quoteId as string) || '';
+      const startDate = typeof req.query.startDate === 'string' ? req.query.startDate : undefined;
+
+      const result = await billingService.getBillingScheduleForQuote(quotationId, startDate);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async generateBillingSchedule(req: Request, res: Response, next: NextFunction) {
+    try {
+      const quotationId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id || '';
+      const { billingStartDate } = req.body || {};
+
+      const result = await billingService.generateAndSaveBillingSchedule(
+        quotationId,
+        typeof billingStartDate === 'string' ? billingStartDate : undefined,
+      );
+
+      res.status(201).json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+}
+
+export const billingController = new BillingController();

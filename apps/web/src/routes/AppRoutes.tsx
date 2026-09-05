@@ -7,8 +7,16 @@ import { ProfileView } from '../features/auth/ProfileView.js';
 import { DashboardLayout } from '../components/layout/DashboardLayout.js';
 import { HomePage } from '../features/dashboard/HomePage.js';
 import { CustomerListPage } from '../features/customers/CustomerListPage.js';
+import { QuoteListPage } from '../features/quotes/QuoteListPage.js';
+import { QuoteBuilderPage } from '../features/quotes/QuoteBuilderPage.js';
 import { ProductListPage } from '../features/products/ProductListPage.js';
+import { PriceListPage } from '../features/pricelists/PriceListPage.js';
+import { PriceListDetailPage } from '../features/pricelists/PriceListDetailPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
+import { DiscountPolicyListPage } from '../features/governance/DiscountPolicyListPage.js';
+import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
+import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
+import { BillingSchedulePage } from '../features/billing/BillingSchedulePage.js';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -35,7 +43,8 @@ export const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<SignupForm />} />
-      
+      <Route path="/portal/quotes/:token" element={<CustomerPortalPage />} />
+
       <Route
         path="/app"
         element={
@@ -46,9 +55,31 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      
+
       <Route
-        path="/app/quotes/:id"
+        path="/quotations"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <QuoteListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quotations/new"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <QuoteBuilderPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quotations/:id"
         element={
           <ProtectedRoute>
             <DashboardLayout>
@@ -59,11 +90,44 @@ export const AppRoutes: React.FC = () => {
       />
 
       <Route
-        path="/app/quotes"
+        path="/quotations/:id/fulfillment"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <QuotationViewPage />
+              <FulfillmentAllocationPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fulfillment"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <FulfillmentAllocationPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quotations/:id/billing"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <BillingSchedulePage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <BillingSchedulePage />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -101,9 +165,45 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/price-lists"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PriceListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/price-lists/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PriceListDetailPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/discount-policies"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DiscountPolicyListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/discount-policy" element={<Navigate to="/discount-policies" replace />} />
+      <Route bg-path="/governance/discount-policies" element={<Navigate to="/discount-policies" replace />} />
+      <Route path="/pricelists" element={<Navigate to="/price-lists" replace />} />
       
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>
   );
 };
-

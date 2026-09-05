@@ -1,6 +1,57 @@
 import { Request, Response, NextFunction } from 'express';
-import { QuoteIdParamSchema, AddQuoteLineSchema } from '@dealflow360/contracts';
+import {
+  QuoteIdParamSchema,
+  QuoteLineParamsSchema,
+  CreateQuoteSchema,
+  UpdateQuoteLineSchema,
+  ListQuotesQuerySchema,
+  AddQuoteLineSchema,
+} from '@dealflow360/contracts';
 import { quoteService } from './quoteService.js';
+
+export async function createQuotation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const userId = req.user?.userId || (req as any).user?.id || 'system-user';
+    const body = CreateQuoteSchema.parse(req.body);
+
+
+    const quotation = await quoteService.createQuotation(userId, body);
+
+    res.status(201).json({
+      success: true,
+      data: quotation,
+      message: 'Quotation created successfully',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listQuotations(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const query = ListQuotesQuerySchema.parse(req.query);
+
+    const result = await quoteService.listQuotations(query);
+
+    res.json({
+      success: true,
+      data: result.data,
+      message: null,
+      meta: result.meta,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function getQuotation(
   req: Request,
@@ -48,6 +99,70 @@ export async function addQuoteLine(
       success: true,
       data: updatedQuotation,
       message: 'Line added successfully',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateQuoteLine(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { id, lineId } = QuoteLineParamsSchema.parse(req.params);
+    const body = UpdateQuoteLineSchema.parse(req.body);
+
+    const updatedQuotation = await quoteService.updateQuoteLine(id, lineId, body);
+
+    res.json({
+      success: true,
+      data: updatedQuotation,
+      message: 'Line updated successfully',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteQuoteLine(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { id, lineId } = QuoteLineParamsSchema.parse(req.params);
+
+    const updatedQuotation = await quoteService.deleteQuoteLine(id, lineId);
+
+    res.json({
+      success: true,
+      data: updatedQuotation,
+      message: 'Line deleted successfully',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function submitQuotation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { id } = QuoteIdParamSchema.parse(req.params);
+
+    const result = await quoteService.submitQuotation(id);
+
+    res.json({
+      success: true,
+      data: result.quotation,
+      message: result.transitionMessage,
       meta: null,
     });
   } catch (error) {

@@ -58,43 +58,43 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'],
       items: [
         { name: 'Quotations', icon: FileText, path: '/quotations', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        // { name: 'New Quotation', icon: Briefcase, path: '/quotations/new', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
         { name: 'Customers', icon: Users, path: '/customers', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Products', icon: Box, path: '/products', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
-        { name: 'Price Lists', icon: Tag, path: '/pricelists', allowedRoles: ['ADMIN', 'SALES_MANAGER'] },
+        { name: 'Price Lists', icon: Tag, path: '/price-lists', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
+
     {
       title: 'RISK & APPROVALS',
-      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'],
-      items: [
-        { name: 'Approvals', icon: CheckSquare, path: '/approvals', badge: 3, allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Policies', icon: ShieldCheck, path: '/policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-      ]
-    },
-    {
-      title: 'FULFILLMENT',
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'],
       items: [
-        { name: 'Orders', icon: ShoppingCart, path: '/orders', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
-        { name: 'Inventory', icon: Package, path: '/inventory', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Deliveries', icon: Truck, path: '/deliveries', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Discount Policies', icon: ShieldAlert, path: '/discount-policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
+        { name: 'Approvals', icon: CheckSquare, path: '/approvals', badge: 3, allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {
-      title: 'BILLING',
+      title: 'OPERATIONS & FULFILLMENT',
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'],
+      items: [
+        { name: 'Warehouse Fulfillment', icon: Truck, path: '/fulfillment', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
+        { name: 'Inventory Stock', icon: Package, path: '/inventory', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+      ]
+    },
+    {
+      title: 'BILLING & REVENUE',
       allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'],
       items: [
-        { name: 'Invoices', icon: FileSpreadsheet, path: '/invoices', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'] },
-        { name: 'Payments', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Credit Control', icon: Activity, path: '/credit-control', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Billing Schedules', icon: FileSpreadsheet, path: '/billing', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'] },
+        { name: 'Payments & Credit', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {
       title: 'CUSTOMER PORTAL',
-      allowedRoles: ['CUSTOMER', 'ADMIN'],
+      allowedRoles: ['CUSTOMER', 'ADMIN', 'SALES_REP', 'SALES_MANAGER'],
       items: [
-        { name: 'My Quotations', icon: FileText, path: '/portal', allowedRoles: ['CUSTOMER', 'ADMIN'] },
+        { name: 'Customer View', icon: ShoppingCart, path: '/portal', allowedRoles: ['CUSTOMER', 'ADMIN', 'SALES_REP', 'SALES_MANAGER'] },
       ]
     },
     {
@@ -103,7 +103,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       items: [
         { name: 'Control Tower', icon: LayoutDashboard, path: '/control-tower', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Analytics', icon: BarChart2, path: '/analytics', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Audit History', icon: PieChart, path: '/audit-trail', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     }
   ];
@@ -175,7 +174,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <h3 className="px-3 text-xs font-semibold text-slate-500 tracking-wider mb-2">{group.title}</h3>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  const isActive = location.pathname === item.path;
+                  const isActive =
+                    location.pathname === item.path ||
+                    (item.path !== '/app' &&
+                      item.path !== '/' &&
+                      location.pathname.startsWith(item.path + '/'));
                   return (
                     <Link
                       key={item.name}
