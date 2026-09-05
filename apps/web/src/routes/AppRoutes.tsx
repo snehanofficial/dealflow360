@@ -14,6 +14,8 @@ import { PriceListPage } from '../features/pricelists/PriceListPage.js';
 import { PriceListDetailPage } from '../features/pricelists/PriceListDetailPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { DiscountPolicyListPage } from '../features/governance/DiscountPolicyListPage.js';
+import { ApprovalInboxPage } from '../features/approvals/ApprovalInboxPage.js';
+import { ApprovalDetailPage } from '../features/approvals/ApprovalDetailPage.js';
 import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
 import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
 import { BillingSchedulePage } from '../features/billing/BillingSchedulePage.js';
@@ -194,6 +196,28 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <DiscountPolicyListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/approvals"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ApprovalInboxPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/approvals/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ApprovalDetailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
