@@ -69,6 +69,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.QUOTATION_CREATE,
     Permissions.QUOTATION_UPDATE,
     Permissions.QUOTATION_SUBMIT,
+    Permissions.APPROVAL_VIEW,
     Permissions.FULFILLMENT_VIEW,
     Permissions.BILLING_VIEW,
     Permissions.DISCOUNT_VIEW,

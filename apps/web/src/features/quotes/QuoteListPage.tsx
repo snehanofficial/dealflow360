@@ -202,9 +202,11 @@ export const QuoteListPage: React.FC = () => {
                         <span
                           className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${q.status === 'APPROVED'
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              : q.status.startsWith('PENDING')
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                              : q.status === 'REJECTED'
+                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                : q.status.startsWith('PENDING')
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
                             }`}
                         >
                           {q.status}

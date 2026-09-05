@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthContext.js';
+import { api } from '../../lib/api/client.js';
 import { 
   Search, Bell, HelpCircle, Settings, LogOut, ChevronDown, 
   Home, Briefcase, FileText, Users, Box, Tag, 
@@ -20,6 +21,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pendingApprovalCount, setPendingApprovalCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      api
+        .get('/approvals', { params: { status: 'PENDING', limit: 1 } })
+        .then((res) => {
+          if (typeof res.data?.total === 'number') {
+            setPendingApprovalCount(res.data.total);
+          }
+        })
+        .catch(() => {
+          setPendingApprovalCount(null);
+        });
+    }
+  }, [user, location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -70,7 +87,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'],
       items: [
         { name: 'Discount Policies', icon: ShieldAlert, path: '/discount-policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
-        { name: 'Approvals', icon: CheckSquare, path: '/approvals', badge: 3, allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Approvals', icon: CheckSquare, path: '/approvals', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
@@ -194,9 +211,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                         <item.icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#714B67]' : 'text-slate-400'}`} />
                         {item.name}
                       </div>
-                      {item.badge && (
-                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                          {item.badge}
+                      {item.name === 'Approvals' && pendingApprovalCount !== null && pendingApprovalCount > 0 && (
+                        <span className="bg-[#714B67] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                          {pendingApprovalCount}
                         </span>
                       )}
                     </Link>
@@ -245,12 +262,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-            <button className="text-slate-400 hover:text-slate-500 relative p-1">
+            <button className="text-slate-400 hover:text-slate-500 relative p-1" title="Pending Approvals">
               <span className="sr-only">View notifications</span>
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white">
-                <span className="text-[8px] absolute inset-0 flex items-center justify-center font-bold">5</span>
-              </span>
+              {pendingApprovalCount !== null && pendingApprovalCount > 0 && (
+                <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-[#714B67] ring-2 ring-white" />
+              )}
             </button>
             <button className="text-slate-400 hover:text-slate-500 hidden sm:block p-1">
               <HelpCircle className="h-5 w-5" />

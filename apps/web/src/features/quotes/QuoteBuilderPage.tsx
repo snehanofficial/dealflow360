@@ -104,10 +104,23 @@ export const QuoteBuilderPage: React.FC = () => {
           }
         }
 
-        if (prodRes.data.success && prodRes.data.data) {
-          setProducts(prodRes.data.data);
-          if (prodRes.data.data.length > 0) {
-            setSelectedProductId(prodRes.data.data[0].id);
+        const rawProdItems =
+          (prodRes.data as any)?.data?.items ||
+          (Array.isArray((prodRes.data as any)?.data) ? (prodRes.data as any).data : []);
+
+        if (Array.isArray(rawProdItems)) {
+          const mappedProducts: ProductOption[] = rawProdItems.map((p: any) => ({
+            id: p.id,
+            sku: p.sku,
+            name: p.name,
+            category: typeof p.category === 'string' ? p.category : p.category?.name || 'General',
+            listPrice: p.unitPrice ?? p.listPrice ?? 0,
+            standardCost: p.costPrice ?? p.standardCost ?? 0,
+          }));
+
+          setProducts(mappedProducts);
+          if (mappedProducts.length > 0) {
+            setSelectedProductId(mappedProducts[0].id);
           }
         }
       } catch (err: any) {
@@ -352,7 +365,7 @@ export const QuoteBuilderPage: React.FC = () => {
               onChange={(e) => setSelectedProductId(e.target.value)}
               className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-[#714B67]"
             >
-              {products.map((p) => (
+              {products?.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} (${p.listPrice})
                 </option>

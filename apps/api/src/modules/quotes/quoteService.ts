@@ -6,6 +6,7 @@ import {
   evaluateSubmitTransition,
 } from '@dealflow360/domain';
 import { CreateQuoteInput, ListQuotesQuery, UpdateQuoteLineInput } from '@dealflow360/contracts';
+import { syncMissingQuoteApprovals } from '../../services/approvalService.js';
 
 export type QuotationWithDetails = Quotation & {
   customer: Customer;
@@ -425,6 +426,8 @@ export class QuoteService {
         },
       },
     });
+
+    await syncMissingQuoteApprovals();
 
     return {
       quotation: updatedQuotation,
