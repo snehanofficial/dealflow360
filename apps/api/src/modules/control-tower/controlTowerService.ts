@@ -6,6 +6,7 @@ import {
   QuotationSummaryInput,
   DetectedAlert,
 } from '@dealflow360/domain';
+import { recordAuditEvent } from '../../services/auditService.js';
 
 export interface ControlTowerFilterOptions {
   status?: string;
@@ -117,7 +118,10 @@ export class ControlTowerService {
     };
   }
 
-  async resolveAlert(alertId: string) {
+  async resolveAlert(
+    alertId: string,
+    actor?: { id?: string; name?: string; role?: string } | null,
+  ) {
     const alert = await db.dealAlert.findUnique({ where: { id: alertId } });
     if (!alert) {
       throw new Error(`Alert ${alertId} not found`);
@@ -126,6 +130,16 @@ export class ControlTowerService {
     const updated = await db.dealAlert.update({
       where: { id: alertId },
       data: { isResolved: true },
+    });
+
+    await recordAuditEvent({
+      eventType: 'DEAL_ALERT_RESOLVED',
+      action: `Resolved operational deal alert: ${alert.message}`,
+      entityType: 'DealAlert',
+      entityId: alertId,
+      actor,
+      previousState: alert,
+      newState: updated,
     });
 
     return updated;

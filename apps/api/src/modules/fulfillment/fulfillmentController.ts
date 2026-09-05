@@ -31,8 +31,8 @@ export async function overrideFulfillment(
   try {
     const { id } = QuoteIdParamSchema.parse(req.params);
     const body = FulfillmentOverrideRequestSchema.parse(req.body);
-
-    const result = await fulfillmentService.overrideFulfillment(id, body);
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+    const result = await fulfillmentService.overrideFulfillment(id, body, actor);
 
     res.json({
       success: true,

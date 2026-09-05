@@ -16,6 +16,7 @@ import {
 } from '@dealflow360/contracts';
 import { env } from '../config/env.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { recordAuditEvent } from './auditService.js';
 
 export class AuthService {
   constructor(private userRepo: UserRepository = userRepository) {}
@@ -102,6 +103,15 @@ export class AuthService {
     });
 
     const userDto = this.mapUserToDto(user);
+
+    await recordAuditEvent({
+      eventType: 'USER_LOGGED_IN',
+      action: `User ${user.email} (${user.role}) logged in successfully`,
+      entityType: 'User',
+      entityId: user.id,
+      actor: { id: user.id, name: user.name, role: user.role as Role },
+      metadata: { ipAddress: meta?.ipAddress, userAgent: meta?.userAgent },
+    });
 
     return {
       authData: { user: userDto, accessToken },

@@ -18,8 +18,9 @@ export async function createQuotation(
     const userId = req.user?.userId || (req as any).user?.id || 'system-user';
     const body = CreateQuoteSchema.parse(req.body);
 
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
 
-    const quotation = await quoteService.createQuotation(userId, body);
+    const quotation = await quoteService.createQuotation(userId, body, actor);
 
     res.status(201).json({
       success: true,
@@ -93,7 +94,8 @@ export async function addQuoteLine(
     const { id } = QuoteIdParamSchema.parse(req.params);
     const body = AddQuoteLineSchema.parse(req.body);
 
-    const updatedQuotation = await quoteService.addQuoteLine(id, body);
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+    const updatedQuotation = await quoteService.addQuoteLine(id, body, actor);
 
     res.status(201).json({
       success: true,
@@ -115,7 +117,8 @@ export async function updateQuoteLine(
     const { id, lineId } = QuoteLineParamsSchema.parse(req.params);
     const body = UpdateQuoteLineSchema.parse(req.body);
 
-    const updatedQuotation = await quoteService.updateQuoteLine(id, lineId, body);
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+    const updatedQuotation = await quoteService.updateQuoteLine(id, lineId, body, actor);
 
     res.json({
       success: true,
@@ -136,7 +139,8 @@ export async function deleteQuoteLine(
   try {
     const { id, lineId } = QuoteLineParamsSchema.parse(req.params);
 
-    const updatedQuotation = await quoteService.deleteQuoteLine(id, lineId);
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+    const updatedQuotation = await quoteService.deleteQuoteLine(id, lineId, actor);
 
     res.json({
       success: true,
@@ -157,7 +161,8 @@ export async function submitQuotation(
   try {
     const { id } = QuoteIdParamSchema.parse(req.params);
 
-    const result = await quoteService.submitQuotation(id);
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+    const result = await quoteService.submitQuotation(id, actor);
 
     res.json({
       success: true,

@@ -18,7 +18,8 @@ export async function createCustomerHandler(
 ): Promise<void> {
   try {
     const validated = CreateCustomerSchema.parse(req.body);
-    const customer = await createCustomer(validated);
+    const actor = (req as any).user;
+    const customer = await createCustomer(validated, actor);
     res.status(201).json({
       success: true,
       data: customer,
@@ -76,7 +77,8 @@ export async function updateCustomerHandler(
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const validated = UpdateCustomerSchema.parse(req.body);
-    const customer = await updateCustomer(id, validated);
+    const actor = (req as any).user;
+    const customer = await updateCustomer(id, validated, actor);
     res.json({
       success: true,
       data: customer,

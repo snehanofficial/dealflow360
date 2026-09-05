@@ -5,6 +5,7 @@ import {
   HybridBillingScheduleResult,
 } from '@dealflow360/domain';
 import { AppError } from '../../middleware/errorHandler.js';
+import { recordAuditEvent } from '../../services/auditService.js';
 
 export class BillingService {
   async getBillingScheduleForQuote(quotationId: string, startDateInput?: string) {
@@ -46,7 +47,11 @@ export class BillingService {
     };
   }
 
-  async generateAndSaveBillingSchedule(quotationId: string, startDateInput?: string) {
+  async generateAndSaveBillingSchedule(
+    quotationId: string,
+    startDateInput?: string,
+    actor?: { id?: string; name?: string; role?: string } | null,
+  ) {
     const quotation = await db.quotation.findUnique({
       where: { id: quotationId },
       include: {
@@ -113,6 +118,15 @@ export class BillingService {
     await db.quotation.update({
       where: { id: quotationId },
       data: { status: 'BILLING' },
+    });
+
+    await recordAuditEvent({
+      eventType: 'BILLING_SCHEDULE_GENERATED',
+      action: `Generated and locked hybrid billing schedule for quotation ${quotation.quoteNumber}`,
+      entityType: 'BillingSchedule',
+      entityId: savedSchedule.id,
+      actor,
+      newState: savedSchedule,
     });
 
     return {

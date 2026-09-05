@@ -7,6 +7,7 @@ import {
 } from '@dealflow360/domain';
 import { CreateQuoteInput, ListQuotesQuery, UpdateQuoteLineInput } from '@dealflow360/contracts';
 import { syncMissingQuoteApprovals } from '../../services/approvalService.js';
+import { recordAuditEvent } from '../../services/auditService.js';
 
 export type QuotationWithDetails = Quotation & {
   customer: Customer;
@@ -143,7 +144,11 @@ export class QuoteService {
     });
   }
 
-  async createQuotation(userId: string, input: CreateQuoteInput): Promise<QuotationWithDetails> {
+  async createQuotation(
+    userId: string,
+    input: CreateQuoteInput,
+    actor?: { id?: string; name?: string; role?: string } | null,
+  ): Promise<QuotationWithDetails> {
     const customer = await this.ensureValidCustomer(input.customerId);
     const validUserId = await this.ensureValidUser(userId);
 
@@ -167,7 +172,7 @@ export class QuoteService {
 
     if (input.initialLines && input.initialLines.length > 0) {
       for (const lineInput of input.initialLines) {
-        await this.addQuoteLine(quotation.id, lineInput);
+        await this.addQuoteLine(quotation.id, lineInput, actor);
       }
     }
 
@@ -175,9 +180,18 @@ export class QuoteService {
     if (!result) {
       throw new Error(`Failed to create quotation`);
     }
+
+    await recordAuditEvent({
+      eventType: 'QUOTE_CREATED',
+      action: `Created draft quotation ${quotation.quoteNumber}`,
+      entityType: 'Quotation',
+      entityId: quotation.id,
+      actor: actor || { id: validUserId },
+      newState: result,
+    });
+
     return result;
   }
-
 
   async listQuotations(query: ListQuotesQuery): Promise<PaginatedQuotations> {
     const { search, status, riskLevel, customerId, page = 1, limit = 20 } = query;
@@ -241,6 +255,7 @@ export class QuoteService {
       quantity?: number;
       proposedDiscountPercent?: number;
     },
+    actor?: { id?: string; name?: string; role?: string } | null,
   ): Promise<QuotationWithDetails> {
     const quotation = await db.quotation.findUnique({
       where: { id: quotationId },
@@ -252,7 +267,6 @@ export class QuoteService {
     }
 
     const product = await this.ensureValidProduct(input.productId);
-
 
     const existingLine = quotation.lines.find((l) => l.productId === input.productId);
     const qty = existingLine ? existingLine.quantity + (input.quantity || 1) : input.quantity || 1;
@@ -270,6 +284,8 @@ export class QuoteService {
       proposedDiscountPercent: discountPct,
     });
 
+    let targetLineId = existingLine?.id;
+
     if (existingLine) {
       await db.quoteLine.update({
         where: { id: existingLine.id },
@@ -283,7 +299,7 @@ export class QuoteService {
         },
       });
     } else {
-      await db.quoteLine.create({
+      const newLine = await db.quoteLine.create({
         data: {
           quotationId,
           productId: product.id,
@@ -296,6 +312,7 @@ export class QuoteService {
           lineMarginPercent: calc.lineMarginPercent,
         },
       });
+      targetLineId = newLine.id;
     }
 
     await this.recalculateQuotation(quotationId);
@@ -304,6 +321,16 @@ export class QuoteService {
     if (!updated) {
       throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
     }
+
+    await recordAuditEvent({
+      eventType: 'QUOTE_LINE_ADDED',
+      action: `Added item (${product.name}, qty: ${calc.quantity}, disc: ${calc.proposedDiscountPercent}%) to ${quotation.quoteNumber}`,
+      entityType: 'QuoteLine',
+      entityId: targetLineId || quotationId,
+      actor,
+      newState: { quotationId, productId: product.id, ...calc },
+    });
+
     return updated;
   }
 
@@ -311,6 +338,7 @@ export class QuoteService {
     quotationId: string,
     lineId: string,
     input: UpdateQuoteLineInput,
+    actor?: { id?: string; name?: string; role?: string } | null,
   ): Promise<QuotationWithDetails> {
     const line = await db.quoteLine.findFirst({
       where: { id: lineId, quotationId },
@@ -352,10 +380,25 @@ export class QuoteService {
     if (!updated) {
       throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
     }
+
+    await recordAuditEvent({
+      eventType: 'QUOTE_LINE_UPDATED',
+      action: `Updated line item ${lineId} on quotation ${quotationId}`,
+      entityType: 'QuoteLine',
+      entityId: lineId,
+      actor,
+      previousState: line,
+      newState: { lineId, ...calc },
+    });
+
     return updated;
   }
 
-  async deleteQuoteLine(quotationId: string, lineId: string): Promise<QuotationWithDetails> {
+  async deleteQuoteLine(
+    quotationId: string,
+    lineId: string,
+    actor?: { id?: string; name?: string; role?: string } | null,
+  ): Promise<QuotationWithDetails> {
     const line = await db.quoteLine.findFirst({
       where: { id: lineId, quotationId },
     });
@@ -374,11 +417,22 @@ export class QuoteService {
     if (!updated) {
       throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
     }
+
+    await recordAuditEvent({
+      eventType: 'QUOTE_LINE_DELETED',
+      action: `Deleted line item ${lineId} from quotation ${quotationId}`,
+      entityType: 'QuoteLine',
+      entityId: lineId,
+      actor,
+      previousState: line,
+    });
+
     return updated;
   }
 
   async submitQuotation(
     quotationId: string,
+    actor?: { id?: string; name?: string; role?: string } | null,
   ): Promise<{ quotation: QuotationWithDetails; transitionMessage: string }> {
     const quotation = await this.getQuotationById(quotationId);
     if (!quotation) {
@@ -428,6 +482,16 @@ export class QuoteService {
     });
 
     await syncMissingQuoteApprovals();
+
+    await recordAuditEvent({
+      eventType: 'QUOTE_SUBMITTED',
+      action: `Submitted quotation ${updatedQuotation.quoteNumber} for approval (Status: ${transition.targetStatus}, Risk Score: ${risk.riskScore})`,
+      entityType: 'Quotation',
+      entityId: quotationId,
+      actor,
+      previousState: quotation,
+      newState: updatedQuotation,
+    });
 
     return {
       quotation: updatedQuotation,

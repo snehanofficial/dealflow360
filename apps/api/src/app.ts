@@ -47,6 +47,7 @@ app.get('/api/v1/health', (_req, res) => {
 import discountPolicyRoutes from './routes/discountPolicyRoutes.js';
 import commercialEvaluationRoutes from './routes/commercialEvaluationRoutes.js';
 import { approvalRoutes } from './routes/approvalRoutes.js';
+import { auditRoutes } from './routes/auditRoutes.js';
 
 // Auth & Business Module Routes
 app.use('/api/v1/auth', authRoutes);
@@ -57,6 +58,7 @@ app.use('/api/v1/price-lists', priceListRoutes);
 app.use('/api/v1/discount-policies', discountPolicyRoutes);
 app.use('/api/v1/commercial-evaluations', commercialEvaluationRoutes);
 app.use('/api/v1/approvals', approvalRoutes);
+app.use('/api/v1/audit', auditRoutes);
 
 import { recommendationRoutes } from './routes/recommendationRoutes.js';
 import { controlTowerRoutes } from './routes/controlTowerRoutes.js';

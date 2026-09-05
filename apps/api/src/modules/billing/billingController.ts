@@ -23,10 +23,11 @@ export class BillingController {
     try {
       const quotationId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id || '';
       const { billingStartDate } = req.body || {};
-
+      const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
       const result = await billingService.generateAndSaveBillingSchedule(
         quotationId,
         typeof billingStartDate === 'string' ? billingStartDate : undefined,
+        actor,
       );
 
       res.status(201).json({

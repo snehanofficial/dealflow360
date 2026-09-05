@@ -65,7 +65,8 @@ export async function createDiscountPolicyHandler(
 ): Promise<void> {
   try {
     const validated = CreateDiscountPolicyRuleSchema.parse(req.body);
-    const created = await createDiscountPolicy(validated);
+    const actor = (req as any).user;
+    const created = await createDiscountPolicy(validated, actor);
     res.status(201).json({
       success: true,
       data: created,
@@ -85,7 +86,8 @@ export async function updateDiscountPolicyHandler(
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const validated = UpdateDiscountPolicyRuleSchema.parse(req.body);
-    const updated = await updateDiscountPolicy(id, validated);
+    const actor = (req as any).user;
+    const updated = await updateDiscountPolicy(id, validated, actor);
     res.json({
       success: true,
       data: updated,
@@ -105,7 +107,8 @@ export async function toggleDiscountPolicyStatusHandler(
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const isActive = req.body.isActive === true;
-    const updated = await toggleDiscountPolicyStatus(id, isActive);
+    const actor = (req as any).user;
+    const updated = await toggleDiscountPolicyStatus(id, isActive, actor);
     res.json({
       success: true,
       data: updated,

@@ -9,6 +9,7 @@ import { canRoleApproveStep, deriveNextRequestState } from '@dealflow360/domain'
 import { db, Role } from '@dealflow360/db';
 import { approvalRepository, ApprovalFilters } from '../repositories/approvalRepository.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { recordAuditEvent } from './auditService.js';
 
 function mapStepToDto(step: any): ApprovalStepDto {
   return {
@@ -55,13 +56,11 @@ export async function createApprovalRequest(
 ): Promise<ApprovalRequestDto> {
   const { evaluation, quotationId } = input;
 
-  // Verify requester exists
   const requester = await db.user.findUnique({ where: { id: requestedById } });
   if (!requester) {
     throw new AppError('NOT_FOUND', `User with ID '${requestedById}' not found.`, 404);
   }
 
-  // If quotationId provided, verify quote exists & supersede previous pending approvals for this quote
   if (quotationId) {
     const quote = await db.quotation.findUnique({ where: { id: quotationId } });
     if (!quote) {
@@ -72,7 +71,6 @@ export async function createApprovalRequest(
 
   const requiredRoles = evaluation.requiredApprovalRoles || [];
 
-  // Deduplicate roles preserving order
   const uniqueRoles: Role[] = [];
   for (const roleStr of requiredRoles) {
     const role = ((roleStr as string) === 'FINANCE' ? 'FINANCE_OPERATIONS' : roleStr) as Role;
@@ -81,7 +79,6 @@ export async function createApprovalRequest(
     }
   }
 
-  // Build steps sequence
   const stepsData = uniqueRoles.map((role, idx) => ({
     sequence: idx + 1,
     requiredRole: role,
@@ -105,7 +102,6 @@ export async function createApprovalRequest(
     steps: stepsData,
   });
 
-  // If attached to a quote, update quotation status
   if (quotationId && initialStatus === 'PENDING') {
     const firstRole = stepsData[0]?.requiredRole;
     const targetStatus = firstRole === 'FINANCE_OPERATIONS' ? 'PENDING_FINANCE' : 'PENDING_MANAGER';
@@ -119,6 +115,15 @@ export async function createApprovalRequest(
       data: { status: 'APPROVED' },
     });
   }
+
+  await recordAuditEvent({
+    eventType: 'APPROVAL_REQUESTED',
+    action: `Submitted Commercial Approval Request (Risk Score: ${evaluation.riskScore}, Level: ${evaluation.riskLevel})`,
+    entityType: 'ApprovalRequest',
+    entityId: requestRecord.id,
+    actor: { id: requester.id, name: requester.name, role: requester.role },
+    newState: requestRecord,
+  });
 
   return mapRequestToDto(requestRecord);
 }
@@ -220,15 +225,11 @@ export async function getApprovalInbox(
     limit: query.limit || 20,
   };
 
-  // Explicit requiredRole in query overrides defaults
   if (query.requiredRole) {
     filters.requiredRole = query.requiredRole as Role;
   }
 
-  // Hierarchy Role Scoping
   if (userRole === 'ADMIN') {
-    // Admin has top-level system hierarchy:
-    // Sees ALL approvals across all roles, users, and statuses.
     if (!query.status) {
       filters.status = 'PENDING';
     }
@@ -243,7 +244,6 @@ export async function getApprovalInbox(
       filters.status = 'PENDING';
     }
   } else if (userRole === 'SALES_REP') {
-    // Sales Rep can view approvals for their own requested deals
     filters.requestedById = userId;
   }
 
@@ -302,7 +302,6 @@ export async function approveStep(
       throw new AppError('INVALID_STATE', `No active pending approval step for sequence ${currentSequence}.`, 400);
     }
 
-    // Role-based authorization check
     if (!canRoleApproveStep(userRole, currentStep.requiredRole)) {
       throw new AppError(
         'FORBIDDEN',
@@ -311,7 +310,12 @@ export async function approveStep(
       );
     }
 
-    // Update current step
+    const actorUser = tx.user
+      ? await tx.user.findUnique({ where: { id: userId } })
+      : db.user?.findUnique
+        ? await db.user.findUnique({ where: { id: userId } })
+        : null;
+
     await tx.approvalStep.update({
       where: { id: currentStep.id },
       data: {
@@ -322,7 +326,6 @@ export async function approveStep(
       },
     });
 
-    // Re-evaluate steps list to derive next request state
     const updatedSteps = requestRecord.steps.map((s) =>
       s.id === currentStep.id
         ? { ...s, status: 'APPROVED' as const, actedById: userId, actedAt: new Date(), comments: comments || null }
@@ -331,7 +334,6 @@ export async function approveStep(
 
     const derivedState = deriveNextRequestState(updatedSteps);
 
-    // Update request state
     await tx.approvalRequest.update({
       where: { id: requestId },
       data: {
@@ -340,7 +342,6 @@ export async function approveStep(
       },
     });
 
-    // Update quotation status if attached to quotation
     if (requestRecord.quotationId) {
       if (derivedState.requestStatus === 'APPROVED') {
         await tx.quotation.update({
@@ -368,6 +369,21 @@ export async function approveStep(
         steps: { include: { actedBy: true }, orderBy: { sequence: 'asc' } },
       },
     });
+
+    // Transactional Audit Event Write
+    await recordAuditEvent(
+      {
+        eventType: 'APPROVAL_APPROVED',
+        action: `Approved step ${currentStep.sequence} (${currentStep.requiredRole}) for Approval Request ${requestId}`,
+        entityType: 'ApprovalRequest',
+        entityId: requestId,
+        actor: actorUser ? { id: actorUser.id, name: actorUser.name, role: actorUser.role } : { id: userId, role: userRole as Role },
+        previousState: requestRecord,
+        newState: finalRecord,
+        metadata: { comments: comments || null, stepSequence: currentStep.sequence },
+      },
+      tx,
+    );
 
     return mapRequestToDto(finalRecord);
   });
@@ -413,7 +429,6 @@ export async function rejectStep(
       throw new AppError('INVALID_STATE', `No active pending approval step for sequence ${currentSequence}.`, 400);
     }
 
-    // Role authorization check
     if (!canRoleApproveStep(userRole, currentStep.requiredRole)) {
       throw new AppError(
         'FORBIDDEN',
@@ -422,7 +437,12 @@ export async function rejectStep(
       );
     }
 
-    // Reject current step
+    const actorUser = tx.user
+      ? await tx.user.findUnique({ where: { id: userId } })
+      : db.user?.findUnique
+        ? await db.user.findUnique({ where: { id: userId } })
+        : null;
+
     await tx.approvalStep.update({
       where: { id: currentStep.id },
       data: {
@@ -433,7 +453,6 @@ export async function rejectStep(
       },
     });
 
-    // Update request state to REJECTED
     await tx.approvalRequest.update({
       where: { id: requestId },
       data: {
@@ -441,7 +460,6 @@ export async function rejectStep(
       },
     });
 
-    // Update quotation status if linked
     if (requestRecord.quotationId) {
       await tx.quotation.update({
         where: { id: requestRecord.quotationId },
@@ -457,6 +475,21 @@ export async function rejectStep(
         steps: { include: { actedBy: true }, orderBy: { sequence: 'asc' } },
       },
     });
+
+    // Transactional Audit Event Write
+    await recordAuditEvent(
+      {
+        eventType: 'APPROVAL_REJECTED',
+        action: `Rejected step ${currentStep.sequence} (${currentStep.requiredRole}) for Approval Request ${requestId}`,
+        entityType: 'ApprovalRequest',
+        entityId: requestId,
+        actor: actorUser ? { id: actorUser.id, name: actorUser.name, role: actorUser.role } : { id: userId, role: userRole as Role },
+        previousState: requestRecord,
+        newState: finalRecord,
+        metadata: { reason, stepSequence: currentStep.sequence },
+      },
+      tx,
+    );
 
     return mapRequestToDto(finalRecord);
   });
