@@ -12,16 +12,24 @@ export function calculateRecommendationMarginImpact(
   promotionDiscountPercent: number = 0,
 ): RecommendationMarginImpact {
   const discount = Math.min(Math.max(promotionDiscountPercent, 0), 100);
-  const additionalRevenue = Math.round(product.listPrice * (1 - discount / 100) * 100) / 100;
-  const additionalCost = Math.round(product.standardCost * 100) / 100;
+
+  // Period multiplier for recurring products (Monthly products annualized = 12x)
+  let periodMultiplier = 1;
+  if (product.billingType === 'RECURRING' && product.recurringPeriod === 'MONTHLY') {
+    periodMultiplier = 12;
+  }
+
+  const baseUnitRevenue = product.listPrice * (1 - discount / 100);
+  const additionalRevenue = Math.round(baseUnitRevenue * periodMultiplier * 100) / 100;
+  const additionalCost = Math.round(product.standardCost * periodMultiplier * 100) / 100;
   const additionalMargin = Math.round((additionalRevenue - additionalCost) * 100) / 100;
 
   const currentNetValue = quotation.netValue || 0;
   const currentMarginDecimal = (quotation.grossMarginPercent || 0) / 100;
-  const currentCost = currentNetValue * (1 - currentMarginDecimal);
+  const currentCost = Math.max(currentNetValue * (1 - currentMarginDecimal), 0);
 
   const projectedNetValue = Math.round((currentNetValue + additionalRevenue) * 100) / 100;
-  const projectedTotalCost = currentCost + additionalCost;
+  const projectedTotalCost = Math.round((currentCost + additionalCost) * 100) / 100;
 
   let projectedGrossMarginPercent = 0;
   if (projectedNetValue > 0) {
@@ -29,8 +37,9 @@ export function calculateRecommendationMarginImpact(
       Math.round(((projectedNetValue - projectedTotalCost) / projectedNetValue) * 10000) / 100;
   }
 
+  const currentMargin = quotation.grossMarginPercent || 0;
   const marginDeltaPercent =
-    Math.round((projectedGrossMarginPercent - quotation.grossMarginPercent) * 100) / 100;
+    Math.round((projectedGrossMarginPercent - currentMargin) * 100) / 100;
 
   return {
     additionalRevenue,
@@ -41,6 +50,7 @@ export function calculateRecommendationMarginImpact(
     marginDeltaPercent,
   };
 }
+
 
 export function generateRecommendations(
   quotation: QuotationDomainModel,

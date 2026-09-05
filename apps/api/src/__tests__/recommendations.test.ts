@@ -1,10 +1,45 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
+import { db } from '@dealflow360/db';
 
 describe('Recommendations & Quotation Lines API', () => {
   let authToken: string;
   const testQuoteId = 'quote-sample-001';
+
+  const resetQuoteData = async () => {
+    // Reset quotation lines to initial state (only serverProduct)
+    await db.quoteLine.deleteMany({
+      where: { quotationId: testQuoteId },
+    });
+
+    await db.quoteLine.create({
+      data: {
+        id: 'qline-sample-001',
+        quotationId: testQuoteId,
+        productId: 'prod-srv-001',
+        quantity: 2,
+        listPrice: 10000,
+        proposedDiscountPercent: 5,
+        discountAmount: 1000,
+        netLinePrice: 19000,
+        lineCost: 12000,
+        lineMarginPercent: 36.84,
+      },
+    });
+
+    await db.quotation.update({
+      where: { id: testQuoteId },
+      data: {
+        subtotal: 20000,
+        totalDiscount: 1000,
+        netValue: 19000,
+        grossMarginPercent: 36.84,
+        riskScore: 2.1,
+        riskLevel: 'LOW',
+      },
+    });
+  };
 
   beforeAll(async () => {
     // Authenticate as sales_rep to obtain JWT token
@@ -18,6 +53,11 @@ describe('Recommendations & Quotation Lines API', () => {
     expect(loginRes.status).toBe(200);
     authToken = loginRes.body.data.accessToken;
   });
+
+  beforeEach(async () => {
+    await resetQuoteData();
+  });
+
 
   it('rejects unauthenticated recommendation requests with 401', async () => {
     const res = await request(app).get(
