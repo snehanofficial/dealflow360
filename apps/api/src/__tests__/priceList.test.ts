@@ -81,7 +81,7 @@ vi.mock('@dealflow360/db', () => {
             updatedAt: new Date(),
           };
           entriesMap.set(key, created);
-          
+
           // Also attach to parent list for convenience in mock
           const list = priceListsMap.get(create.priceListId);
           if (list) {
@@ -148,7 +148,7 @@ describe('Price List Management API Tests (Developer A Phase A2)', () => {
       .set('Authorization', `Bearer ${salesManagerToken}`)
       .send({
         name: 'Tier 1 USD Pricing',
-        customerTier: 'TIER_1',
+        customerTier: 'GOLD',
         currency: 'USD',
         isDefault: false,
         isActive: true,

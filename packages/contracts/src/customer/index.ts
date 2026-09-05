@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 export const CustomerTierEnum = z.enum([
   'ENTERPRISE',
-  'TIER_1',
-  'TIER_2',
-  'TIER_3',
+  'GOLD',
+  'SILVER',
+  'BRONZE',
 ]);
 
 export type CustomerTier = z.infer<typeof CustomerTierEnum>;
@@ -36,7 +36,7 @@ export const CreateCustomerSchema = z.object({
   name: z.string().min(2, 'Customer name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
-  tier: CustomerTierEnum.default('TIER_2'),
+  tier: CustomerTierEnum.default('SILVER'),
   status: CustomerStatusEnum.default('ACTIVE'),
 });
 

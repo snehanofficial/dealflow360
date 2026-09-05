@@ -169,9 +169,8 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
               type="text"
               {...register('name')}
               placeholder="e.g. Enterprise Hardware Discount Governance"
-              className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] ${
-                errors.name ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] ${errors.name ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                }`}
             />
             {errors.name && (
               <p className="mt-1 text-xs font-medium text-red-600">{errors.name.message}</p>
@@ -201,9 +200,9 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
               >
                 <option value="GLOBAL">All Tiers (Global Rule)</option>
                 <option value="ENTERPRISE">ENTERPRISE Tier</option>
-                <option value="TIER_1">TIER_1 Key Accounts</option>
-                <option value="TIER_2">TIER_2 Standard Accounts</option>
-                <option value="TIER_3">TIER_3 Growth Accounts</option>
+                <option value="GOLD">GOLD Key Accounts</option>
+                <option value="SILVER">SILVER Standard Accounts</option>
+                <option value="BRONZE">BRONZE Growth Accounts</option>
               </select>
             </div>
 
@@ -234,9 +233,8 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                   type="number"
                   step="0.1"
                   {...register('maxDiscountPercent')}
-                  className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] pr-8 ${
-                    errors.maxDiscountPercent ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] pr-8 ${errors.maxDiscountPercent ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                    }`}
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">%</span>
               </div>
@@ -255,9 +253,8 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                   step="0.1"
                   {...register('minMarginPercent')}
                   placeholder="e.g. 25"
-                  className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] pr-8 ${
-                    errors.minMarginPercent ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] pr-8 ${errors.minMarginPercent ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                    }`}
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">%</span>
               </div>
@@ -289,9 +286,8 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                 type="number"
                 {...register('priority')}
                 placeholder="10"
-                className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] ${
-                  errors.priority ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
-                }`}
+                className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] ${errors.priority ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                  }`}
               />
               {errors.priority && (
                 <p className="mt-1 text-xs font-medium text-red-600">{errors.priority.message}</p>

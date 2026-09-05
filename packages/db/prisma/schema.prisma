@@ -75,9 +75,9 @@ model RefreshSession {
 
 enum CustomerTier {
   ENTERPRISE
-  TIER_1
-  TIER_2
-  TIER_3
+  GOLD
+  SILVER
+  BRONZE
 }
 
 enum CustomerStatus {
@@ -92,7 +92,7 @@ model Customer {
   name      String
   email     String
   phone     String?
-  tier      CustomerTier   @default(TIER_2)
+  tier      CustomerTier   @default(SILVER)
   status    CustomerStatus @default(ACTIVE)
   creditLimit    Float        @default(50000)
   region         String       @default("US-East")

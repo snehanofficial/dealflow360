@@ -24,9 +24,9 @@ vi.mock('@dealflow360/db', () => {
   return {
     CustomerTier: {
       ENTERPRISE: 'ENTERPRISE',
-      TIER_1: 'TIER_1',
-      TIER_2: 'TIER_2',
-      TIER_3: 'TIER_3',
+      GOLD: 'GOLD',
+      SILVER: 'SILVER',
+      BRONZE: 'BRONZE',
     },
     Role: {
       ADMIN: 'ADMIN',

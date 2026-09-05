@@ -103,11 +103,10 @@ export const DiscountPolicyListPage: React.FC = () => {
       <div className="flex items-center space-x-2 border-b border-slate-200">
         <button
           onClick={() => setActiveTab('matrix')}
-          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === 'matrix'
-              ? 'border-[#714B67] text-[#714B67]'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
+          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 ${activeTab === 'matrix'
+            ? 'border-[#714B67] text-[#714B67]'
+            : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
         >
           <Layers className="w-4 h-4" />
           <span>Governance Policy Matrix ({policies.length})</span>
@@ -115,11 +114,10 @@ export const DiscountPolicyListPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('simulator')}
-          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 ${
-            activeTab === 'simulator'
-              ? 'border-[#714B67] text-[#714B67]'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
+          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all flex items-center space-x-2 ${activeTab === 'simulator'
+            ? 'border-[#714B67] text-[#714B67]'
+            : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
         >
           <Play className="w-4 h-4" />
           <span>Interactive Deal Scenario Simulator</span>
@@ -173,9 +171,9 @@ export const DiscountPolicyListPage: React.FC = () => {
               >
                 <option value="">All Customer Tiers</option>
                 <option value="ENTERPRISE">ENTERPRISE</option>
-                <option value="TIER_1">TIER_1</option>
-                <option value="TIER_2">TIER_2</option>
-                <option value="TIER_3">TIER_3</option>
+                <option value="GOLD">GOLD</option>
+                <option value="SILVER">SILVER</option>
+                <option value="BRONZE">BRONZE</option>
               </select>
 
               <select

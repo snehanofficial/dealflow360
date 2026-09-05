@@ -130,9 +130,9 @@ export const PriceListFormModal: React.FC<PriceListFormModalProps> = ({
               >
                 <option value="">All Tiers (Global Default)</option>
                 <option value="ENTERPRISE">ENTERPRISE</option>
-                <option value="TIER_1">TIER_1</option>
-                <option value="TIER_2">TIER_2</option>
-                <option value="TIER_3">TIER_3</option>
+                <option value="GOLD">GOLD</option>
+                <option value="SILVER">SILVER</option>
+                <option value="BRONZE">BRONZE</option>
               </select>
               <p className="text-[10px] text-slate-400 mt-1">Applies override to specific tier customers.</p>
             </div>

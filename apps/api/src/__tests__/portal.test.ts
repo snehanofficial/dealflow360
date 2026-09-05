@@ -12,7 +12,7 @@ vi.mock('@dealflow360/db', () => {
     id: 'cust-portal-01',
     code: 'CUST-PORTAL-01',
     name: 'Portal Test Corp',
-    tier: 'TIER_1',
+    tier: 'GOLD',
   };
 
   const defaultProduct = {
