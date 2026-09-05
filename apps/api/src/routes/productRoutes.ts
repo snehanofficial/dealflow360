@@ -7,8 +7,10 @@ import {
   getCategoriesHandler,
   createCategoryHandler,
   getPriceListsHandler,
+  getPriceListByIdHandler,
   createPriceListHandler,
   updatePriceListHandler,
+  deletePriceListHandler,
   upsertPriceListEntryHandler,
   deletePriceListEntryHandler,
   getAttributesHandler,
@@ -71,6 +73,12 @@ productRoutes.get(
   getPriceListsHandler,
 );
 
+productRoutes.get(
+  '/price-lists/:id',
+  requirePermission(Permissions.PRODUCT_VIEW),
+  getPriceListByIdHandler,
+);
+
 productRoutes.post(
   '/price-lists',
   requireRole(['ADMIN', 'SALES_MANAGER']),
@@ -81,6 +89,12 @@ productRoutes.patch(
   '/price-lists/:id',
   requireRole(['ADMIN', 'SALES_MANAGER']),
   updatePriceListHandler,
+);
+
+productRoutes.delete(
+  '/price-lists/:id',
+  requireRole(['ADMIN', 'SALES_MANAGER']),
+  deletePriceListHandler,
 );
 
 productRoutes.post(
@@ -94,6 +108,7 @@ productRoutes.delete(
   requireRole(['ADMIN', 'SALES_MANAGER']),
   deletePriceListEntryHandler,
 );
+
 
 // Products
 productRoutes.get(

@@ -49,9 +49,21 @@ export function usePriceLists() {
   return useQuery<PriceListDto[]>({
     queryKey: ['price-lists'],
     queryFn: async () => {
-      const response = await api.get('/products/price-lists');
+      const response = await api.get('/price-lists');
       return response.data.data;
     },
+  });
+}
+
+export function usePriceList(id?: string) {
+  return useQuery<PriceListDto>({
+    queryKey: ['price-lists', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Price List ID is required');
+      const response = await api.get(`/price-lists/${id}`);
+      return response.data.data;
+    },
+    enabled: !!id,
   });
 }
 
@@ -88,7 +100,22 @@ export function useCreatePriceList() {
 
   return useMutation({
     mutationFn: async (data: CreatePriceListRequest) => {
-      const response = await api.post('/products/price-lists', data);
+      const response = await api.post('/price-lists', data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useDeletePriceList() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/price-lists/${id}`);
       return response.data.data;
     },
     onSuccess: () => {
@@ -212,7 +239,7 @@ export function useUpdatePriceList() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await api.patch(`/products/price-lists/${id}`, data);
+      const response = await api.patch(`/price-lists/${id}`, data);
       return response.data.data;
     },
     onSuccess: () => {
@@ -227,7 +254,7 @@ export function useUpsertPriceListEntry() {
 
   return useMutation({
     mutationFn: async ({ priceListId, productId, unitPrice }: { priceListId: string; productId: string; unitPrice: number }) => {
-      const response = await api.post(`/products/price-lists/${priceListId}/entries`, { productId, unitPrice });
+      const response = await api.post(`/price-lists/${priceListId}/entries`, { productId, unitPrice });
       return response.data.data;
     },
     onSuccess: () => {
@@ -242,7 +269,7 @@ export function useDeletePriceListEntry() {
 
   return useMutation({
     mutationFn: async ({ priceListId, productId }: { priceListId: string; productId: string }) => {
-      const response = await api.delete(`/products/price-lists/${priceListId}/entries/${productId}`);
+      const response = await api.delete(`/price-lists/${priceListId}/entries/${productId}`);
       return response.data.data;
     },
     onSuccess: () => {
@@ -251,3 +278,4 @@ export function useDeletePriceListEntry() {
     },
   });
 }
+

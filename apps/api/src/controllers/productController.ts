@@ -139,6 +139,34 @@ export async function getPriceListsHandler(
   }
 }
 
+export async function getPriceListByIdHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const priceList = await priceListRepository.findById(id);
+    if (!priceList) {
+      res.status(404).json({
+        success: false,
+        data: null,
+        message: 'Price list not found',
+        meta: null,
+      });
+      return;
+    }
+    res.json({
+      success: true,
+      data: priceList,
+      message: null,
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function createPriceListHandler(
   req: Request,
   res: Response,
@@ -157,6 +185,7 @@ export async function createPriceListHandler(
     next(error);
   }
 }
+
 
 export async function createCategoryHandler(
   req: Request,
@@ -338,6 +367,25 @@ export async function updatePriceListHandler(
   }
 }
 
+export async function deletePriceListHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    await priceListRepository.delete(id);
+    res.json({
+      success: true,
+      data: null,
+      message: 'Price list deleted successfully.',
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function upsertPriceListEntryHandler(
   req: Request,
   res: Response,
@@ -377,3 +425,4 @@ export async function deletePriceListEntryHandler(
     next(error);
   }
 }
+

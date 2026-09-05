@@ -8,6 +8,8 @@ import { DashboardLayout } from '../components/layout/DashboardLayout.js';
 import { HomePage } from '../features/dashboard/HomePage.js';
 import { CustomerListPage } from '../features/customers/CustomerListPage.js';
 import { ProductListPage } from '../features/products/ProductListPage.js';
+import { PriceListPage } from '../features/pricelists/PriceListPage.js';
+import { PriceListDetailPage } from '../features/pricelists/PriceListDetailPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { Loader2 } from 'lucide-react';
 
@@ -101,9 +103,34 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/price-lists"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PriceListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/price-lists/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PriceListDetailPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/pricelists" element={<Navigate to="/price-lists" replace />} />
       
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>
   );
 };
+
 

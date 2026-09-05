@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/authRoutes.js';
 import { customerRoutes } from './routes/customerRoutes.js';
 import { productRoutes } from './routes/productRoutes.js';
+import { priceListRoutes } from './routes/priceListRoutes.js';
 import { quoteRoutes } from './routes/quoteRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
@@ -44,6 +45,8 @@ app.get('/api/v1/health', (_req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/price-lists', priceListRoutes);
+
 
 // Quotation & Recommendation Routes
 app.use('/api/v1/quotations', quoteRoutes);

@@ -102,9 +102,21 @@ export const PriceListEntrySchema = z.object({
   priceListId: z.string(),
   productId: z.string(),
   unitPrice: z.number(),
+  product: z
+    .object({
+      id: z.string(),
+      sku: z.string(),
+      name: z.string(),
+      category: z.string().optional(),
+      unitPrice: z.number().optional(),
+      listPrice: z.number().optional(),
+    })
+    .optional()
+    .nullable(),
 });
 
 export type PriceListEntryDto = z.infer<typeof PriceListEntrySchema>;
+
 
 export const PriceListSchema = z.object({
   id: z.string(),

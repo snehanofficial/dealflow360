@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProducts, useCreateProduct } from './useProducts.js';
 import { ProductFormModal } from './ProductFormModal.js';
 import { ProductDetailModal } from './ProductDetailPage.js';
@@ -27,6 +28,7 @@ import {
 } from '@dealflow360/contracts';
 
 export const ProductListPage: React.FC = () => {
+  const navigate = useNavigate();
   const { role } = useAuth();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -117,7 +119,7 @@ export const ProductListPage: React.FC = () => {
               Categories
             </Button>
 
-            <Button onClick={() => setIsPriceListModalOpen(true)} variant="outline" size="sm">
+            <Button onClick={() => navigate('/price-lists')} variant="outline" size="sm">
               <DollarSign className="w-4 h-4 mr-1.5" />
               Price Lists
             </Button>

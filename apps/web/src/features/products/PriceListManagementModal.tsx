@@ -265,13 +265,15 @@ export const PriceListManagementModal: React.FC<PriceListManagementModalProps> =
 
                 <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100 text-xs">
                   {selectedList.entries && selectedList.entries.length > 0 ? (
-                    selectedList.entries.map((entry) => {
-                      const prod = productsData?.items?.find((p) => p.id === entry.productId);
+                    selectedList.entries.map((entry: any) => {
+                      const prod = productsData?.items?.find((p) => p.id === entry.productId) || entry.product;
+                      const prodName = prod?.name || 'Product Details Unavailable';
+                      const prodSku = prod?.sku || '';
                       return (
                         <div key={entry.id} className="p-2 flex items-center justify-between">
                           <div>
-                            <span className="font-semibold text-slate-800">{prod?.name || entry.productId}</span>
-                            <span className="text-[10px] text-slate-400 ml-1 font-mono">{prod?.sku}</span>
+                            <span className="font-semibold text-slate-800">{prodName}</span>
+                            {prodSku && <span className="text-[10px] text-slate-400 ml-1 font-mono">{prodSku}</span>}
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="font-mono font-bold text-slate-900">
@@ -288,6 +290,7 @@ export const PriceListManagementModal: React.FC<PriceListManagementModalProps> =
                       );
                     })
                   ) : (
+
                     <div className="p-4 text-center text-[11px] text-slate-400">
                       No custom price entries for this list. Base list prices will apply.
                     </div>

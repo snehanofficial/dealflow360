@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ProductDto,
   ProductVariantDto,
@@ -6,6 +7,7 @@ import {
   ProductCategoryEnum,
   ProductTypeEnum,
 } from '@dealflow360/contracts';
+
 import {
   useUpdateProduct,
   useCategories,
@@ -782,15 +784,23 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
         {/* TAB 5: PRICE LISTS */}
         {activeTab === 'price-lists' && (
           <div className="space-y-4 text-xs">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-              <div className="flex items-center space-x-2 text-slate-900 font-bold">
-                <Shield className="w-4 h-4 text-[#714B67]" />
-                <span>B2B Customer Tier & Currency Price List Governance</span>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2 text-slate-900 font-bold">
+                  <Shield className="w-4 h-4 text-[#714B67]" />
+                  <span>B2B Customer Tier & Currency Price List Governance</span>
+                </div>
+                <p className="text-slate-500 text-[11px]">
+                  Price Lists define contractual unit prices for specific Customer Tiers (ENTERPRISE, TIER_1, TIER_2, TIER_3) and Currencies (USD, EUR, GBP, INR). When a customer builds a quotation, the server automatically resolves the exact matching price list override.
+                </p>
               </div>
-              <p className="text-slate-500 text-[11px]">
-                Price Lists define contractual unit prices for specific Customer Tiers (ENTERPRISE, TIER_1, TIER_2, TIER_3) and Currencies (USD, EUR, GBP, INR). When a customer builds a quotation, the server automatically resolves the exact matching price list override.
-              </p>
+              <Link to="/price-lists" className="shrink-0">
+                <Button size="sm" variant="outline">
+                  Manage All Price Lists
+                </Button>
+              </Link>
             </div>
+
 
             {priceLists && priceLists.length > 0 ? (
               <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100">
