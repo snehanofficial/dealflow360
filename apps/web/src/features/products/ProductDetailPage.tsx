@@ -2,7 +2,7 @@ import React from 'react';
 import { ProductDto } from '@dealflow360/contracts';
 import { Badge } from '../../components/ui/Badge.js';
 import { Button } from '../../components/ui/Button.js';
-import { ShieldAlert, X } from 'lucide-react';
+import { ShieldAlert, X, Tag, Percent, Layers, DollarSign } from 'lucide-react';
 
 interface ProductDetailModalProps {
   product: ProductDto | null;
@@ -26,7 +26,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden my-8 p-6 space-y-6">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden my-8 p-6 space-y-6">
         {/* Header Summary */}
         <div className="flex items-start justify-between pb-4 border-b border-slate-100">
           <div>
@@ -58,7 +58,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               Selling Price
             </span>
             <span className="text-base font-bold text-slate-900 mt-0.5 block">
-              ${product.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              ${product.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} / {product.unit || 'Unit'}
             </span>
           </div>
 
@@ -90,26 +90,60 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Categorization Specs */}
+        {/* Categorization & Tax Specs */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
           <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Category & Billing Classification
+            Classification & Tax Metadata
           </h3>
-          <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div>
-              <span className="text-slate-400 block">Product Category</span>
-              <span className="font-medium text-slate-900 mt-0.5 block">
-                {product.category.replace('_', ' ')}
+              <span className="text-slate-400 block">Primary Category</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block">
+                {product.primaryCategory?.name || product.category.replace('_', ' ')}
               </span>
             </div>
             <div>
               <span className="text-slate-400 block">Billing Type</span>
-              <span className="font-medium text-slate-900 mt-0.5 block">
+              <span className="font-semibold text-slate-900 mt-0.5 block">
                 {product.type.replace('_', ' ')}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">Unit of Measure</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block">
+                {product.unit || 'Unit'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block">Tax Rate</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block">
+                {product.taxRate ?? 0}%
               </span>
             </div>
           </div>
         </div>
+
+        {/* Variants Breakdown */}
+        {product.variants && product.variants.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              Product Variants ({product.variants.length})
+            </h3>
+            <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100 text-xs">
+              {product.variants.map((variant) => (
+                <div key={variant.id} className="p-2.5 flex items-center justify-between bg-white">
+                  <div>
+                    <span className="font-mono font-semibold text-[#714B67] mr-2">{variant.sku}</span>
+                    <span className="font-medium text-slate-800">{variant.name}</span>
+                  </div>
+                  <span className="font-mono text-slate-700 font-semibold">
+                    {variant.extraPrice > 0 ? `+$${variant.extraPrice.toFixed(2)}` : 'Standard Price'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Governance Note */}
         <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-start space-x-2 text-amber-800 text-xs">

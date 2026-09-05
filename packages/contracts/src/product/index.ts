@@ -17,17 +17,107 @@ export const ProductTypeEnum = z.enum([
 
 export type ProductType = z.infer<typeof ProductTypeEnum>;
 
+export const CategorySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  code: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type CategoryDto = z.infer<typeof CategorySchema>;
+
+export const CategoryReferenceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  code: z.string(),
+  isPrimary: z.boolean(),
+});
+
+export type CategoryReferenceDto = z.infer<typeof CategoryReferenceSchema>;
+
+export const VariantAttributeValueSchema = z.object({
+  attributeName: z.string(),
+  attributeValue: z.string(),
+});
+
+export type VariantAttributeValueDto = z.infer<typeof VariantAttributeValueSchema>;
+
+export const ProductVariantSchema = z.object({
+  id: z.string(),
+  productId: z.string(),
+  sku: z.string(),
+  name: z.string(),
+  extraPrice: z.number(),
+  isActive: z.boolean(),
+  attributes: z.array(VariantAttributeValueSchema).default([]),
+});
+
+export type ProductVariantDto = z.infer<typeof ProductVariantSchema>;
+
+export const CreateVariantSchema = z.object({
+  sku: z.string().min(2, 'Variant SKU is required'),
+  name: z.string().min(2, 'Variant name is required'),
+  extraPrice: z.number().default(0),
+  attributes: z.array(z.object({
+    attributeName: z.string().min(1),
+    attributeValue: z.string().min(1),
+  })).default([]),
+});
+
+export type CreateVariantRequest = z.infer<typeof CreateVariantSchema>;
+
+export const PriceListEntrySchema = z.object({
+  id: z.string(),
+  priceListId: z.string(),
+  productId: z.string(),
+  unitPrice: z.number(),
+});
+
+export type PriceListEntryDto = z.infer<typeof PriceListEntrySchema>;
+
+export const PriceListSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  customerTier: z.string().nullable().optional(),
+  currency: z.string().default('USD'),
+  isDefault: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+  entries: z.array(PriceListEntrySchema).optional(),
+});
+
+export type PriceListDto = z.infer<typeof PriceListSchema>;
+
+export const CreatePriceListSchema = z.object({
+  name: z.string().min(2, 'Price list name is required'),
+  customerTier: z.enum(['ENTERPRISE', 'TIER_1', 'TIER_2', 'TIER_3']).optional().nullable(),
+  currency: z.string().default('USD'),
+  isDefault: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+  entries: z.array(z.object({
+    productId: z.string(),
+    unitPrice: z.number().positive(),
+  })).optional(),
+});
+
+export type CreatePriceListRequest = z.infer<typeof CreatePriceListSchema>;
+
 export const ProductSchema = z.object({
   id: z.string(),
   sku: z.string(),
   name: z.string(),
   description: z.string().nullable().optional(),
   category: ProductCategoryEnum,
+  primaryCategory: CategoryReferenceSchema.optional(),
+  categories: z.array(CategoryReferenceSchema).default([]),
   type: ProductTypeEnum,
+  unit: z.string().default('Unit'),
+  taxRate: z.number().min(0).max(100).default(0),
   unitPrice: z.number().positive(),
   costPrice: z.number().nonnegative(),
   maxAllowedDiscount: z.number().min(0).max(100),
   isActive: z.boolean(),
+  variants: z.array(ProductVariantSchema).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -39,7 +129,11 @@ export const ProductReferenceSchema = z.object({
   sku: z.string(),
   name: z.string(),
   category: ProductCategoryEnum,
+  primaryCategory: CategoryReferenceSchema.optional(),
+  categories: z.array(CategoryReferenceSchema).default([]),
   type: ProductTypeEnum,
+  unit: z.string().default('Unit'),
+  taxRate: z.number().default(0),
   unitPrice: z.number(),
   costPrice: z.number(),
   maxAllowedDiscount: z.number(),
@@ -52,11 +146,15 @@ export const CreateProductSchema = z.object({
   name: z.string().min(2, 'Product name must be at least 2 characters'),
   description: z.string().optional().nullable(),
   category: ProductCategoryEnum,
+  additionalCategoryIds: z.array(z.string()).optional(),
   type: ProductTypeEnum.default('ONE_TIME'),
+  unit: z.string().default('Unit'),
+  taxRate: z.number().min(0).max(100).default(0),
   unitPrice: z.number().positive('Unit price must be positive'),
   costPrice: z.number().nonnegative('Cost price cannot be negative'),
   maxAllowedDiscount: z.number().min(0, 'Min discount 0%').max(100, 'Max discount 100%').default(15),
   isActive: z.boolean().default(true),
+  variants: z.array(CreateVariantSchema).optional(),
 });
 
 export type CreateProductRequest = z.infer<typeof CreateProductSchema>;
@@ -65,7 +163,10 @@ export const UpdateProductSchema = z.object({
   name: z.string().min(2, 'Product name must be at least 2 characters').optional(),
   description: z.string().optional().nullable(),
   category: ProductCategoryEnum.optional(),
+  additionalCategoryIds: z.array(z.string()).optional(),
   type: ProductTypeEnum.optional(),
+  unit: z.string().optional(),
+  taxRate: z.number().min(0).max(100).optional(),
   unitPrice: z.number().positive('Unit price must be positive').optional(),
   costPrice: z.number().nonnegative('Cost price cannot be negative').optional(),
   maxAllowedDiscount: z.number().min(0).max(100).optional(),
@@ -77,7 +178,10 @@ export type UpdateProductRequest = z.infer<typeof UpdateProductSchema>;
 export const ProductFilterQuerySchema = z.object({
   search: z.string().optional(),
   category: ProductCategoryEnum.optional(),
+  categoryIds: z.string().optional(),
   type: ProductTypeEnum.optional(),
+  tier: z.string().optional(),
+  currency: z.string().optional(),
   isActive: z.preprocess((val) => {
     if (val === 'true') return true;
     if (val === 'false') return false;
