@@ -6,11 +6,159 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ADMIN
+  SALES_MANAGER
+  SALES_REP
+  FINANCE_OPERATIONS
+  CUSTOMER
+}
+
+enum CustomerTier {
+  STANDARD
+  GOLD
+  PLATINUM
+}
+
+enum BillingType {
+  ONE_TIME
+  RECURRING
+}
+
+enum RecurringPeriod {
+  MONTHLY
+  ANNUAL
+}
+
+enum QuoteStatus {
+  DRAFT
+  PENDING_MANAGER
+  PENDING_FINANCE
+  APPROVED
+  NEGOTIATING
+  FULFILLMENT
+  BILLING
+  COMPLETED
+}
+
+enum RecommendationRuleType {
+  CO_PURCHASE
+  PROMOTION
+  CROSS_SELL
+  UPSELL
+}
+
 model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  passwordHash    String
+  name            String
+  role            Role             @default(SALES_REP)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  refreshSessions RefreshSession[]
+  quotations      Quotation[]
+}
+
+model RefreshSession {
   id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  role      String   @default("SALES_REP")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
+
+model Customer {
+  id             String       @id @default(uuid())
+  name           String
+  tier           CustomerTier @default(STANDARD)
+  creditLimit    Float        @default(50000)
+  region         String       @default("US-East")
+  accountManager String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  quotations     Quotation[]
+}
+
+model Product {
+  id                  String               @id @default(uuid())
+  sku                 String               @unique
+  name                String
+  category            String
+  listPrice           Float
+  standardCost        Float
+  billingType         BillingType          @default(ONE_TIME)
+  recurringPeriod     RecurringPeriod?
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  quoteLines          QuoteLine[]
+  sourceRules         RecommendationRule[] @relation("SourceProductRules")
+  recommendedRules    RecommendationRule[] @relation("RecommendedProductRules")
+}
+
+model Quotation {
+  id                 String      @id @default(uuid())
+  quoteNumber        String      @unique
+  customerId         String
+  customer           Customer    @relation(fields: [customerId], references: [id])
+  createdById        String
+  createdBy          User        @relation(fields: [createdById], references: [id])
+  status             QuoteStatus @default(DRAFT)
+  subtotal           Float       @default(0)
+  totalDiscount      Float       @default(0)
+  netValue           Float       @default(0)
+  grossMarginPercent Float       @default(0)
+  riskScore          Float       @default(0)
+  riskLevel          String      @default("LOW")
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  lines              QuoteLine[]
+}
+
+model QuoteLine {
+  id                      String    @id @default(uuid())
+  quotationId             String
+  quotation               Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  productId               String
+  product                 Product   @relation(fields: [productId], references: [id])
+  quantity                Int       @default(1)
+  listPrice               Float
+  proposedDiscountPercent Float     @default(0)
+  discountAmount          Float     @default(0)
+  netLinePrice            Float
+  lineCost                Float
+  lineMarginPercent       Float
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([quotationId])
+  @@index([productId])
+}
+
+model RecommendationRule {
+  id                      String                 @id @default(uuid())
+  sourceProductId         String?
+  sourceProduct           Product?               @relation("SourceProductRules", fields: [sourceProductId], references: [id], onDelete: Cascade)
+  recommendedProductId    String
+  recommendedProduct      Product                @relation("RecommendedProductRules", fields: [recommendedProductId], references: [id], onDelete: Cascade)
+  ruleType                RecommendationRuleType @default(CO_PURCHASE)
+  reasonTemplate          String
+  priority                Int                    @default(10)
+  promotionDiscountPercent Float?
+  isActive                Boolean                @default(true)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  @@index([sourceProductId])
+  @@index([recommendedProductId])
+}
+

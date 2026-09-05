@@ -1,5 +1,2 @@
-export interface UpsellRecommendation {
-  productId: string;
-  productName: string;
-  reason: string;
-}
+export * from './types.js';
+export * from './recommendationEngine.js';

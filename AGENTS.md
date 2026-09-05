@@ -172,9 +172,11 @@ Do not collapse them into one generic billing calculation.
 
 # 3. How to work
 
+**CRITICAL MANDATE: `AGENTS.md` MUST BE STRICTLY FOLLOWED ON EVERY PROMPT AND TASK WITHOUT EXCEPTION.**
+
 Follow this loop for every non-trivial request:
 
-1.  Read this `AGENTS.md`.
+1.  Read this `AGENTS.md` and strictly adhere to all product principles, architecture boundaries, and UI rules.
 2.  Read the skills the user named.
 3.  Read any supporting skill that is clearly relevant.
 4.  Inspect the existing code, package configuration, database schema,
@@ -237,6 +239,16 @@ Never claim a test passed unless it was actually run.
 
 The AI is **not the product designer**.
 
+### Display Adaptability & Responsiveness Rules (Strict Requirement)
+
+**Every implemented UI feature must be adaptive and responsive across all display sizes from 360px (mobile) to 4K displays (3840px+) without layout breakage, clipped content, or unhandled body scroll.**
+
+-   **360px - 640px (Mobile)**: Stack complex forms, grids, and side-by-side columns into clean vertical layouts. Data tables must scroll horizontally within container boundaries or degrade gracefully into card views. Use mobile drawers or collapsible sidebars for navigation. Ensure interactive touch targets are at least 44x44px.
+-   **641px - 1024px (Tablet / Small Laptop)**: Utilize multi-column layouts (2-3 columns max) with responsive flex wraps and responsive spacing.
+-   **1025px - 1920px (Desktop / Full HD)**: Follow explicit desktop design specs, keeping layouts dense, aligned, and readable.
+-   **1921px - 3840px+ (Ultra-wide / 4K Displays)**: Prevent content from stretching uncontrollably across ultra-wide monitors. Use structured max-width wrappers (e.g. `max-w-[1920px] mx-auto` or controlled grid expansion `2xl:grid-cols-4 4k:grid-cols-6`) and maintain optimal typographic line length and density.
+-   **No Hardcoded Viewport Heights/Widths**: Never hardcode static pixel widths or heights that break on small or large viewports. Use responsive Tailwind breakpoints (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`).
+
 When desktop screenshots, design references, Figma designs, or explicit
 UI specifications are provided:
 
@@ -253,9 +265,7 @@ UI specifications are provided:
 -   Use the project's semantic design tokens.
 -   Implement loading, error, empty, disabled, pending, rejected, and
     success states deliberately.
--   Make desktop references accurate first.
--   Make layouts responsive when no mobile reference exists, without
-    changing the intended desktop design.
+-   Make desktop references accurate first while ensuring multi-resolution adaptability (360px to 4K).
 
 ### DealFlow360 visual character
 

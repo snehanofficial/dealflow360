@@ -14,9 +14,15 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^7.0.0"
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "argon2": "^0.41.1",
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.3"
   },
   "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/pg": "^8.11.11",
     "prisma": "^7.0.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
