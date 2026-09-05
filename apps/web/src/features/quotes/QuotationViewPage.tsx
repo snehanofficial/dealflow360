@@ -14,6 +14,9 @@ import {
   ArrowLeft,
   RefreshCw,
   Package,
+  Trash2,
+  Send,
+  Loader2,
 } from 'lucide-react';
 
 interface QuoteLineData {
@@ -60,6 +63,8 @@ export const QuotationViewPage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRecsLoading, setIsRecsLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const quoteId = id || 'quote-sample-001';
@@ -69,7 +74,7 @@ export const QuotationViewPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const res = await api.get<{ success: boolean; data: QuotationData }>(
-        `/quotations/${quoteId}`,
+        `/quotes/${quoteId}`,
       );
       if (res.data.success) {
         setQuotation(res.data.data);
@@ -86,7 +91,7 @@ export const QuotationViewPage: React.FC = () => {
     try {
       setIsRecsLoading(true);
       const res = await api.get<{ success: boolean; data: RecommendationItem[] }>(
-        `/quotations/${quoteId}/recommendations`,
+        `/quotes/${quoteId}/recommendations`,
       );
       if (res.data.success) {
         setRecommendations(res.data.data);
@@ -104,14 +109,55 @@ export const QuotationViewPage: React.FC = () => {
   }, [fetchQuotationData, fetchRecommendations]);
 
   const handleAddRecommendation = async (rec: RecommendationItem) => {
-    await api.post(`/quotations/${quoteId}/lines`, {
+    await api.post(`/quotes/${quoteId}/lines`, {
       productId: rec.productId,
       quantity: 1,
       proposedDiscountPercent: rec.promotionDiscountPercent || 0,
     });
-    // Recalculate quotation and recommendations
     await fetchQuotationData();
     await fetchRecommendations();
+  };
+
+  const handleUpdateLine = async (lineId: string, quantity?: number, proposedDiscountPercent?: number) => {
+    try {
+      await api.patch(`/quotes/${quoteId}/lines/${lineId}`, {
+        quantity,
+        proposedDiscountPercent,
+      });
+      await fetchQuotationData();
+      await fetchRecommendations();
+    } catch (err: any) {
+      console.error('Failed to update line:', err);
+    }
+  };
+
+  const handleDeleteLine = async (lineId: string) => {
+    try {
+      await api.delete(`/quotes/${quoteId}/lines/${lineId}`);
+      await fetchQuotationData();
+      await fetchRecommendations();
+    } catch (err: any) {
+      console.error('Failed to delete line:', err);
+    }
+  };
+
+  const handleSubmitQuote = async () => {
+    try {
+      setIsSubmitting(true);
+      setSubmitMessage(null);
+      const res = await api.post<{ success: boolean; data: QuotationData; message: string }>(
+        `/quotes/${quoteId}/submit`,
+      );
+      if (res.data.success) {
+        setQuotation(res.data.data);
+        setSubmitMessage(res.data.message);
+      }
+    } catch (err: any) {
+      console.error('Failed to submit quote:', err);
+      setError(err.response?.data?.message || 'Failed to submit quotation');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -134,10 +180,10 @@ export const QuotationViewPage: React.FC = () => {
           <p className="text-sm">{error || 'The requested quotation does not exist.'}</p>
         </div>
         <button
-          onClick={() => navigate('/app')}
+          onClick={() => navigate('/quotations')}
           className="inline-flex items-center gap-2 text-slate-700 bg-white border border-slate-300 px-4 py-2 rounded-lg hover:bg-slate-50 font-medium text-sm"
         >
-          <ArrowLeft className="w-4 h-4" /> Return to Dashboard
+          <ArrowLeft className="w-4 h-4" /> Return to Quotation List
         </button>
       </div>
     );
@@ -145,6 +191,7 @@ export const QuotationViewPage: React.FC = () => {
 
   const isRiskHigh = quotation.riskLevel === 'HIGH';
   const isRiskMedium = quotation.riskLevel === 'MEDIUM';
+  const isDraft = quotation.status === 'DRAFT';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -152,9 +199,9 @@ export const QuotationViewPage: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/app')}
+            onClick={() => navigate('/quotations')}
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Back"
+            title="Back to Quotation List"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -163,7 +210,14 @@ export const QuotationViewPage: React.FC = () => {
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
                 {quotation.quoteNumber}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${quotation.status === 'APPROVED'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    : quotation.status.startsWith('PENDING')
+                      ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                      : 'bg-blue-100 text-blue-800 border border-blue-200'
+                  }`}
+              >
                 {quotation.status}
               </span>
             </div>
@@ -177,13 +231,12 @@ export const QuotationViewPage: React.FC = () => {
         <div className="flex items-center gap-3">
           {/* Risk Badge */}
           <div
-            className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-medium ${
-              isRiskHigh
+            className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-medium ${isRiskHigh
                 ? 'bg-rose-50 border-rose-200 text-rose-800'
                 : isRiskMedium
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            }`}
+                  ? 'bg-amber-50 border-amber-200 text-amber-800'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              }`}
           >
             {isRiskHigh ? (
               <AlertTriangle className="w-4 h-4 text-rose-600" />
@@ -195,6 +248,21 @@ export const QuotationViewPage: React.FC = () => {
               <span className="font-mono ml-1.5 opacity-80">({quotation.riskScore}/10)</span>
             </div>
           </div>
+
+          {isDraft && (
+            <button
+              onClick={handleSubmitQuote}
+              disabled={isSubmitting || quotation.lines.length === 0}
+              className="inline-flex items-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium text-xs shadow-xs transition-colors"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              Submit Quote
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -208,6 +276,13 @@ export const QuotationViewPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {submitMessage && (
+        <div className="p-4 bg-blue-50 border border-blue-200 text-blue-800 text-xs font-semibold rounded-xl flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-blue-600" />
+          {submitMessage}
+        </div>
+      )}
 
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -270,6 +345,7 @@ export const QuotationViewPage: React.FC = () => {
                     <th className="py-3 px-3 text-right">Disc %</th>
                     <th className="py-3 px-4 text-right">Net Total</th>
                     <th className="py-3 px-4 text-right">Margin %</th>
+                    {isDraft && <th className="py-3 px-3 text-center">Action</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-mono">
@@ -279,14 +355,49 @@ export const QuotationViewPage: React.FC = () => {
                         <div className="font-semibold text-slate-900">{line.product.name}</div>
                         <div className="text-slate-400 text-[11px]">SKU: {line.product.sku}</div>
                       </td>
-                      <td className="py-3 px-3 text-center text-slate-800 font-semibold">
-                        {line.quantity}
+                      <td className="py-3 px-3 text-center">
+                        {isDraft ? (
+                          <input
+                            type="number"
+                            min="1"
+                            value={line.quantity}
+                            onChange={(e) =>
+                              handleUpdateLine(
+                                line.id,
+                                parseInt(e.target.value) || 1,
+                                line.proposedDiscountPercent,
+                              )
+                            }
+                            className="w-14 text-center border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:border-[#714B67]"
+                          />
+                        ) : (
+                          <span className="text-slate-800 font-semibold">{line.quantity}</span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-right text-slate-700">
                         ${line.listPrice.toLocaleString()}
                       </td>
-                      <td className="py-3 px-3 text-right text-amber-700">
-                        {line.proposedDiscountPercent}%
+                      <td className="py-3 px-3 text-right">
+                        {isDraft ? (
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={line.proposedDiscountPercent}
+                            onChange={(e) =>
+                              handleUpdateLine(
+                                line.id,
+                                line.quantity,
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            className="w-14 text-right border border-slate-200 rounded px-1 py-0.5 bg-slate-50 text-amber-700 font-bold focus:border-[#714B67]"
+                          />
+                        ) : (
+                          <span className="text-amber-700 font-semibold">
+                            {line.proposedDiscountPercent}%
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-slate-900">
                         ${line.netLinePrice.toLocaleString()}
@@ -294,6 +405,17 @@ export const QuotationViewPage: React.FC = () => {
                       <td className="py-3 px-4 text-right font-semibold text-purple-700">
                         {line.lineMarginPercent}%
                       </td>
+                      {isDraft && (
+                        <td className="py-3 px-3 text-center">
+                          <button
+                            onClick={() => handleDeleteLine(line.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                            title="Remove line item"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

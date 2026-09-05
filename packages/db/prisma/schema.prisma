@@ -120,23 +120,53 @@ model Product {
 }
 
 model Quotation {
-  id                 String      @id @default(uuid())
-  quoteNumber        String      @unique
+  id                 String         @id @default(uuid())
+  quoteNumber        String         @unique
   customerId         String
-  customer           Customer    @relation(fields: [customerId], references: [id])
+  customer           Customer       @relation(fields: [customerId], references: [id])
   createdById        String
-  createdBy          User        @relation(fields: [createdById], references: [id])
-  status             QuoteStatus @default(DRAFT)
-  subtotal           Float       @default(0)
-  totalDiscount      Float       @default(0)
-  netValue           Float       @default(0)
-  grossMarginPercent Float       @default(0)
-  riskScore          Float       @default(0)
-  riskLevel          String      @default("LOW")
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdBy          User           @relation(fields: [createdById], references: [id])
+  status             QuoteStatus    @default(DRAFT)
+  subtotal           Float          @default(0)
+  totalDiscount      Float          @default(0)
+  netValue           Float          @default(0)
+  grossMarginPercent Float          @default(0)
+  riskScore          Float          @default(0)
+  riskLevel          String         @default("LOW")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   lines              QuoteLine[]
+  portalTokens       PortalToken[]
+  counterOffers      CounterOffer[]
 }
+
+model PortalToken {
+  id          String    @id @default(uuid())
+  token       String    @unique @default(uuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  isRevoked   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([quotationId])
+  @@index([token])
+}
+
+model CounterOffer {
+  id                      String    @id @default(uuid())
+  quotationId             String
+  quotation               Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  proposedDiscountPercent Float
+  customerNotes           String?
+  status                  String    @default("SUBMITTED")
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([quotationId])
+}
+
 
 model QuoteLine {
   id                      String    @id @default(uuid())

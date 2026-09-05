@@ -43,8 +43,14 @@ app.get('/api/v1/health', (_req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/customers', customerRoutes);
 
+import { portalRoutes } from './routes/portalRoutes.js';
+
 // Quotation & Recommendation Routes
+app.use('/api/v1/quotes', quoteRoutes);
 app.use('/api/v1/quotations', quoteRoutes);
+app.use('/api/v1/portal', portalRoutes);
+
+
 
 // Centralized Error Handler
 app.use(errorHandler);

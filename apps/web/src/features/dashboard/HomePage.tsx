@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, ComposedChart, Area
 } from 'recharts';
-import { 
-  ArrowUpRight, ArrowDownRight, FileText, DollarSign, ShieldAlert, 
-  CheckCircle, Truck, MoreHorizontal, ArrowRight, Lightbulb 
+import {
+  ArrowUpRight, ArrowDownRight, FileText, DollarSign, ShieldAlert,
+  CheckCircle, Truck, MoreHorizontal, ArrowRight, Lightbulb
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.js';
 import { Badge } from '../../components/ui/Badge.js';
@@ -13,7 +13,7 @@ import { Button } from '../../components/ui/Button.js';
 
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
-  
+
   // Mock Data
   const pipelineData = [
     { name: 'Draft', count: 12, value: 320, color: '#E2E8F0' },
@@ -74,7 +74,7 @@ export const HomePage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <a
-              href="/app/quotes/quote-sample-001"
+              href="/quotations/quote-sample-001"
               className="px-4 py-2 text-sm font-medium text-[#714B67] bg-purple-50 border border-purple-200 hover:bg-purple-100 rounded-md transition-colors flex items-center gap-2"
             >
               <FileText className="w-4 h-4" /> Open Sample Quote (QT-2026-0001)
@@ -111,7 +111,7 @@ export const HomePage: React.FC = () => {
             <span className="text-xs text-slate-400 ml-2">vs last month</span>
           </div>
         </div>
-        
+
         {/* Estimated Revenue */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between">
@@ -198,29 +198,29 @@ export const HomePage: React.FC = () => {
               <option>This Quarter</option>
             </select>
           </div>
-          
+
           {/* Custom Funnel Implementation */}
           <div className="flex space-x-1 mb-4 h-8">
-             {pipelineData.map((stage) => (
-                <div key={stage.name} className="flex-1 flex items-center justify-center relative group">
-                  <div 
-                    className="absolute inset-0"
-                    style={{ backgroundColor: stage.color }}
-                  ></div>
-                  <span className="relative z-10 text-[10px] font-semibold text-slate-700 truncate px-1">
-                    {stage.name}
-                  </span>
-                </div>
-             ))}
+            {pipelineData.map((stage) => (
+              <div key={stage.name} className="flex-1 flex items-center justify-center relative group">
+                <div
+                  className="absolute inset-0"
+                  style={{ backgroundColor: stage.color }}
+                ></div>
+                <span className="relative z-10 text-[10px] font-semibold text-slate-700 truncate px-1">
+                  {stage.name}
+                </span>
+              </div>
+            ))}
           </div>
-          
+
           <div className="flex justify-between text-center mt-2 px-1">
-             {pipelineData.map(stage => (
-               <div key={`val-${stage.name}`} className="flex-1">
-                 <div className="font-bold text-lg text-slate-900">{stage.count}</div>
-                 <div className="text-[11px] text-slate-500 font-medium">${stage.value}K</div>
-               </div>
-             ))}
+            {pipelineData.map(stage => (
+              <div key={`val-${stage.name}`} className="flex-1">
+                <div className="font-bold text-lg text-slate-900">{stage.count}</div>
+                <div className="text-[11px] text-slate-500 font-medium">${stage.value}K</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -285,15 +285,15 @@ export const HomePage: React.FC = () => {
               </div>
             </div>
             <div className="w-1/2 flex flex-col justify-center gap-4 pl-4">
-               {riskData.map(item => (
-                 <div key={item.name} className="flex items-center justify-between">
-                   <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                     <span className="text-xs font-medium text-slate-700">{item.name}</span>
-                   </div>
-                   <span className="text-xs font-bold text-slate-900">{item.value}%</span>
-                 </div>
-               ))}
+              {riskData.map(item => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-xs font-medium text-slate-700">{item.name}</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-900">{item.value}%</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -301,7 +301,7 @@ export const HomePage: React.FC = () => {
 
       {/* Tables Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Recent Quotations */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm lg:col-span-2 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
@@ -381,33 +381,33 @@ export const HomePage: React.FC = () => {
             </table>
           </div>
         </div>
-        
+
       </div>
-      
+
       {/* AI Insights Banner */}
       <div className="bg-gradient-to-r from-[#e9d5ff] to-[#f3e8ff] rounded-xl p-6 border border-purple-200 shadow-sm relative overflow-hidden flex items-center justify-between">
-         {/* Decorative background lines */}
-         <div className="absolute right-0 bottom-0 opacity-20 pointer-events-none">
-            <svg width="300" height="100" viewBox="0 0 300 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 100 Q 50 20 100 80 T 200 40 T 300 100" stroke="#714B67" strokeWidth="4" fill="none"/>
-              <path d="M0 100 Q 50 60 100 90 T 200 70 T 300 100" stroke="#714B67" strokeWidth="2" fill="none"/>
-            </svg>
-         </div>
-         
-         <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-full bg-[#714B67] flex items-center justify-center text-white shadow-md">
-               <Lightbulb className="w-6 h-6" />
-            </div>
-            <div>
-               <h3 className="font-bold text-lg text-slate-900">Turn more quotes into revenue</h3>
-               <p className="text-sm text-slate-700 mt-0.5">Use AI-powered insights to identify at-risk deals and get recommended next actions.</p>
-            </div>
-         </div>
-         <div className="relative z-10">
-            <button className="bg-white text-[#714B67] font-semibold py-2 px-4 rounded-lg shadow-sm border border-purple-100 hover:bg-purple-50 transition-colors flex items-center gap-2">
-               Explore Insights <ArrowRight className="w-4 h-4" />
-            </button>
-         </div>
+        {/* Decorative background lines */}
+        <div className="absolute right-0 bottom-0 opacity-20 pointer-events-none">
+          <svg width="300" height="100" viewBox="0 0 300 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 100 Q 50 20 100 80 T 200 40 T 300 100" stroke="#714B67" strokeWidth="4" fill="none" />
+            <path d="M0 100 Q 50 60 100 90 T 200 70 T 300 100" stroke="#714B67" strokeWidth="2" fill="none" />
+          </svg>
+        </div>
+
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-12 h-12 rounded-full bg-[#714B67] flex items-center justify-center text-white shadow-md">
+            <Lightbulb className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-slate-900">Turn more quotes into revenue</h3>
+            <p className="text-sm text-slate-700 mt-0.5">Use AI-powered insights to identify at-risk deals and get recommended next actions.</p>
+          </div>
+        </div>
+        <div className="relative z-10">
+          <button className="bg-white text-[#714B67] font-semibold py-2 px-4 rounded-lg shadow-sm border border-purple-100 hover:bg-purple-50 transition-colors flex items-center gap-2">
+            Explore Insights <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
     </div>
@@ -418,7 +418,7 @@ export const HomePage: React.FC = () => {
 function ChevronDownIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m6 9 6 6 6-6"/>
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }
@@ -432,7 +432,7 @@ function RiskBadge({ risk }: { risk: string }) {
       default: return 'bg-slate-100 text-slate-700';
     }
   };
-  
+
   return (
     <span className={`px-2.5 py-1 text-[10px] font-bold rounded ${getColors()}`}>
       {risk}
@@ -451,7 +451,7 @@ function StatusBadge({ status }: { status: string }) {
       default: return 'bg-slate-100 text-slate-700';
     }
   };
-  
+
   return (
     <span className={`px-2.5 py-1 text-[10px] font-bold rounded ${getColors()}`}>
       {status}

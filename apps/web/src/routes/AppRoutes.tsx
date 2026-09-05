@@ -7,6 +7,8 @@ import { ProfileView } from '../features/auth/ProfileView.js';
 import { DashboardLayout } from '../components/layout/DashboardLayout.js';
 import { HomePage } from '../features/dashboard/HomePage.js';
 import { CustomerListPage } from '../features/customers/CustomerListPage.js';
+import { QuoteListPage } from '../features/quotes/QuoteListPage.js';
+import { QuoteBuilderPage } from '../features/quotes/QuoteBuilderPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { Loader2 } from 'lucide-react';
 
@@ -29,12 +31,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
+
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<SignupForm />} />
-      
+      <Route path="/portal/quotes/:token" element={<CustomerPortalPage />} />
+
+
       <Route
         path="/app"
         element={
@@ -45,20 +51,31 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      
+
       <Route
-        path="/app/quotes/:id"
+        path="/quotations"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <QuotationViewPage />
+              <QuoteListPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/app/quotes"
+        path="/quotations/new"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <QuoteBuilderPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quotations/:id"
         element={
           <ProtectedRoute>
             <DashboardLayout>
@@ -89,9 +106,8 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      
+
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>
   );
 };
-

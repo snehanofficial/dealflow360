@@ -1,1 +1,2 @@
-export const PortalFeature = {};
+export * from './CustomerPortalPage.js';
+
