@@ -72,15 +72,24 @@ export const HomePage: React.FC = () => {
               <span>Partly cloudy, 28°C</span>
             </div>
           </div>
-          <div className="flex bg-[#714B67] text-white rounded-md shadow-sm overflow-hidden hover:bg-[#5F3D56] transition-colors self-start sm:self-auto">
-            <button className="px-4 py-2 text-sm font-medium flex items-center gap-2">
-              <span className="text-lg leading-none">+</span> New Quotation
-            </button>
-            <button className="px-2 border-l border-white/20 hover:bg-white/10 flex items-center justify-center">
-              <ChevronDownIcon className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-2">
+            <a
+              href="/app/quotes/quote-sample-001"
+              className="px-4 py-2 text-sm font-medium text-[#714B67] bg-purple-50 border border-purple-200 hover:bg-purple-100 rounded-md transition-colors flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" /> Open Sample Quote (QT-2026-0001)
+            </a>
+            <div className="flex bg-[#714B67] text-white rounded-md shadow-sm overflow-hidden hover:bg-[#5F3D56] transition-colors self-start sm:self-auto">
+              <button className="px-4 py-2 text-sm font-medium flex items-center gap-2">
+                <span className="text-lg leading-none">+</span> New Quotation
+              </button>
+              <button className="px-2 border-l border-white/20 hover:bg-white/10 flex items-center justify-center">
+                <ChevronDownIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
+
       </div>
 
       {/* KPI Cards */}
