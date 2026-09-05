@@ -181,6 +181,53 @@ export class ProductRepository {
     if (data.maxAllowedDiscount !== undefined) updateData.maxAllowedDiscount = data.maxAllowedDiscount;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
+    // Handle Category Join Updates (Primary & Secondary Categories)
+    if (data.additionalCategoryIds !== undefined || data.category !== undefined) {
+      const currentProduct = await db.product.findUnique({
+        where: { id },
+        include: { categories: { include: { category: true } } },
+      });
+
+      if (currentProduct) {
+        const primaryCatCode = data.category !== undefined ? data.category : currentProduct.category;
+        let primaryCat = await categoryRepository.findByCode(primaryCatCode);
+        if (!primaryCat) {
+          primaryCat = await categoryRepository.create({
+            name: primaryCatCode.replace('_', ' '),
+            code: primaryCatCode,
+          });
+        }
+
+        let secondaryIds: string[];
+        if (data.additionalCategoryIds !== undefined) {
+          secondaryIds = data.additionalCategoryIds;
+        } else {
+          secondaryIds = currentProduct.categories
+            .filter((pc) => !pc.isPrimary)
+            .map((pc) => pc.categoryId);
+        }
+
+        const categoryJoins: { categoryId: string; isPrimary: boolean }[] = [
+          { categoryId: primaryCat.id, isPrimary: true },
+        ];
+
+        for (const catId of secondaryIds) {
+          if (catId !== primaryCat.id && !categoryJoins.some((cj) => cj.categoryId === catId)) {
+            categoryJoins.push({ categoryId: catId, isPrimary: false });
+          }
+        }
+
+        await db.productCategory.deleteMany({ where: { productId: id } });
+        await db.productCategory.createMany({
+          data: categoryJoins.map((cj) => ({
+            productId: id,
+            categoryId: cj.categoryId,
+            isPrimary: cj.isPrimary,
+          })),
+        });
+      }
+    }
+
     return db.product.update({
       where: { id },
       data: updateData,

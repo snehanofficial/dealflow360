@@ -145,34 +145,58 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
 
           {/* Section 2: Classification */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Primary Category *</label>
-              <select
-                {...register('category')}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#714B67]"
-              >
-                {ProductCategoryEnum.options.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Primary Category *</label>
+                <select
+                  {...register('category')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                >
+                  {ProductCategoryEnum.options.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Product Type *</label>
+                <select
+                  {...register('type')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                >
+                  {ProductTypeEnum.options.map((t) => (
+                    <option key={t} value={t}>
+                      {t.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Product Type *</label>
-              <select
-                {...register('type')}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#714B67]"
-              >
-                {ProductTypeEnum.options.map((t) => (
-                  <option key={t} value={t}>
-                    {t.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Secondary Categories Multi-Select Grid */}
+            {categories && categories.length > 0 && (
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                <span className="font-semibold text-slate-700 text-[11px] uppercase tracking-wider block">
+                  Assign Additional Catalog Categories (Multi-Category Support)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {categories.map((cat) => (
+                    <label key={cat.id} className="flex items-center space-x-2 text-slate-700 font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        value={cat.id}
+                        {...register('additionalCategoryIds')}
+                        className="rounded border-slate-300 text-[#714B67] focus:ring-[#714B67]"
+                      />
+                      <span>{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section 3: Commercial Unit & Tax */}

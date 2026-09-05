@@ -565,9 +565,10 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
         {activeTab === 'categories' && (
           <div className="space-y-4 text-xs">
             <p className="text-slate-500">
-              Select multiple categories to associate with this product across the commercial catalog.
+              Configure primary and secondary catalog categories for this product line. Products can belong to multiple categories.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-1">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
               {allCategories?.map((cat) => {
                 const isAssigned = currentProduct.categories?.some((c) => c.id === cat.id);
                 const isPrimary = currentProduct.primaryCategory?.id === cat.id || currentProduct.category === cat.code;
@@ -575,25 +576,54 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
                 return (
                   <div
                     key={cat.id}
-                    onClick={() => !isPrimary && handleToggleSecondaryCategory(cat.id)}
-                    className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-colors ${
+                    className={`p-3.5 rounded-xl border space-y-2 transition-colors ${
                       isPrimary
-                        ? 'bg-[#F3E9F1] border-[#714B67] text-[#714B67]'
+                        ? 'bg-[#F3E9F1] border-[#714B67]'
                         : isAssigned
-                        ? 'bg-slate-100 border-slate-300 text-slate-900'
-                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                        ? 'bg-slate-50 border-slate-300 text-slate-900'
+                        : 'bg-white border-slate-200 text-slate-500'
                     }`}
                   >
-                    <div>
-                      <span className="font-semibold block">{cat.name}</span>
-                      <span className="font-mono text-[10px] opacity-75">{cat.code}</span>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900 block">{cat.name}</span>
+                        <span className="font-mono text-[10px] text-slate-500">{cat.code}</span>
+                      </div>
+                      {isPrimary ? (
+                        <span className="text-[10px] font-bold bg-[#714B67] text-white px-2 py-0.5 rounded shadow-xs">
+                          PRIMARY CATEGORY
+                        </span>
+                      ) : (
+                        <label className="flex items-center space-x-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isAssigned}
+                            onChange={() => handleToggleSecondaryCategory(cat.id)}
+                            className="rounded border-slate-300 text-[#714B67] focus:ring-[#714B67]"
+                          />
+                          <span className="font-medium text-slate-700">Assigned</span>
+                        </label>
+                      )}
                     </div>
-                    {isPrimary ? (
-                      <span className="text-[10px] font-bold bg-[#714B67] text-white px-2 py-0.5 rounded">PRIMARY</span>
-                    ) : isAssigned ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <Plus className="w-4 h-4 text-slate-400" />
+
+                    {!isPrimary && isManagerOrAdmin && (
+                      <div className="pt-2 border-t border-slate-200/60 flex justify-end">
+                        <button
+                          onClick={async () => {
+                            try {
+                              await updateProductMutation.mutateAsync({
+                                id: currentProduct.id,
+                                data: { category: cat.code as any },
+                              });
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }}
+                          className="text-[11px] font-semibold text-[#714B67] hover:underline"
+                        >
+                          Make Primary Category
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -752,29 +782,61 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
         {/* TAB 5: PRICE LISTS */}
         {activeTab === 'price-lists' && (
           <div className="space-y-4 text-xs">
-            <p className="text-slate-500">
-              Customer Tier & Currency Price List overrides for this product line.
-            </p>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+              <div className="flex items-center space-x-2 text-slate-900 font-bold">
+                <Shield className="w-4 h-4 text-[#714B67]" />
+                <span>B2B Customer Tier & Currency Price List Governance</span>
+              </div>
+              <p className="text-slate-500 text-[11px]">
+                Price Lists define contractual unit prices for specific Customer Tiers (ENTERPRISE, TIER_1, TIER_2, TIER_3) and Currencies (USD, EUR, GBP, INR). When a customer builds a quotation, the server automatically resolves the exact matching price list override.
+              </p>
+            </div>
+
             {priceLists && priceLists.length > 0 ? (
               <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100">
                 {priceLists.map((pl) => {
                   const entry = pl.entries?.find((e) => e.productId === currentProduct.id);
                   const currentPrice = entry ? entry.unitPrice : currentProduct.unitPrice;
+                  const delta = currentPrice - currentProduct.unitPrice;
+                  const percentDiscount = currentProduct.unitPrice > 0 ? ((delta / currentProduct.unitPrice) * 100).toFixed(1) : '0';
+
+                  const tierColorMap: Record<string, string> = {
+                    ENTERPRISE: 'bg-amber-100 text-amber-800 border-amber-300',
+                    TIER_1: 'bg-purple-100 text-purple-800 border-purple-300',
+                    TIER_2: 'bg-blue-100 text-blue-800 border-blue-300',
+                    TIER_3: 'bg-slate-100 text-slate-800 border-slate-300',
+                  };
+
                   return (
-                    <div key={pl.id} className="p-3 flex items-center justify-between hover:bg-slate-50">
-                      <div>
-                        <span className="font-bold text-slate-900 block">{pl.name}</span>
-                        <div className="flex items-center space-x-2 text-[10px] text-slate-500 mt-0.5">
-                          <span>Tier: {pl.customerTier || 'GLOBAL'}</span>
-                          <span>Currency: {pl.currency}</span>
+                    <div key={pl.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80">
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-slate-900">{pl.name}</span>
+                          <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${tierColorMap[pl.customerTier || ''] || 'bg-indigo-100 text-indigo-800 border-indigo-300'}`}>
+                            {pl.customerTier || 'GLOBAL TIER'}
+                          </span>
+                          <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[10px] font-bold rounded">
+                            {pl.currency}
+                          </span>
                         </div>
+
+                        {entry ? (
+                          <div className="text-[11px] text-slate-500 font-mono">
+                            Base Catalog: <span className="line-through">${currentProduct.unitPrice.toFixed(2)}</span>
+                            <span className="ml-2 text-emerald-600 font-semibold">
+                              Override: ${entry.unitPrice.toFixed(2)} ({delta < 0 ? `${percentDiscount}% Tier Savings` : `+$${delta.toFixed(2)}`})
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-slate-400">
+                            No custom price entry. Base catalog price (${currentProduct.unitPrice.toFixed(2)}) applies.
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-slate-500 text-[11px]">
-                          {entry ? 'Override Price:' : 'Base Price:'}
-                        </span>
+                      <div className="flex items-center space-x-2 shrink-0">
                         <div className="relative">
+                          <span className="absolute left-2.5 top-1.5 text-slate-400 text-xs">$</span>
                           <input
                             type="number"
                             step="0.01"
@@ -782,7 +844,7 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
                             onChange={(e) =>
                               setPriceOverrides({ ...priceOverrides, [pl.id]: parseFloat(e.target.value) || 0 })
                             }
-                            className="w-24 px-2 py-1 font-mono font-bold border border-slate-200 rounded text-slate-900 bg-white"
+                            className="w-28 pl-6 pr-2 py-1 font-mono font-bold border border-slate-200 rounded text-slate-900 bg-white"
                           />
                         </div>
                         {isManagerOrAdmin && (
@@ -792,7 +854,7 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
                             onClick={() => handleSavePriceListEntry(pl.id)}
                             isLoading={upsertPriceEntryMutation.isPending}
                           >
-                            Save
+                            Set Tier Price
                           </Button>
                         )}
                       </div>
