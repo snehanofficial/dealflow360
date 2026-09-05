@@ -44,13 +44,17 @@ app.get('/api/v1/health', (_req, res) => {
   });
 });
 
+import discountPolicyRoutes from './routes/discountPolicyRoutes.js';
+import commercialEvaluationRoutes from './routes/commercialEvaluationRoutes.js';
+
 // Auth & Business Module Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/quotes', quoteRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/price-lists', priceListRoutes);
-
+app.use('/api/v1/discount-policies', discountPolicyRoutes);
+app.use('/api/v1/commercial-evaluations', commercialEvaluationRoutes);
 
 // Quotation & Recommendation Routes
 app.use('/api/v1/quotations', quoteRoutes);

@@ -31,6 +31,9 @@ export const Permissions = {
   PORTAL_NEGOTIATE: 'portal.negotiate',
   PORTAL_CONFIRM: 'portal.confirm',
   AUDIT_VIEW: 'audit.view',
+  DISCOUNT_VIEW: 'discount.view',
+  DISCOUNT_EVALUATE: 'discount.evaluate',
+  DISCOUNT_CONFIGURE: 'discount.configure',
 } as const;
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions];
@@ -52,6 +55,9 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.FULFILLMENT_VIEW,
     Permissions.BILLING_VIEW,
     Permissions.AUDIT_VIEW,
+    Permissions.DISCOUNT_VIEW,
+    Permissions.DISCOUNT_EVALUATE,
+    Permissions.DISCOUNT_CONFIGURE,
   ],
   SALES_REP: [
     Permissions.DASHBOARD_VIEW,
@@ -65,6 +71,8 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.QUOTATION_SUBMIT,
     Permissions.FULFILLMENT_VIEW,
     Permissions.BILLING_VIEW,
+    Permissions.DISCOUNT_VIEW,
+    Permissions.DISCOUNT_EVALUATE,
   ],
   FINANCE_OPERATIONS: [
     Permissions.DASHBOARD_VIEW,
@@ -76,6 +84,9 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.BILLING_VIEW,
     Permissions.BILLING_MANAGE,
     Permissions.AUDIT_VIEW,
+    Permissions.DISCOUNT_VIEW,
+    Permissions.DISCOUNT_EVALUATE,
+    Permissions.DISCOUNT_CONFIGURE,
   ],
   CUSTOMER: [
     Permissions.PROFILE_VIEW,

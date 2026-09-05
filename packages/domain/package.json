@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@dealflow360/contracts": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.8.2"
   }

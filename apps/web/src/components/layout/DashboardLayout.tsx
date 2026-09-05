@@ -67,11 +67,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
     {
       title: 'RISK & APPROVALS',
-      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'],
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'],
       items: [
+        { name: 'Discount Policies', icon: ShieldAlert, path: '/discount-policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
         { name: 'Approvals', icon: CheckSquare, path: '/approvals', badge: 3, allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Policies', icon: ShieldCheck, path: '/policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {

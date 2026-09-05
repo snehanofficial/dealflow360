@@ -263,6 +263,79 @@ async function main() {
     console.log(`Seeded sample quotation: ${sampleQuote.quoteNumber}`);
   }
 
+  // Seed Discount Policy Rules
+  const policyRules = [
+    {
+      id: 'rule-ent-001',
+      name: 'Enterprise Tier Discount Policy',
+      description: 'Special high-volume discount allowance for Enterprise tier customers',
+      customerTier: 'ENTERPRISE' as const,
+      category: null,
+      maxDiscountPercent: 20.0,
+      minMarginPercent: 20.0,
+      requiredApprovalRole: Role.SALES_MANAGER,
+      priority: 50,
+      isActive: true,
+    },
+    {
+      id: 'rule-t1-001',
+      name: 'Tier 1 Customer Policy',
+      description: 'Standard governed discount allowance for Tier 1 key accounts',
+      customerTier: 'TIER_1' as const,
+      category: null,
+      maxDiscountPercent: 15.0,
+      minMarginPercent: 25.0,
+      requiredApprovalRole: Role.SALES_MANAGER,
+      priority: 40,
+      isActive: true,
+    },
+    {
+      id: 'rule-t2-001',
+      name: 'Tier 2 Customer Policy',
+      description: 'Strict discount policy for Tier 2 standard accounts',
+      customerTier: 'TIER_2' as const,
+      category: null,
+      maxDiscountPercent: 10.0,
+      minMarginPercent: 30.0,
+      requiredApprovalRole: Role.SALES_MANAGER,
+      priority: 30,
+      isActive: true,
+    },
+    {
+      id: 'rule-hw-001',
+      name: 'Hardware Category Margin Protection Policy',
+      description: 'Requires Finance approval when Hardware discounts impact baseline margin',
+      customerTier: null,
+      category: 'Hardware',
+      maxDiscountPercent: 12.0,
+      minMarginPercent: 25.0,
+      requiredApprovalRole: Role.FINANCE_OPERATIONS,
+      priority: 60,
+      isActive: true,
+    },
+    {
+      id: 'rule-global-001',
+      name: 'Global Default Commercial Governance',
+      description: 'Fallback policy for unclassified customers and products',
+      customerTier: null,
+      category: null,
+      maxDiscountPercent: 10.0,
+      minMarginPercent: 25.0,
+      requiredApprovalRole: Role.SALES_MANAGER,
+      priority: 10,
+      isActive: true,
+    },
+  ];
+
+  for (const rule of policyRules) {
+    await prisma.discountPolicyRule.upsert({
+      where: { id: rule.id },
+      update: rule,
+      create: rule,
+    });
+  }
+  console.log('Seeded discount policy rules.');
+
   console.log('Database seed completed successfully.');
 }
 
