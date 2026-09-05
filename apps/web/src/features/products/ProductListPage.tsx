@@ -13,9 +13,6 @@ import {
   Edit2,
   Eye,
   Layers,
-  ShieldCheck,
-  DollarSign,
-  Percent,
 } from 'lucide-react';
 import {
   ProductDto,
@@ -80,6 +77,8 @@ export const ProductListPage: React.FC = () => {
             description: formData.description,
             category: formData.category,
             type: formData.type,
+            unit: formData.unit,
+            taxRate: formData.taxRate,
             unitPrice: formData.unitPrice,
             costPrice: formData.costPrice,
             maxAllowedDiscount: formData.maxAllowedDiscount,
@@ -118,7 +117,7 @@ export const ProductListPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Product Catalog & Base Pricing</h1>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Governed product offerings, base list prices, standard costs, and maximum discount limits.
+            Governed product offerings, unit of measure, base list prices, standard costs, and tax rules.
           </p>
         </div>
 
@@ -202,15 +201,15 @@ export const ProductListPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left text-sm border-collapse min-w-[760px]">
+            <table className="w-full text-left text-sm border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4">SKU</th>
                   <th className="py-3 px-4">Product Name</th>
                   <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Unit</th>
                   <th className="py-3 px-4 text-right">Selling Price</th>
-                  <th className="py-3 px-4 text-right">Cost Price</th>
+                  <th className="py-3 px-4 text-right">Tax Rate</th>
                   <th className="py-3 px-4 text-right">Max Discount</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
@@ -231,17 +230,17 @@ export const ProductListPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={categoryBadgeMap[product.category] || 'default'} size="sm">
-                        {product.category.replace('_', ' ')}
+                        {product.primaryCategory?.name || product.category.replace('_', ' ')}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-xs font-medium text-slate-600">
-                      {product.type.replace('_', ' ')}
+                      {product.unit || 'Unit'}
                     </td>
                     <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
                       ${product.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3 px-4 text-right font-mono text-xs text-slate-600">
-                      ${product.costPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {product.taxRate ?? 0}%
                     </td>
                     <td className="py-3 px-4 text-right">
                       <span className="inline-flex items-center font-mono text-xs font-semibold text-[#714B67] bg-[#F3E9F1] px-2 py-0.5 rounded">
