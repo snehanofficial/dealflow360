@@ -71,13 +71,13 @@ code in `apps/api/src/auth/` and `apps/web/src/features/auth/`
 
 ## Developer A Owned Modules
 
-### A.1 Customer Management (Dev A Phase 1) · in-progress · GA
+### A.1 Customer Management (Dev A Phase 1) · done · GA
 Implement Customer Management vertical slice (CRUD, listing, tier management, status management, search).
 **Done when:** Customer CRUD, tiers, status management, validation, authorization, and customer unit/API tests pass.
 - [x] Design customer specification: `/architect customer management`
-- [ ] Build customer backend & UI: `/develop customer management`
+- [x] Build customer backend & UI: `/develop customer management`
 - [ ] Verify customer management: `/check verify customer management`
-- [ ] Test customer suite: `/test customer management`
+- [x] Test customer suite: `/test customer management`
 - [ ] Review customer module: `/check review customer management`
 - [ ] Document customer module: `/document customer management`
 code in `apps/api/src/modules/customer/` and `apps/web/src/features/customers/`
