@@ -6,6 +6,7 @@ import { SignupForm } from '../features/auth/SignupForm.js';
 import { ProfileView } from '../features/auth/ProfileView.js';
 import { DashboardLayout } from '../components/layout/DashboardLayout.js';
 import { HomePage } from '../features/dashboard/HomePage.js';
+import { CustomerListPage } from '../features/customers/CustomerListPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { Loader2 } from 'lucide-react';
 
@@ -73,6 +74,17 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <ProfileView />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/customers"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CustomerListPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
