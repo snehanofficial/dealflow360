@@ -10,6 +10,8 @@ import { CustomerListPage } from '../features/customers/CustomerListPage.js';
 import { QuoteListPage } from '../features/quotes/QuoteListPage.js';
 import { QuoteBuilderPage } from '../features/quotes/QuoteBuilderPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
+import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
+import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,15 +33,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
-
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<SignupForm />} />
       <Route path="/portal/quotes/:token" element={<CustomerPortalPage />} />
-
 
       <Route
         path="/app"
@@ -80,6 +79,28 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <QuotationViewPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quotations/:id/fulfillment"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <FulfillmentAllocationPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fulfillment"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <FulfillmentAllocationPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

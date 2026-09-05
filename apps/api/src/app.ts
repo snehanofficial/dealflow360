@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/authRoutes.js';
 import { customerRoutes } from './routes/customerRoutes.js';
 import { quoteRoutes } from './routes/quoteRoutes.js';
+import { portalRoutes } from './routes/portalRoutes.js';
+import { fulfillmentRoutes } from './routes/fulfillmentRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
 
@@ -42,19 +44,14 @@ app.get('/api/v1/health', (_req, res) => {
 // Auth & Business Module Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/customers', customerRoutes);
-
-import { portalRoutes } from './routes/portalRoutes.js';
-
-// Quotation & Recommendation Routes
 app.use('/api/v1/quotes', quoteRoutes);
 app.use('/api/v1/quotations', quoteRoutes);
 app.use('/api/v1/portal', portalRoutes);
-
-
+app.use('/api/v1/fulfillment', fulfillmentRoutes);
+app.use('/api/v1/quotes', fulfillmentRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);
-
 
 const PORT = env.PORT;
 
