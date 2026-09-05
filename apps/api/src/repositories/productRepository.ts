@@ -202,6 +202,85 @@ export class ProductRepository {
       },
     });
   }
+
+  async createVariant(productId: string, data: {
+    sku: string;
+    name: string;
+    extraPrice?: number;
+    isActive?: boolean;
+    attributeValueIds?: string[];
+  }) {
+    return db.productVariant.create({
+      data: {
+        productId,
+        sku: data.sku,
+        name: data.name,
+        extraPrice: data.extraPrice ?? 0,
+        isActive: data.isActive ?? true,
+        attributes: data.attributeValueIds && data.attributeValueIds.length > 0
+          ? {
+              create: data.attributeValueIds.map((id) => ({ attributeValueId: id })),
+            }
+          : undefined,
+      },
+      include: {
+        attributes: {
+          include: {
+            attributeValue: {
+              include: { attribute: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async updateVariant(variantId: string, data: {
+    sku?: string;
+    name?: string;
+    extraPrice?: number;
+    isActive?: boolean;
+    attributeValueIds?: string[];
+  }) {
+    if (data.attributeValueIds !== undefined) {
+      await db.variantAttributeValue.deleteMany({
+        where: { variantId },
+      });
+      if (data.attributeValueIds.length > 0) {
+        await db.variantAttributeValue.createMany({
+          data: data.attributeValueIds.map((id) => ({
+            variantId,
+            attributeValueId: id,
+          })),
+        });
+      }
+    }
+
+    return db.productVariant.update({
+      where: { id: variantId },
+      data: {
+        sku: data.sku,
+        name: data.name,
+        extraPrice: data.extraPrice,
+        isActive: data.isActive,
+      },
+      include: {
+        attributes: {
+          include: {
+            attributeValue: {
+              include: { attribute: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async deleteVariant(variantId: string) {
+    return db.productVariant.delete({
+      where: { id: variantId },
+    });
+  }
 }
 
 export const productRepository = new ProductRepository();

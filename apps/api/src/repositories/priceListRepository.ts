@@ -50,6 +50,7 @@ export class PriceListRepository {
           currency,
           isActive: true,
         },
+        orderBy: { createdAt: 'desc' },
         include: {
           entries: {
             where: { productId },
@@ -81,6 +82,48 @@ export class PriceListRepository {
     }
 
     return null;
+  }
+
+  async update(id: string, data: {
+    name?: string;
+    customerTier?: CustomerTier | null;
+    currency?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+  }): Promise<PriceList & { entries: PriceListEntry[] }> {
+    return db.priceList.update({
+      where: { id },
+      data,
+      include: { entries: true },
+    });
+  }
+
+  async upsertEntry(priceListId: string, productId: string, unitPrice: number): Promise<PriceListEntry> {
+    return db.priceListEntry.upsert({
+      where: {
+        priceListId_productId: {
+          priceListId,
+          productId,
+        },
+      },
+      update: {
+        unitPrice,
+      },
+      create: {
+        priceListId,
+        productId,
+        unitPrice,
+      },
+    });
+  }
+
+  async deleteEntry(priceListId: string, productId: string): Promise<void> {
+    await db.priceListEntry.deleteMany({
+      where: {
+        priceListId,
+        productId,
+      },
+    });
   }
 }
 

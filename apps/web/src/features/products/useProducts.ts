@@ -97,3 +97,157 @@ export function useCreatePriceList() {
     },
   });
 }
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { name: string; code: string }) => {
+      const response = await api.post('/products/categories', data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useAttributes() {
+  return useQuery({
+    queryKey: ['attributes'],
+    queryFn: async () => {
+      const response = await api.get('/products/attributes');
+      return response.data.data;
+    },
+  });
+}
+
+export function useCreateAttribute() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { name: string; values?: string[] }) => {
+      const response = await api.post('/products/attributes', data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attributes'] });
+    },
+  });
+}
+
+export function useAddAttributeValue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ attributeId, value }: { attributeId: string; value: string }) => {
+      const response = await api.post(`/products/attributes/${attributeId}/values`, { value });
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attributes'] });
+    },
+  });
+}
+
+export function useDeleteAttributeValue() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (valueId: string) => {
+      const response = await api.delete(`/products/attributes/values/${valueId}`);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attributes'] });
+    },
+  });
+}
+
+export function useCreateVariant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, data }: { productId: string; data: any }) => {
+      const response = await api.post(`/products/${productId}/variants`, data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpdateVariant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, variantId, data }: { productId: string; variantId: string; data: any }) => {
+      const response = await api.patch(`/products/${productId}/variants/${variantId}`, data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useDeleteVariant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, variantId }: { productId: string; variantId: string }) => {
+      const response = await api.delete(`/products/${productId}/variants/${variantId}`);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpdatePriceList() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await api.patch(`/products/price-lists/${id}`, data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpsertPriceListEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ priceListId, productId, unitPrice }: { priceListId: string; productId: string; unitPrice: number }) => {
+      const response = await api.post(`/products/price-lists/${priceListId}/entries`, { productId, unitPrice });
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useDeletePriceListEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ priceListId, productId }: { priceListId: string; productId: string }) => {
+      const response = await api.delete(`/products/price-lists/${priceListId}/entries/${productId}`);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
