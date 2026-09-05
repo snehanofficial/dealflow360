@@ -29,6 +29,7 @@ enum QuoteStatus {
   PENDING_MANAGER
   PENDING_FINANCE
   APPROVED
+  REJECTED
   NEGOTIATING
   FULFILLMENT
   BILLING
@@ -53,6 +54,8 @@ model User {
   updatedAt       DateTime         @updatedAt
   refreshSessions RefreshSession[]
   quotations      Quotation[]
+  approvalRequests ApprovalRequest[]
+  actedApprovalSteps ApprovalStep[]
 }
 
 model RefreshSession {
@@ -250,6 +253,7 @@ model Quotation {
   fulfillmentAllocations FulfillmentAllocation[]
   billingSchedule        BillingSchedule?
   dealAlerts             DealAlert[]
+  approvalRequests       ApprovalRequest[]
 }
 
 model PortalToken {
@@ -436,6 +440,62 @@ model DealAlert {
   @@index([isResolved])
 }
 
+enum ApprovalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUPERSEDED
+}
+
+enum ApprovalStepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUPERSEDED
+}
+
+model ApprovalRequest {
+  id                  String                @id @default(uuid())
+  quotationId         String?
+  quotation           Quotation?            @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  requestedById       String
+  requestedBy         User                  @relation(fields: [requestedById], references: [id])
+  status              ApprovalRequestStatus @default(PENDING)
+  riskScore           Float                 @default(0)
+  riskLevel           String                @default("LOW")
+  netTotal            Float                 @default(0)
+  marginAmount        Float                 @default(0)
+  marginPercentage    Float                 @default(0)
+  violations          Json?
+  commercialSummary   Json?
+  currentStepSequence Int                   @default(1)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  steps               ApprovalStep[]
+
+  @@index([quotationId])
+  @@index([requestedById])
+  @@index([status])
+}
+
+model ApprovalStep {
+  id                String             @id @default(uuid())
+  approvalRequestId String
+  approvalRequest   ApprovalRequest    @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  sequence          Int                @default(1)
+  requiredRole      Role
+  status            ApprovalStepStatus @default(PENDING)
+  actedById         String?
+  actedBy           User?              @relation(fields: [actedById], references: [id])
+  actedAt           DateTime?
+  comments          String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([approvalRequestId])
+  @@index([requiredRole])
+  @@index([status])
+}
 
 
 

@@ -104,10 +104,23 @@ export const QuoteBuilderPage: React.FC = () => {
           }
         }
 
-        if (prodRes.data.success && prodRes.data.data) {
-          setProducts(prodRes.data.data);
-          if (prodRes.data.data.length > 0) {
-            setSelectedProductId(prodRes.data.data[0].id);
+        const rawProdItems =
+          (prodRes.data as any)?.data?.items ||
+          (Array.isArray((prodRes.data as any)?.data) ? (prodRes.data as any).data : []);
+
+        if (Array.isArray(rawProdItems)) {
+          const mappedProducts: ProductOption[] = rawProdItems.map((p: any) => ({
+            id: p.id,
+            sku: p.sku,
+            name: p.name,
+            category: typeof p.category === 'string' ? p.category : p.category?.name || 'General',
+            listPrice: p.unitPrice ?? p.listPrice ?? 0,
+            standardCost: p.costPrice ?? p.standardCost ?? 0,
+          }));
+
+          setProducts(mappedProducts);
+          if (mappedProducts.length > 0) {
+            setSelectedProductId(mappedProducts[0].id);
           }
         }
       } catch (err: any) {
