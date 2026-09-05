@@ -1,1 +1,1 @@
-export const BillingFeature = {};
+export * from './BillingSchedulePage.js';
