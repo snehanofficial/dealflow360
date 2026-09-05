@@ -140,6 +140,7 @@ model Quotation {
   portalTokens           PortalToken[]
   counterOffers          CounterOffer[]
   fulfillmentAllocations FulfillmentAllocation[]
+  billingSchedule        BillingSchedule?
 }
 
 model PortalToken {
@@ -254,5 +255,39 @@ model FulfillmentAllocation {
   @@index([quoteLineId])
   @@index([warehouseId])
 }
+
+model BillingSchedule {
+  id                    String        @id @default(uuid())
+  quotationId           String        @unique
+  quotation             Quotation     @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  totalOneTimeAmount    Float         @default(0)
+  totalRecurringMonthly Float         @default(0)
+  totalRecurringAnnual  Float         @default(0)
+  billingStartDate      DateTime      @default(now())
+  status                String        @default("ACTIVE")
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  lines                 BillingLine[]
+}
+
+model BillingLine {
+  id                String           @id @default(uuid())
+  billingScheduleId String
+  billingSchedule   BillingSchedule  @relation(fields: [billingScheduleId], references: [id], onDelete: Cascade)
+  quoteLineId       String?
+  productName       String
+  billingType       BillingType      @default(ONE_TIME)
+  recurringPeriod   RecurringPeriod?
+  billingDate       DateTime
+  amount            Float
+  proratedDays      Int?
+  isProrated        Boolean          @default(false)
+  status            String           @default("PENDING")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([billingScheduleId])
+}
+
 
 

@@ -12,6 +12,7 @@ import { QuoteBuilderPage } from '../features/quotes/QuoteBuilderPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
 import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
+import { BillingSchedulePage } from '../features/billing/BillingSchedulePage.js';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -101,6 +102,28 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <FulfillmentAllocationPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quotations/:id/billing"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <BillingSchedulePage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <BillingSchedulePage />
             </DashboardLayout>
           </ProtectedRoute>
         }

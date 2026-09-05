@@ -17,6 +17,8 @@ import {
   Trash2,
   Send,
   Loader2,
+  FileSpreadsheet,
+  Truck,
 } from 'lucide-react';
 
 interface QuoteLineData {
@@ -263,6 +265,22 @@ export const QuotationViewPage: React.FC = () => {
               Submit Quote
             </button>
           )}
+
+          <button
+            onClick={() => navigate(`/quotations/${quotation.id}/fulfillment`)}
+            className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
+            title="View Fulfillment Allocation"
+          >
+            <Truck className="w-3.5 h-3.5 text-[#714B67]" /> Fulfillment Split
+          </button>
+
+          <button
+            onClick={() => navigate(`/quotations/${quotation.id}/billing`)}
+            className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
+            title="View Billing Schedule"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-[#714B67]" /> Billing Schedule
+          </button>
 
           <button
             onClick={() => {

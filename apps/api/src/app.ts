@@ -8,6 +8,7 @@ import { customerRoutes } from './routes/customerRoutes.js';
 import { quoteRoutes } from './routes/quoteRoutes.js';
 import { portalRoutes } from './routes/portalRoutes.js';
 import { fulfillmentRoutes } from './routes/fulfillmentRoutes.js';
+import { billingRoutes } from './routes/billingRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
 
@@ -49,6 +50,8 @@ app.use('/api/v1/quotations', quoteRoutes);
 app.use('/api/v1/portal', portalRoutes);
 app.use('/api/v1/fulfillment', fulfillmentRoutes);
 app.use('/api/v1/quotes', fulfillmentRoutes);
+app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/quotes', billingRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);
