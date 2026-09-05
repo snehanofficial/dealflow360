@@ -352,7 +352,7 @@ export const QuoteBuilderPage: React.FC = () => {
               onChange={(e) => setSelectedProductId(e.target.value)}
               className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-[#714B67]"
             >
-              {products.map((p) => (
+              {products?.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} (${p.listPrice})
                 </option>

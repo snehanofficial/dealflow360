@@ -127,7 +127,7 @@ export const AddProductToPriceListModal: React.FC<AddProductToPriceListModalProp
               </div>
             ) : (
               <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
-                {availableProducts.map((prod) => {
+                {availableProducts?.map((prod) => {
                   const isSelected = selectedProductId === prod.id;
                   return (
                     <div
