@@ -7,6 +7,7 @@ import { ProfileView } from '../features/auth/ProfileView.js';
 import { DashboardLayout } from '../components/layout/DashboardLayout.js';
 import { HomePage } from '../features/dashboard/HomePage.js';
 import { CustomerListPage } from '../features/customers/CustomerListPage.js';
+import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -46,6 +47,28 @@ export const AppRoutes: React.FC = () => {
       />
       
       <Route
+        path="/app/quotes/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <QuotationViewPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/app/quotes"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <QuotationViewPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -71,3 +94,4 @@ export const AppRoutes: React.FC = () => {
     </Routes>
   );
 };
+
