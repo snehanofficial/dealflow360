@@ -1,14 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { X, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { DiscountPolicyRuleDto, CreateDiscountPolicyRuleRequest } from '@dealflow360/contracts';
 import { useCreateDiscountPolicy, useUpdateDiscountPolicy } from './useDiscountPolicies.js';
-import { Button } from '../../components/ui/index.js';
+import { Alert, Button } from '../../components/ui/index.js';
 
 interface DiscountPolicyFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   ruleToEdit?: DiscountPolicyRuleDto | null;
 }
+
+const discountPolicyFormSchema = z.object({
+  name: z.string().trim().min(1, 'Policy rule name is required'),
+  description: z.string().optional(),
+  customerTier: z.string(),
+  category: z.string(),
+  maxDiscountPercent: z.coerce
+    .number({ invalid_type_error: 'Max discount percent must be a valid number' })
+    .min(0, 'Max discount percent cannot be negative')
+    .max(100, 'Max discount percent cannot exceed 100%'),
+  minMarginPercent: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+    z.number({ invalid_type_error: 'Minimum margin percent must be a valid number' })
+      .min(0, 'Minimum margin percent cannot be negative')
+      .max(100, 'Minimum margin percent cannot exceed 100%')
+      .nullable()
+  ),
+  requiredApprovalRole: z.enum(['SALES_MANAGER', 'FINANCE_OPERATIONS']),
+  priority: z.coerce
+    .number({ invalid_type_error: 'Priority must be a valid number' })
+    .int('Priority must be an integer'),
+  isActive: z.boolean(),
+});
+
+type DiscountPolicyFormValues = z.infer<typeof discountPolicyFormSchema>;
 
 export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = ({
   isOpen,
@@ -18,75 +46,72 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
   const isEditing = !!ruleToEdit;
   const createMutation = useCreateDiscountPolicy();
   const updateMutation = useUpdateDiscountPolicy();
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [customerTier, setCustomerTier] = useState<string>('GLOBAL');
-  const [category, setCategory] = useState<string>('GLOBAL');
-  const [maxDiscountPercent, setMaxDiscountPercent] = useState<number>(10);
-  const [minMarginPercent, setMinMarginPercent] = useState<string>('25');
-  const [requiredApprovalRole, setRequiredApprovalRole] = useState<'SALES_MANAGER' | 'FINANCE_OPERATIONS'>('SALES_MANAGER');
-  const [priority, setPriority] = useState<number>(10);
-  const [isActive, setIsActive] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<DiscountPolicyFormValues>({
+    resolver: zodResolver(discountPolicyFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      customerTier: 'GLOBAL',
+      category: 'GLOBAL',
+      maxDiscountPercent: 10,
+      minMarginPercent: 25,
+      requiredApprovalRole: 'SALES_MANAGER',
+      priority: 10,
+      isActive: true,
+    },
+  });
 
   useEffect(() => {
     if (ruleToEdit) {
-      setName(ruleToEdit.name);
-      setDescription(ruleToEdit.description || '');
-      setCustomerTier(ruleToEdit.customerTier || 'GLOBAL');
-      setCategory(ruleToEdit.category || 'GLOBAL');
-      setMaxDiscountPercent(ruleToEdit.maxDiscountPercent);
-      setMinMarginPercent(ruleToEdit.minMarginPercent !== null && ruleToEdit.minMarginPercent !== undefined ? String(ruleToEdit.minMarginPercent) : '');
-      setRequiredApprovalRole(ruleToEdit.requiredApprovalRole as any || 'SALES_MANAGER');
-      setPriority(ruleToEdit.priority);
-      setIsActive(ruleToEdit.isActive);
+      reset({
+        name: ruleToEdit.name,
+        description: ruleToEdit.description || '',
+        customerTier: ruleToEdit.customerTier || 'GLOBAL',
+        category: ruleToEdit.category || 'GLOBAL',
+        maxDiscountPercent: ruleToEdit.maxDiscountPercent,
+        minMarginPercent: ruleToEdit.minMarginPercent ?? null,
+        requiredApprovalRole: (ruleToEdit.requiredApprovalRole as any) || 'SALES_MANAGER',
+        priority: ruleToEdit.priority,
+        isActive: ruleToEdit.isActive,
+      });
     } else {
-      setName('');
-      setDescription('');
-      setCustomerTier('GLOBAL');
-      setCategory('GLOBAL');
-      setMaxDiscountPercent(10);
-      setMinMarginPercent('25');
-      setRequiredApprovalRole('SALES_MANAGER');
-      setPriority(10);
-      setIsActive(true);
+      reset({
+        name: '',
+        description: '',
+        customerTier: 'GLOBAL',
+        category: 'GLOBAL',
+        maxDiscountPercent: 10,
+        minMarginPercent: 25,
+        requiredApprovalRole: 'SALES_MANAGER',
+        priority: 10,
+        isActive: true,
+      });
     }
     setErrorMsg(null);
-  }, [ruleToEdit, isOpen]);
+  }, [ruleToEdit, isOpen, reset]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: DiscountPolicyFormValues) => {
     setErrorMsg(null);
 
-    if (!name.trim()) {
-      setErrorMsg('Policy name is required.');
-      return;
-    }
-
-    if (maxDiscountPercent < 0 || maxDiscountPercent > 100) {
-      setErrorMsg('Max discount percent must be between 0 and 100.');
-      return;
-    }
-
-    const parsedMinMargin = minMarginPercent.trim() !== '' ? Number(minMarginPercent) : null;
-    if (parsedMinMargin !== null && (isNaN(parsedMinMargin) || parsedMinMargin < 0 || parsedMinMargin > 100)) {
-      setErrorMsg('Minimum margin percent must be a valid number between 0 and 100.');
-      return;
-    }
-
     const payload: CreateDiscountPolicyRuleRequest = {
-      name: name.trim(),
-      description: description.trim() || undefined,
-      customerTier: customerTier === 'GLOBAL' ? null : (customerTier as any),
-      category: category === 'GLOBAL' ? null : category.trim(),
-      maxDiscountPercent: Number(maxDiscountPercent),
-      minMarginPercent: parsedMinMargin,
-      requiredApprovalRole: requiredApprovalRole as any,
-      priority: Number(priority),
-      isActive,
+      name: values.name.trim(),
+      description: values.description?.trim() || undefined,
+      customerTier: values.customerTier === 'GLOBAL' ? null : (values.customerTier as any),
+      category: values.category === 'GLOBAL' ? null : values.category.trim(),
+      maxDiscountPercent: values.maxDiscountPercent,
+      minMarginPercent: values.minMarginPercent,
+      requiredApprovalRole: values.requiredApprovalRole,
+      priority: values.priority,
+      isActive: values.isActive,
     };
 
     try {
@@ -122,32 +147,35 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* API Error Display on Top */}
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2 text-red-700 text-sm">
-            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
+          <Alert type="danger">
+            {errorMsg}
+          </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
               Policy Rule Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...register('name')}
               placeholder="e.g. Enterprise Hardware Discount Governance"
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none"
-              required
+              className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] ${
+                errors.name ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+              }`}
             />
+            {errors.name && (
+              <p className="mt-1 text-xs font-medium text-red-600">{errors.name.message}</p>
+            )}
           </div>
 
           <div>
@@ -156,8 +184,7 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
             </label>
             <textarea
               rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              {...register('description')}
               placeholder="Explain the commercial governance intent..."
               className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none"
             />
@@ -169,8 +196,7 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                 Target Customer Tier
               </label>
               <select
-                value={customerTier}
-                onChange={(e) => setCustomerTier(e.target.value)}
+                {...register('customerTier')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none bg-white"
               >
                 <option value="GLOBAL">All Tiers (Global Rule)</option>
@@ -186,8 +212,7 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                 Target Product Category
               </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                {...register('category')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none bg-white"
               >
                 <option value="GLOBAL">All Categories (Global Rule)</option>
@@ -208,15 +233,16 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                 <input
                   type="number"
                   step="0.1"
-                  min="0"
-                  max="100"
-                  value={maxDiscountPercent}
-                  onChange={(e) => setMaxDiscountPercent(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none pr-8"
-                  required
+                  {...register('maxDiscountPercent')}
+                  className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] pr-8 ${
+                    errors.maxDiscountPercent ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                  }`}
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">%</span>
               </div>
+              {errors.maxDiscountPercent && (
+                <p className="mt-1 text-xs font-medium text-red-600">{errors.maxDiscountPercent.message}</p>
+              )}
             </div>
 
             <div>
@@ -227,15 +253,17 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                 <input
                   type="number"
                   step="0.1"
-                  min="0"
-                  max="100"
-                  value={minMarginPercent}
-                  onChange={(e) => setMinMarginPercent(e.target.value)}
+                  {...register('minMarginPercent')}
                   placeholder="e.g. 25"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none pr-8"
+                  className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] pr-8 ${
+                    errors.minMarginPercent ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                  }`}
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">%</span>
               </div>
+              {errors.minMarginPercent && (
+                <p className="mt-1 text-xs font-medium text-red-600">{errors.minMarginPercent.message}</p>
+              )}
             </div>
           </div>
 
@@ -245,8 +273,7 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
                 Required Approval Role
               </label>
               <select
-                value={requiredApprovalRole}
-                onChange={(e) => setRequiredApprovalRole(e.target.value as any)}
+                {...register('requiredApprovalRole')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none bg-white"
               >
                 <option value="SALES_MANAGER">SALES_MANAGER</option>
@@ -260,11 +287,15 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
               </label>
               <input
                 type="number"
-                value={priority}
-                onChange={(e) => setPriority(Number(e.target.value))}
+                {...register('priority')}
                 placeholder="10"
-                className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none"
+                className={`w-full px-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-[#714B67] ${
+                  errors.priority ? 'border-red-500 text-red-900 bg-red-50/20' : 'border-slate-300'
+                }`}
               />
+              {errors.priority && (
+                <p className="mt-1 text-xs font-medium text-red-600">{errors.priority.message}</p>
+              )}
             </div>
           </div>
 
@@ -272,8 +303,7 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
             <input
               type="checkbox"
               id="isActiveToggle"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
+              {...register('isActive')}
               className="w-4 h-4 text-[#714B67] rounded border-slate-300 focus:ring-[#714B67]"
             />
             <label htmlFor="isActiveToggle" className="text-sm text-slate-700 font-medium cursor-pointer">
@@ -303,3 +333,4 @@ export const DiscountPolicyFormModal: React.FC<DiscountPolicyFormModalProps> = (
     </div>
   );
 };
+
