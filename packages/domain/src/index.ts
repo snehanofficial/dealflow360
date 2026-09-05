@@ -8,4 +8,5 @@ export * from './billing/index.js';
 export * from './recommendations/index.js';
 export * from './quote/index.js';
 export * from './state-machine/index.js';
+export * from './control-tower/index.js';
 export * from './shared/index.js';

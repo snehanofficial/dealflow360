@@ -8,6 +8,7 @@ export * from './billing/index.js';
 export * from './recommendations/index.js';
 export * from './policy/index.js';
 export * from './portal/index.js';
+export * from './control-tower/index.js';
 export * from './common/index.js';
 
 

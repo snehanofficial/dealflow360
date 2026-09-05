@@ -252,6 +252,7 @@ model Quotation {
   counterOffers          CounterOffer[]
   fulfillmentAllocations FulfillmentAllocation[]
   billingSchedule        BillingSchedule?
+  dealAlerts             DealAlert[]
   approvalRequests       ApprovalRequest[]
 }
 
@@ -421,6 +422,22 @@ model BillingLine {
   updatedAt         DateTime         @updatedAt
 
   @@index([billingScheduleId])
+}
+
+model DealAlert {
+  id          String    @id @default(uuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  alertType   String
+  severity    String    @default("WARNING")
+  message     String
+  isResolved  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([quotationId])
+  @@index([alertType])
+  @@index([isResolved])
 }
 
 enum ApprovalRequestStatus {
