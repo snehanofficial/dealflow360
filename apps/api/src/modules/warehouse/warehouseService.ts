@@ -53,6 +53,29 @@ export class WarehouseService {
       }
     }
 
+    if (typeof (db as any).fulfillmentAllocation?.aggregate === 'function') {
+      const items = await db.inventoryItem.findMany();
+      for (const item of items) {
+        const agg = await db.fulfillmentAllocation.aggregate({
+          where: {
+            warehouseId: item.warehouseId,
+            status: 'RESERVED',
+            quoteLine: { productId: item.productId },
+          },
+          _sum: { allocatedQuantity: true },
+        });
+        const reserved = agg._sum?.allocatedQuantity ?? 0;
+        const available = Math.max(0, item.onHandQuantity - reserved);
+        await db.inventoryItem.update({
+          where: { id: item.id },
+          data: {
+            reservedQuantity: reserved,
+            availableQuantity: available,
+          },
+        });
+      }
+    }
+
     return warehouses;
   }
 
@@ -224,7 +247,7 @@ export class WarehouseService {
     const { warehouseId, productId, productVariantId, quantity, movementType, reason } = input;
 
     const result = await executeTransaction(async (tx: any) => {
-      const item = await tx.inventoryItem.findUnique({
+      let item = await tx.inventoryItem.findUnique({
         where: {
           warehouseId_productId: {
             warehouseId,
@@ -235,7 +258,17 @@ export class WarehouseService {
       });
 
       if (!item) {
-        throw new AppError('NOT_FOUND', `Inventory item for product ${productId} in warehouse ${warehouseId} not found`, 404);
+        item = await tx.inventoryItem.create({
+          data: {
+            warehouseId,
+            productId,
+            productVariantId: productVariantId || null,
+            onHandQuantity: 0,
+            reservedQuantity: 0,
+            availableQuantity: 0,
+          },
+          include: { warehouse: true, product: true },
+        });
       }
 
       const onHandBefore = item.onHandQuantity;

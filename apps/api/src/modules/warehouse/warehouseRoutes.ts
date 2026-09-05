@@ -23,4 +23,4 @@ warehouseRoutes.patch('/warehouses/:id', requireRole(['ADMIN', 'FINANCE_OPERATIO
 // Inventory & Movements endpoints
 warehouseRoutes.get('/inventory', getInventoryStock);
 warehouseRoutes.get('/inventory/movements', getInventoryMovements);
-warehouseRoutes.post('/inventory/adjustments', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER']), adjustInventory);
+warehouseRoutes.post('/inventory/adjustments', requireRole(['ADMIN', 'FINANCE', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), adjustInventory);

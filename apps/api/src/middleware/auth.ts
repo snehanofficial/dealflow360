@@ -67,7 +67,7 @@ export function requirePermission(permission: Permission) {
   };
 }
 
-export function requireRole(roles: Role[]) {
+export function requireRole(roles: (Role | string)[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
       return next(
@@ -75,7 +75,19 @@ export function requireRole(roles: Role[]) {
       );
     }
 
-    if (!roles.includes(req.user.role)) {
+    const userRole = req.user.role as string;
+    const isAllowed = roles.some((r) => {
+      if (r === userRole) return true;
+      if (
+        (r === 'FINANCE' || r === 'FINANCE_OPERATIONS') &&
+        (userRole === 'FINANCE' || userRole === 'FINANCE_OPERATIONS')
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    if (!isAllowed) {
       return next(
         new AppError('FORBIDDEN', 'Access denied for user role.', 403),
       );

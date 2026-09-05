@@ -91,7 +91,22 @@ export const InventoryDashboardPage: React.FC = () => {
     setSaving(true);
     setErrorMsg(null);
     try {
-      await api.post('/inventory/adjustments', adjustmentData);
+      const warehouseId = adjustmentData.warehouseId || stockItems[0]?.warehouseId;
+      const productId = adjustmentData.productId || stockItems[0]?.productId;
+
+      if (!warehouseId || !productId) {
+        setErrorMsg('Please select a target stock item.');
+        setSaving(false);
+        return;
+      }
+
+      const payload = {
+        ...adjustmentData,
+        warehouseId,
+        productId,
+      };
+
+      await api.post('/inventory/adjustments', payload);
       setIsAdjustmentModalOpen(false);
       fetchData();
     } catch (err: any) {
@@ -324,7 +339,13 @@ export const InventoryDashboardPage: React.FC = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Target Stock Item</label>
                 <select
-                  value={`${adjustmentData.warehouseId}::${adjustmentData.productId}`}
+                  value={
+                    adjustmentData.warehouseId && adjustmentData.productId
+                      ? `${adjustmentData.warehouseId}::${adjustmentData.productId}`
+                      : stockItems[0]
+                      ? `${stockItems[0].warehouseId}::${stockItems[0].productId}`
+                      : ''
+                  }
                   onChange={(e) => {
                     const [whId, prodId] = e.target.value.split('::');
                     setAdjustmentData({ ...adjustmentData, warehouseId: whId, productId: prodId });

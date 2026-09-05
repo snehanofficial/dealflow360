@@ -78,6 +78,7 @@ vi.mock('@dealflow360/db', () => {
         }),
       },
       fulfillmentAllocation: {
+        aggregate: vi.fn(async () => ({ _sum: { allocatedQuantity: 0 } })),
         deleteMany: vi.fn(async () => ({ count: 0 })),
         create: vi.fn(async ({ data }: { data: any }) => {
           const newAlloc = { id: `alloc-${Date.now()}`, ...data };
