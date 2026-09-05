@@ -57,7 +57,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       title: 'SALES',
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'],
       items: [
-        { name: 'Quotations', icon: FileText, path: '/app', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Quotations', icon: FileText, path: '/quotations', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Customers', icon: Users, path: '/customers', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Products', icon: Box, path: '/products', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
         { name: 'Price Lists', icon: Tag, path: '/pricelists', allowedRoles: ['ADMIN', 'SALES_MANAGER'] },

@@ -14,8 +14,12 @@ This document establishes the official governance hierarchy, ownership boundarie
 | `05_BUSINESS_RULES.md` | Business Truth | Commercial engine rules (pricing, margin, policy, risk scoring matrix, approvals, fulfillment splitting, billing proration). | Controller HTTP routes, React components. | `03_ROLES_PERMISSIONS_AND_FLOWS.md` | Business Lead | Commercial policy updates |
 | `06_API_CONTRACT.md` | Interface Truth | Full REST API endpoints, request/response formats, status codes, validation rules. | Internal SQL queries, React UI state. | `05_BUSINESS_RULES.md` | Tech Lead / Both Devs | API route/payload changes |
 | `07_FEATURE_MODULES.md` | Architecture Truth | System module breakdown across monorepo packages, cross-module rules. | Unrelated CRM features, temporary hack logic. | `architecture.md` | Tech Lead | Package/Module boundary changes |
-| `08_DEVELOPER_A.md` | Execution Truth | Developer A ownership (Customer, Product, Quote, Discount, Approval, Audit) & phase plan. | Developer B implementation logic. | `06_API_CONTRACT.md`, `07_FEATURE_MODULES.md` | Developer A | Developer A progress |
-| `09_DEVELOPER_B.md` | Execution Truth | Developer B ownership (Upsell, Fulfillment, Billing, Portal, Health, Control Tower) & phase plan. | Developer A implementation logic. | `06_API_CONTRACT.md`, `07_FEATURE_MODULES.md` | Developer B | Developer B progress |
+| `08_DEVELOPER_A.md` | Execution Truth | Developer A ownership (Customer, Product Catalog, Discount Governance, Approvals, Audit) & phase plan. | Developer B implementation logic. | `06_API_CONTRACT.md`, `07_FEATURE_MODULES.md` | Developer A | Developer A progress |
+| `09_DEVELOPER_B.md` | Execution Truth | Developer B ownership (Quotation, Portal, Fulfillment, Billing, Upsell, Control Tower) & phase plan. | Developer A implementation logic. | `06_API_CONTRACT.md`, `07_FEATURE_MODULES.md` | Developer B | Developer B progress |
+| `developer-dependency-matrix.md` | Ownership Matrix | Matrix proving 100% independence of Developer A & B features, DB models, and API routes. | Code implementation details. | `08_DEVELOPER_A.md`, `09_DEVELOPER_B.md` | Tech Lead / Both Devs | Ownership adjustments |
+| `parallel-development-plan.md` | Parallel Execution | Detailed stage-by-stage parallel execution strategy, contract freeze, and integration protocol. | Specific feature unit specs. | `developer-dependency-matrix.md` | Tech Lead / Both Devs | Phase changes |
+| `shared-contracts.md` | Interface Contract | Frozen cross-developer interfaces (CustomerReference, ProductReference, CommercialEvaluation). | Low-level internal service classes. | `06_API_CONTRACT.md` | Tech Lead / Both Devs | Contract changes |
+| `database-contract.md` | Persistence Contract | Prisma model ownership table and database safety rules. | Migration SQL details. | `packages/db/prisma/schema.prisma` | DB Owner / Both Devs | Schema changes |
 | `00_BASE_IMPLEMENTATION.md` | Foundation Truth | Shared infrastructure phase plan (Auth, RBAC, Shell, API client, DB seed, base tests). | Vertical business module logic. | `03_ROLES_PERMISSIONS_AND_FLOWS.md`, `06_API_CONTRACT.md` | Base Owner (Dev 0) | Foundation changes |
 | `11_ANTIGRAVITY_RULES.md` | Control Truth | AI agent operating rules, execution loop, prompt requirements, verification standards. | Product feature specs. | Project Rules | Lead / Agent | Operating rule changes |
 | `architecture.md` | Architecture Ref | Concise summary of stack, layers, dependency rules, modular monolith design. | Volatile endpoint details. | `07_FEATURE_MODULES.md` | Tech Lead | Architectural shift |
@@ -25,6 +29,7 @@ This document establishes the official governance hierarchy, ownership boundarie
 | `demo-script.md` | Demo Truth | Step-by-step judge demonstration flow proving end-to-end commercial governance. | Out-of-scope feature walkthroughs. | `01_PROJECT_VISION.md`, `TASKS.md` | Lead / Demo Owner | Demo flow adjustments |
 | `DOCUMENTATION_AUDIT.md` | Audit Record | Record of doc inspection, conflicts found, duplications, and resolutions. | Active runtime specs. | All docs | AntiGravity Agent | Audit updates |
 | `AGENTS.md` | System Governance | Primary operating manual for developers and AI agents in the repository. | Code-level implementations. | `11_ANTIGRAVITY_RULES.md` | Lead / Agent | System rule updates |
+
 
 ---
 

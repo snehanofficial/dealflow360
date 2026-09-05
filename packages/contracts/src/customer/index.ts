@@ -71,3 +71,13 @@ export const CustomerListResponseSchema = z.object({
 });
 
 export type CustomerListResponse = z.infer<typeof CustomerListResponseSchema>;
+
+export const CustomerReferenceSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+  tier: CustomerTierEnum,
+});
+
+export type CustomerReferenceDto = z.infer<typeof CustomerReferenceSchema>;
+
