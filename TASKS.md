@@ -23,10 +23,13 @@
 ---
 
 ## Phase 2: Developer B — Deal Execution & Operations Vertical Slices
-- [ ] Phase B1: Quotation Management & Quote Builder UI (Quote & Line models, Quote Builder UI, State machine, Tests)
-- [ ] Phase B2: Customer Negotiation Portal (Portal token security, Counteroffer submission, Responsive Portal UI, Tests)
-- [ ] Phase B3: Multi-Warehouse Fulfillment & Splitting (Inventory models, Split allocation logic, Override UI, Tests)
-- [ ] Phase B4: Subscription & Hybrid Billing Engine (Hybrid billing schedules, Proration formula, Billing UI, Tests)
+- [x] Phase B1: Quotation Management & Quote Builder UI (Quote & Line models, Quote Builder UI, State machine, Tests)
+
+- [x] Phase B2: Customer Negotiation Portal (Portal token security, Counteroffer submission, Responsive Portal UI, Tests)
+
+- [x] Phase B3: Multi-Warehouse Fulfillment & Splitting (Inventory models, Split allocation logic, Override UI, Tests)
+
+- [x] Phase B4: Subscription & Hybrid Billing Engine (Hybrid billing schedules, Proration formula, Billing UI, Tests)
 - [ ] Phase B5: Upsell & Cross-sell Engine (Deterministic suggestions, Commercial impact calculation, UI, Tests)
 - [ ] Phase B6: Deal Health & Control Tower Dashboard (Stalled deal alerts, Live operational metrics, Filterable Dashboard UI, Tests)
 
