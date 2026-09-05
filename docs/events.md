@@ -56,7 +56,14 @@ The following event types represent all governed business mutations across the s
 | `QUOTE_SUBMITTED` | `Quotation` | `quoteService.ts` -> `submitQuotation` | Quotation submitted for risk & approval evaluation |
 | `PORTAL_TOKEN_GENERATED` | `PortalToken` | `portalService.ts` -> `generatePortalToken` | Customer portal token generated |
 | `COUNTEROFFER_SUBMITTED` | `CounterOffer` | `portalService.ts` -> `submitCounterOffer` | Customer submitted counteroffer via portal |
-| `FULFILLMENT_ALLOCATED` | `FulfillmentAllocation` | `fulfillmentService.ts` -> `overrideFulfillment` | Warehouse fulfillment allocations saved |
+| `WAREHOUSE_CREATED` | `Warehouse` | `warehouseService.ts` -> `createWarehouse` | New warehouse fulfillment center created |
+| `WAREHOUSE_UPDATED` | `Warehouse` | `warehouseService.ts` -> `updateWarehouse` | Warehouse settings/priority updated |
+| `INVENTORY_ADJUSTED` | `InventoryItem` | `warehouseService.ts` -> `adjustInventory` | Stock level receipt/adjustment logged |
+| `STOCK_RESERVED` | `Quotation` / `FulfillmentAllocation` | `fulfillmentService.ts` -> `confirmFulfillment` | Stock reserved for confirmed order allocation |
+| `STOCK_SHIPPED` | `FulfillmentAllocation` | `fulfillmentService.ts` -> `shipAllocation` | Shipment executed (onHand & reserved decreased) |
+| `ALLOCATION_OVERRIDDEN` | `FulfillmentAllocation` | `fulfillmentService.ts` -> `overrideFulfillment` | Manual allocation override confirmed |
+| `BACKORDER_REALLOCATED` | `Backorder` | `fulfillmentService.ts` -> `confirmBackorderReallocation` | Backorder stock reallocated upon replenishment |
+| `FULFILLMENT_ALLOCATED` | `FulfillmentAllocation` | `fulfillmentService.ts` -> `confirmFulfillment` | Warehouse fulfillment allocations saved |
 | `BILLING_SCHEDULE_GENERATED` | `BillingSchedule` | `billingService.ts` -> `generateAndSaveBillingSchedule` | Hybrid billing schedule generated and locked |
 | `DEAL_ALERT_RESOLVED` | `DealAlert` | `controlTowerService.ts` -> `resolveAlert` | Operational deal health alert resolved |
 | `USER_LOGGED_IN` | `User` | `authService.ts` -> `login` | Authenticated user session initiated |

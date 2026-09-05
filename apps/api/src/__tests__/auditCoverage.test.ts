@@ -148,17 +148,16 @@ describe('Platform-Wide Audit Coverage Suite (A1-A5 + B Modules)', () => {
       .set('Authorization', `Bearer ${managerToken}`);
     const quote = listRes.body.data[0];
 
-    // Compute fulfillment plan first to ensure warehouses/stock exist
-    const planRes = await request(app)
-      .post(`/api/v1/quotes/${quote.id}/fulfillment/compute`)
-      .set('Authorization', `Bearer ${managerToken}`);
-    expect(planRes.status).toBe(200);
-
-    const warehouseId = planRes.body.data.lineResults?.[0]?.allocations?.[0]?.warehouseId;
+    const wh = await db.warehouse.findFirst({ where: { isActive: true } });
     const quoteLineId = quote.lines[0]?.id;
 
-    if (warehouseId && quoteLineId) {
-      // Override fulfillment
+    if (wh && quoteLineId) {
+      await db.inventoryItem.upsert({
+        where: { warehouseId_productId: { warehouseId: wh.id, productId: quote.lines[0].productId } },
+        create: { warehouseId: wh.id, productId: quote.lines[0].productId, onHandQuantity: 1000, reservedQuantity: 0, availableQuantity: 1000 },
+        update: { onHandQuantity: 1000, reservedQuantity: 0, availableQuantity: 1000 },
+      });
+
       const overrideRes = await request(app)
         .post(`/api/v1/quotes/${quote.id}/fulfillment/override`)
         .set('Authorization', `Bearer ${managerToken}`)
@@ -166,7 +165,7 @@ describe('Platform-Wide Audit Coverage Suite (A1-A5 + B Modules)', () => {
           overrides: [
             {
               quoteLineId,
-              warehouseId,
+              warehouseId: wh.id,
               allocatedQuantity: quote.lines[0].quantity,
             },
           ],

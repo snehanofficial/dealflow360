@@ -21,6 +21,10 @@ import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
 import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
 import { BillingSchedulePage, InvoiceListPage, InvoiceDetailPage } from '../features/billing/index.js';
 import { ControlTowerPage } from '../features/control-tower/ControlTowerPage.js';
+import { WarehouseKanbanPage } from '../features/warehouse/WarehouseKanbanPage.js';
+import { WarehouseManagementPage } from '../features/warehouse/WarehouseManagementPage.js';
+import { InventoryDashboardPage } from '../features/inventory/InventoryDashboardPage.js';
+import { BackordersPage } from '../features/inventory/BackordersPage.js';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -109,7 +113,51 @@ export const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <FulfillmentAllocationPage />
+              <WarehouseKanbanPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/warehouse"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <WarehouseKanbanPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/warehouses"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <WarehouseManagementPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <InventoryDashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/backorders"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <BackordersPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

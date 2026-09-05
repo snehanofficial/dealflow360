@@ -153,6 +153,8 @@ model Product {
   sourceRules         RecommendationRule[]    @relation("SourceProductRules")
   recommendedRules    RecommendationRule[]    @relation("RecommendedProductRules")
   inventory           InventoryItem[]
+  inventoryMovements  InventoryMovement[]
+  backorders          Backorder[]
   invoiceLines        InvoiceLine[]
 
   @@index([category])
@@ -191,6 +193,9 @@ model ProductVariant {
   createdAt  DateTime                @default(now())
   updatedAt  DateTime                @updatedAt
   attributes VariantAttributeValue[]
+  inventory  InventoryItem[]
+  movements  InventoryMovement[]
+  backorders Backorder[]
 
   @@index([productId])
 }
@@ -257,6 +262,7 @@ model Quotation {
   portalTokens           PortalToken[]
   counterOffers          CounterOffer[]
   fulfillmentAllocations FulfillmentAllocation[]
+  backorders             Backorder[]
   billingSchedule        BillingSchedule?
   dealAlerts             DealAlert[]
   approvalRequests       ApprovalRequest[]
@@ -309,6 +315,7 @@ model QuoteLine {
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
   allocations             FulfillmentAllocation[]
+  backorders              Backorder[]
 
   @@index([quotationId])
   @@index([productId])
@@ -359,46 +366,133 @@ model Warehouse {
   id           String                  @id @default(uuid())
   code         String                  @unique
   name         String
+  description  String?
   location     String
+  priority     Int                     @default(10)
   isActive     Boolean                 @default(true)
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
   inventory    InventoryItem[]
   allocations  FulfillmentAllocation[]
+  movements    InventoryMovement[]
 }
 
 model InventoryItem {
-  id                String    @id @default(uuid())
+  id                String          @id @default(uuid())
   warehouseId       String
-  warehouse         Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  warehouse         Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
   productId         String
-  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  availableQuantity Int       @default(0)
-  reservedQuantity  Int       @default(0)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariantId  String?
+  productVariant    ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  onHandQuantity    Int             @default(0)
+  reservedQuantity  Int             @default(0)
+  availableQuantity Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@unique([warehouseId, productId])
   @@index([productId])
   @@index([warehouseId])
+  @@index([productVariantId])
 }
 
 model FulfillmentAllocation {
-  id                String    @id @default(uuid())
-  quotationId       String
-  quotation         Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
-  quoteLineId       String
-  quoteLine         QuoteLine @relation(fields: [quoteLineId], references: [id], onDelete: Cascade)
-  warehouseId       String
-  warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
-  allocatedQuantity Int
-  isOverride        Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                  String              @id @default(uuid())
+  quotationId         String
+  quotation           Quotation           @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  quoteLineId         String
+  quoteLine           QuoteLine           @relation(fields: [quoteLineId], references: [id], onDelete: Cascade)
+  warehouseId         String
+  warehouse           Warehouse           @relation(fields: [warehouseId], references: [id])
+  allocatedQuantity   Int
+  backorderedQuantity Int                 @default(0)
+  status              String              @default("RESERVED")
+  explanation         Json?
+  isOverride          Boolean             @default(false)
+  overrideReason      String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  movements           InventoryMovement[]
+  backorders          Backorder[]
 
   @@index([quotationId])
   @@index([quoteLineId])
   @@index([warehouseId])
+  @@index([status])
+}
+
+enum InventoryMovementType {
+  RECEIPT
+  RESERVATION
+  RESERVATION_RELEASE
+  SHIPMENT
+  RETURN
+  ADJUSTMENT
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+model InventoryMovement {
+  id                      String                 @id @default(uuid())
+  warehouseId             String
+  warehouse               Warehouse              @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  productId               String
+  product                 Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariantId        String?
+  productVariant          ProductVariant?        @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  movementType            InventoryMovementType
+  quantity                Int
+  onHandBefore            Int                    @default(0)
+  onHandAfter             Int                    @default(0)
+  reservedBefore          Int                    @default(0)
+  reservedAfter           Int                    @default(0)
+  referenceType           String?
+  referenceId             String?
+  fulfillmentAllocationId String?
+  fulfillmentAllocation   FulfillmentAllocation? @relation(fields: [fulfillmentAllocationId], references: [id], onDelete: SetNull)
+  reason                  String?
+  actorId                 String?
+  actorName               String?
+  createdAt               DateTime               @default(now())
+
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([createdAt])
+  @@index([movementType])
+}
+
+enum BackorderStatus {
+  BACKORDERED
+  PARTIALLY_REALLOCATED
+  RESOLVED
+  CANCELLED
+}
+
+model Backorder {
+  id                      String                 @id @default(uuid())
+  quotationId             String
+  quotation               Quotation              @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  quoteLineId             String
+  quoteLine               QuoteLine              @relation(fields: [quoteLineId], references: [id], onDelete: Cascade)
+  fulfillmentAllocationId String?
+  fulfillmentAllocation   FulfillmentAllocation? @relation(fields: [fulfillmentAllocationId], references: [id], onDelete: SetNull)
+  productId               String
+  product                 Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariantId        String?
+  productVariant          ProductVariant?        @relation(fields: [productVariantId], references: [id], onDelete: SetNull)
+  requestedQuantity       Int
+  allocatedQuantity       Int                    @default(0)
+  backorderedQuantity     Int
+  status                  BackorderStatus        @default(BACKORDERED)
+  notes                   String?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  @@index([quotationId])
+  @@index([quoteLineId])
+  @@index([productId])
+  @@index([status])
 }
 
 model BillingSchedule {

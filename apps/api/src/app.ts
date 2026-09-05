@@ -63,11 +63,13 @@ app.use('/api/v1/audit', auditRoutes);
 import { recommendationRoutes } from './routes/recommendationRoutes.js';
 import { controlTowerRoutes } from './routes/controlTowerRoutes.js';
 import { invoiceRoutes } from './modules/invoice/invoiceRoutes.js';
+import { warehouseRoutes } from './modules/warehouse/warehouseRoutes.js';
 
 // Quotation & Recommendation Routes
 app.use('/api/v1/quotations', quoteRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
 app.use('/api/v1/portal', portalRoutes);
+app.use('/api/v1', warehouseRoutes);
 app.use('/api/v1/fulfillment', fulfillmentRoutes);
 app.use('/api/v1/quotes', fulfillmentRoutes);
 app.use('/api/v1/billing', billingRoutes);

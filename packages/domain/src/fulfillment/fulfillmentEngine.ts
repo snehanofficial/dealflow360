@@ -9,7 +9,11 @@ export interface InventoryItemStock {
   warehouseCode: string;
   warehouseName: string;
   productId: string;
+  onHandQuantity: number;
+  reservedQuantity: number;
   availableQuantity: number;
+  priority?: number;
+  isActive?: boolean;
 }
 
 export interface LineWarehouseAllocation {
@@ -72,13 +76,14 @@ export function computeFulfillmentPlan(
 
     // Find all stock entries for this product
     const availableStock = Array.from(stockMap.values())
-      .filter((s) => s.productId === line.productId && s.availableQuantity > 0)
-      .sort((a, b) => b.availableQuantity - a.availableQuantity);
+      .filter((s) => s.productId === line.productId && (s.availableQuantity ?? (s.onHandQuantity - s.reservedQuantity)) > 0)
+      .sort((a, b) => (b.availableQuantity ?? (b.onHandQuantity - b.reservedQuantity)) - (a.availableQuantity ?? (a.onHandQuantity - a.reservedQuantity)));
 
     for (const stock of availableStock) {
       if (remainingQty <= 0) break;
+      const currentAvail = stock.availableQuantity ?? Math.max(0, stock.onHandQuantity - stock.reservedQuantity);
 
-      const allocQty = Math.min(remainingQty, stock.availableQuantity);
+      const allocQty = Math.min(remainingQty, currentAvail);
       if (allocQty > 0) {
         lineAllocations.push({
           warehouseId: stock.warehouseId,
@@ -87,7 +92,7 @@ export function computeFulfillmentPlan(
           allocatedQuantity: allocQty,
         });
 
-        stock.availableQuantity -= allocQty;
+        stock.availableQuantity = currentAvail - allocQty;
         remainingQty -= allocQty;
         activeWarehouses.add(stock.warehouseId);
       }
@@ -115,45 +120,5 @@ export function computeFulfillmentPlan(
     totalBackordered,
     shipmentCount: activeWarehouses.size,
     isFullyFulfilled: totalBackordered === 0,
-  };
-}
-
-/**
- * Validates manual user fulfillment overrides server-side.
- * Ensures: allocatedQuantity >= 0 and allocatedQuantity <= availableQuantity.
- */
-export function validateFulfillmentOverrides(
-  overrides: ManualOverrideItem[],
-  stockItems: InventoryItemStock[],
-): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
-  for (const override of overrides) {
-    if (override.allocatedQuantity < 0) {
-      errors.push(
-        `Invalid negative allocation quantity (${override.allocatedQuantity}) for line ${override.quoteLineId}`,
-      );
-      continue;
-    }
-
-    const stockKey = Array.from(stockItems.values()).find(
-      (s) => s.warehouseId === override.warehouseId,
-    );
-
-    if (!stockKey) {
-      errors.push(`Warehouse ${override.warehouseId} not found in inventory stock`);
-      continue;
-    }
-
-    if (override.allocatedQuantity > stockKey.availableQuantity) {
-      errors.push(
-        `Allocated quantity (${override.allocatedQuantity}) exceeds available stock (${stockKey.availableQuantity}) at warehouse ${stockKey.warehouseCode}`,
-      );
-    }
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
   };
 }

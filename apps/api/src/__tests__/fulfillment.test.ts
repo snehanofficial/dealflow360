@@ -38,12 +38,13 @@ vi.mock('@dealflow360/db', () => {
   };
   quotesMap.set(defaultQuote.id, defaultQuote);
 
-  const itemEast = { id: 'inv-01', warehouseId: 'wh-east', productId: 'prod-ff-01', availableQuantity: 10, warehouse: whEast, product: product1 };
-  const itemWest = { id: 'inv-02', warehouseId: 'wh-west', productId: 'prod-ff-01', availableQuantity: 20, warehouse: whWest, product: product1 };
+  const itemEast = { id: 'inv-01', warehouseId: 'wh-east', productId: 'prod-ff-01', onHandQuantity: 10, reservedQuantity: 0, availableQuantity: 10, warehouse: whEast, product: product1 };
+  const itemWest = { id: 'inv-02', warehouseId: 'wh-west', productId: 'prod-ff-01', onHandQuantity: 20, reservedQuantity: 0, availableQuantity: 20, warehouse: whWest, product: product1 };
   inventoryMap.set(`${itemEast.warehouseId}_${itemEast.productId}`, itemEast);
   inventoryMap.set(`${itemWest.warehouseId}_${itemWest.productId}`, itemWest);
 
   return {
+    Prisma: { JsonNull: 'DbNull' },
     db: {
       warehouse: {
         findMany: vi.fn(async () => Array.from(warehousesMap.values())),
@@ -54,7 +55,18 @@ vi.mock('@dealflow360/db', () => {
       },
       inventoryItem: {
         findMany: vi.fn(async () => [itemEast, itemWest]),
+        findUnique: vi.fn(async ({ where }: { where: any }) => {
+          if (where.warehouseId_productId) {
+            return inventoryMap.get(`${where.warehouseId_productId.warehouseId}_${where.warehouseId_productId.productId}`) || null;
+          }
+          return null;
+        }),
         upsert: vi.fn(async ({ create }: { create: any }) => create),
+        update: vi.fn(async ({ where, data }: { where: any; data: any }) => {
+          const item = Array.from(inventoryMap.values()).find((i) => i.id === where.id);
+          if (item) Object.assign(item, data);
+          return item;
+        }),
       },
       quotation: {
         findUnique: vi.fn(async ({ where }: { where: { id: string } }) => quotesMap.get(where.id) || null),
@@ -72,6 +84,9 @@ vi.mock('@dealflow360/db', () => {
           allocationsMap.set(newAlloc.id, newAlloc);
           return newAlloc;
         }),
+      },
+      auditLog: {
+        create: vi.fn(async ({ data }: any) => ({ id: 'audit-1', createdAt: new Date(), ...data })),
       },
     },
   };

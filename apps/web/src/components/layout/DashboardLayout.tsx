@@ -96,8 +96,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       title: 'OPERATIONS & FULFILLMENT',
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'],
       items: [
-        { name: 'Warehouse Fulfillment', icon: Truck, path: '/fulfillment', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
+        { name: 'Warehouse Kanban', icon: Truck, path: '/warehouse', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
         { name: 'Inventory Stock', icon: Package, path: '/inventory', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Backorders Queue', icon: Box, path: '/backorders', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Warehouse Setup', icon: Home, path: '/warehouses', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS'] },
       ]
     },
     {

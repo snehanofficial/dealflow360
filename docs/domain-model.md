@@ -75,10 +75,12 @@ For detailed business entity definitions and workflows, see [`03_ROLES_PERMISSIO
 
 ## 4. Fulfillment, Billing & Portal Entities (Developer B)
 
-11. **Warehouse**: Code, name, location, capacity.
-12. **InventoryItem**: Warehouse FK, Product FK, available quantity, reserved quantity.
-13. **FulfillmentPlan**: Quotation FK, QuoteLine FK, Warehouse FK, allocated quantity, status (`PLANNED`, `OVERRIDDEN`, `SHIPPED`).
-14. **BillingSchedule**: Quotation FK, QuoteLine FK, billing type (`ONE_TIME` | `RECURRING`), billing date, period start/end, amount, status (`DRAFT`, `INVOICED`).
-15. **CustomerPortalSession**: Quotation FK, secure token, expiresAt, status (`ACTIVE`, `SUBMITTED`, `EXPIRED`).
-16. **Invoice**: Quotation FK, Customer FK, invoice number, status (`DRAFT`, `ISSUED`, `PAID`, `VOID`), customer snapshot details, financial snapshot totals (subtotal, total discount, taxable amount, tax amount, net total).
-17. **InvoiceLine**: Invoice FK, Product FK, item name, SKU, quantity, list price, approved selling price snapshot (`unitPrice`), discount %, discount amount, tax rate, tax amount, line total.
+11. **Warehouse**: Code, name, location, priority hierarchy (1 = top priority), description, active status (`isActive`).
+12. **InventoryItem**: Warehouse FK, Product FK, ProductVariant FK (optional), `onHandQuantity`, `reservedQuantity`, and derived `availableQuantity = onHandQuantity - reservedQuantity`.
+13. **InventoryMovement**: Warehouse FK, Product FK, ProductVariant FK (optional), `movementType` (`RECEIPT`, `RESERVATION`, `RESERVATION_RELEASE`, `SHIPMENT`, `RETURN`, `ADJUSTMENT`, `TRANSFER_IN`, `TRANSFER_OUT`), quantity, `onHandBefore`, `onHandAfter`, `reservedBefore`, `reservedAfter`, reference details, reason, actor info.
+14. **FulfillmentAllocation**: Quotation FK, QuoteLine FK, Warehouse FK, allocated quantity, backordered quantity, status (`RESERVED`, `PICKING`, `PACKED`, `SHIPPED`, `BACKORDERED`), explanation reasons JSON, manual override flag & reason.
+15. **Backorder**: Quotation FK, QuoteLine FK, FulfillmentAllocation FK (optional), Product FK, requested quantity, allocated quantity, backordered quantity, status (`BACKORDERED`, `PARTIALLY_REALLOCATED`, `RESOLVED`, `CANCELLED`), notes.
+16. **BillingSchedule**: Quotation FK, QuoteLine FK, billing type (`ONE_TIME` | `RECURRING`), billing date, period start/end, amount, status (`DRAFT`, `INVOICED`).
+17. **CustomerPortalSession**: Quotation FK, secure token, expiresAt, status (`ACTIVE`, `SUBMITTED`, `EXPIRED`).
+18. **Invoice**: Quotation FK, Customer FK, invoice number, status (`DRAFT`, `ISSUED`, `PAID`, `VOID`), customer snapshot details, financial snapshot totals (subtotal, total discount, taxable amount, tax amount, net total).
+19. **InvoiceLine**: Invoice FK, Product FK, item name, SKU, quantity, list price, approved selling price snapshot (`unitPrice`), discount %, discount amount, tax rate, tax amount, line total.
