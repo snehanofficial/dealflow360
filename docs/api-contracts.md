@@ -76,6 +76,15 @@ All API endpoints are prefixed with `/api/v1`.
 - `POST /api/v1/quotes/:id/order/confirm` - Confirm order for fulfillment (`order.confirm`)
 - `GET  /api/v1/quotes/:id/billing` - Generate billing schedule (`billing.view`)
 
+### Invoicing & Financial Snapshots
+- `GET  /api/v1/invoices` - List invoices with pagination & status filters (`invoice.view`)
+- `GET  /api/v1/invoices/:id` - Get itemized invoice snapshot details (`invoice.view`)
+- `GET  /api/v1/invoices/quotation/:quotationId` - Get invoice for quotation (`invoice.view`)
+- `POST /api/v1/invoices` - Create immutable invoice from approved quotation (`invoice.create`)
+- `POST /api/v1/invoices/:id/issue` - Issue draft invoice (`invoice.issue`)
+- `POST /api/v1/invoices/:id/pay` - Mark invoice as paid (`invoice.pay`)
+- `POST /api/v1/invoices/:id/void` - Void invoice with reason (`invoice.void`)
+
 ### Deal Health & Control Tower (Developer B)
 - `GET /api/v1/control-tower` - Operational deal dashboard metrics (`dashboard.view`)
 - `GET /api/v1/quotes/:id/events` - Fetch immutable audit timeline events (`audit.view`)

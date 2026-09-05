@@ -62,6 +62,7 @@ app.use('/api/v1/audit', auditRoutes);
 
 import { recommendationRoutes } from './routes/recommendationRoutes.js';
 import { controlTowerRoutes } from './routes/controlTowerRoutes.js';
+import { invoiceRoutes } from './modules/invoice/invoiceRoutes.js';
 
 // Quotation & Recommendation Routes
 app.use('/api/v1/quotations', quoteRoutes);
@@ -71,6 +72,7 @@ app.use('/api/v1/fulfillment', fulfillmentRoutes);
 app.use('/api/v1/quotes', fulfillmentRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/quotes', billingRoutes);
+app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/control-tower', controlTowerRoutes);
 
 // Centralized Error Handler

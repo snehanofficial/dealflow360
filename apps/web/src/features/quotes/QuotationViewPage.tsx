@@ -19,6 +19,7 @@ import {
   Loader2,
   FileSpreadsheet,
   Truck,
+  FileCheck,
 } from 'lucide-react';
 
 interface QuoteLineData {
@@ -74,6 +75,8 @@ export const QuotationViewPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [existingInvoice, setExistingInvoice] = useState<{ id: string; invoiceNumber: string } | null>(null);
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState<boolean>(false);
 
   const quoteId = id || 'quote-sample-001';
 
@@ -118,9 +121,23 @@ export const QuotationViewPage: React.FC = () => {
     }
   }, [quoteId]);
 
+  const fetchExistingInvoice = useCallback(async () => {
+    try {
+      const res = await api.get<{ success: boolean; data: any }>(`/invoices/quotation/${quoteId}`);
+      if (res.data.success && res.data.data) {
+        setExistingInvoice(res.data.data);
+      } else {
+        setExistingInvoice(null);
+      }
+    } catch {
+      setExistingInvoice(null);
+    }
+  }, [quoteId]);
+
   useEffect(() => {
     fetchQuotationData(true);
     fetchRecommendations();
+    fetchExistingInvoice();
   }, [quoteId]);
 
   const handleAddRecommendation = async (rec: RecommendationItem) => {
@@ -272,6 +289,25 @@ export const QuotationViewPage: React.FC = () => {
     }
   };
 
+  const handleCreateInvoice = async () => {
+    if (!quotation) return;
+    try {
+      setIsCreatingInvoice(true);
+      const res = await api.post<{ success: boolean; data: { id: string; invoiceNumber: string } }>(
+        '/invoices',
+        { quotationId: quotation.id },
+      );
+      if (res.data.success && res.data.data) {
+        navigate(`/invoices/${res.data.data.id}`);
+      }
+    } catch (err: any) {
+      console.error('Failed to create invoice:', err);
+      setError(err.response?.data?.error?.message || 'Failed to create invoice');
+    } finally {
+      setIsCreatingInvoice(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
@@ -394,6 +430,32 @@ export const QuotationViewPage: React.FC = () => {
             <FileSpreadsheet className="w-3.5 h-3.5 text-[#714B67]" /> Billing Schedule
           </button>
 
+          {existingInvoice ? (
+            <button
+              onClick={() => navigate(`/invoices/${existingInvoice.id}`)}
+              className="inline-flex items-center gap-1.5 text-white bg-[#714B67] hover:bg-[#5b3c53] px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+              title="View Financial Invoice"
+            >
+              <FileCheck className="w-3.5 h-3.5" /> View Invoice ({existingInvoice.invoiceNumber})
+            </button>
+          ) : (
+            ['APPROVED', 'FULFILLMENT', 'BILLING', 'COMPLETED'].includes(quotation.status) && (
+              <button
+                onClick={handleCreateInvoice}
+                disabled={isCreatingInvoice}
+                className="inline-flex items-center gap-1.5 text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                title="Generate Financial Snapshot Invoice"
+              >
+                {isCreatingInvoice ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileCheck className="w-3.5 h-3.5" />
+                )}
+                Create Invoice
+              </button>
+            )
+          )}
+
           <button
             onClick={() => {
               fetchQuotationData();
@@ -427,19 +489,19 @@ export const QuotationViewPage: React.FC = () => {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            Taxable Base
+            Tax
           </span>
-          <p className="text-lg font-bold text-slate-800 font-mono mt-1">
-            ${(quotation.taxableAmount || (quotation.subtotal - quotation.totalDiscount)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <p className="text-lg font-bold text-blue-700 font-mono mt-1">
+            +${(quotation.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            Tax
+            Price After Tax
           </span>
-          <p className="text-lg font-bold text-blue-700 font-mono mt-1">
-            +${(quotation.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <p className="text-lg font-bold text-slate-800 font-mono mt-1">
+            ${(quotation.subtotal + (quotation.taxAmount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
@@ -485,8 +547,7 @@ export const QuotationViewPage: React.FC = () => {
                   <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
                     <th className="py-3 px-3">Product</th>
                     <th className="py-3 px-2 text-center">Qty</th>
-                    <th className="py-3 px-3 text-right">Default Price</th>
-                    <th className="py-3 px-3 text-right">Selling Price</th>
+                    <th className="py-3 px-3 text-right">Unit Price</th>
                     <th className="py-3 px-3 text-right">Tax</th>
                     <th className="py-3 px-3 text-right">Disc %</th>
                     <th className="py-3 px-3 text-right">Net Total</th>
@@ -520,9 +581,6 @@ export const QuotationViewPage: React.FC = () => {
                         ) : (
                           <span className="text-slate-800 font-semibold">{line.quantity}</span>
                         )}
-                      </td>
-                      <td className="py-3 px-3 text-right text-slate-500 italic">
-                        ${line.listPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-3 px-3 text-right">
                         {isDraft ? (

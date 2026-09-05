@@ -56,6 +56,7 @@ model User {
   quotations      Quotation[]
   approvalRequests ApprovalRequest[]
   actedApprovalSteps ApprovalStep[]
+  invoices        Invoice[]
 }
 
 model RefreshSession {
@@ -100,6 +101,7 @@ model Customer {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   quotations     Quotation[]
+  invoices       Invoice[]
   
   @@index([tier])
   @@index([status])
@@ -151,6 +153,7 @@ model Product {
   sourceRules         RecommendationRule[]    @relation("SourceProductRules")
   recommendedRules    RecommendationRule[]    @relation("RecommendedProductRules")
   inventory           InventoryItem[]
+  invoiceLines        InvoiceLine[]
 
   @@index([category])
   @@index([sku])
@@ -257,6 +260,7 @@ model Quotation {
   billingSchedule        BillingSchedule?
   dealAlerts             DealAlert[]
   approvalRequests       ApprovalRequest[]
+  invoices               Invoice[]
 }
 
 model PortalToken {
@@ -523,3 +527,68 @@ model AuditLog {
   @@index([actorId])
   @@index([eventType])
 }
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  quotationId   String        @unique
+  quotation     Quotation     @relation(fields: [quotationId], references: [id])
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  customerTier  CustomerTier  @default(SILVER)
+  customerRegion String       @default("US-East")
+  status        InvoiceStatus @default(ISSUED)
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime?
+  subtotal      Float         @default(0)
+  totalDiscount Float         @default(0)
+  taxableAmount Float         @default(0)
+  taxAmount     Float         @default(0)
+  totalAmount   Float         @default(0)
+  notes         String?
+  createdById   String?
+  createdBy     User?         @relation(fields: [createdById], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  lines         InvoiceLine[]
+
+  @@index([customerId])
+  @@index([quotationId])
+  @@index([status])
+  @@index([invoiceNumber])
+}
+
+model InvoiceLine {
+  id                      String   @id @default(uuid())
+  invoiceId               String
+  invoice                 Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId               String?
+  product                 Product? @relation(fields: [productId], references: [id])
+  productName             String
+  productSku              String
+  quantity                Int      @default(1)
+  listPrice               Float    @default(0)
+  unitPrice               Float    @default(0)
+  proposedDiscountPercent Float    @default(0)
+  discountAmount          Float    @default(0)
+  taxRate                 Float    @default(0)
+  taxAmount               Float    @default(0)
+  taxableAmount           Float    @default(0)
+  lineTotal               Float    @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([productId])
+}
+

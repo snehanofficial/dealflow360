@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import React from 'react';
-import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+expect.extend(matchers);
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { KanbanBoard, KanbanColumn } from './KanbanBoard.js';
+
+afterEach(() => {
+  cleanup();
+});
 
 interface TestItem {
   id: string;

@@ -420,8 +420,7 @@ export const QuoteBuilderPage: React.FC = () => {
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
                   <th className="py-2.5 px-3">Product</th>
                   <th className="py-2.5 px-3 text-center">Qty</th>
-                  <th className="py-2.5 px-3 text-right">Default Price</th>
-                  <th className="py-2.5 px-3 text-right">Selling Price</th>
+                  <th className="py-2.5 px-3 text-right">Unit Price</th>
                   <th className="py-2.5 px-3 text-right">Tax</th>
                   <th className="py-2.5 px-3 text-right">Disc %</th>
                   <th className="py-2.5 px-3 text-right">Net Line Total</th>
@@ -454,10 +453,6 @@ export const QuoteBuilderPage: React.FC = () => {
                           }
                           className="w-14 text-center border border-slate-200 rounded px-2 py-1 bg-slate-50 focus:border-[#714B67]"
                         />
-                      </td>
-
-                      <td className="py-3 px-3 text-right text-slate-500 italic">
-                        ${line.listPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
 
                       <td className="py-3 px-3 text-right">

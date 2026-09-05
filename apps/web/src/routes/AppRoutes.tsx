@@ -19,7 +19,7 @@ import { ApprovalDetailPage } from '../features/approvals/ApprovalDetailPage.js'
 import { AuditTrailPage } from '../features/audit/AuditTrailPage.js';
 import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
 import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
-import { BillingSchedulePage } from '../features/billing/BillingSchedulePage.js';
+import { BillingSchedulePage, InvoiceListPage, InvoiceDetailPage } from '../features/billing/index.js';
 import { ControlTowerPage } from '../features/control-tower/ControlTowerPage.js';
 import { Loader2 } from 'lucide-react';
 
@@ -132,6 +132,28 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <BillingSchedulePage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/invoices"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <InvoiceListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/invoices/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <InvoiceDetailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

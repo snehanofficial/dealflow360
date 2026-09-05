@@ -189,7 +189,11 @@ export async function updateCategoryHandler(
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const validated = UpdateCategorySchema.parse(req.body);
-    const category = await categoryRepository.update(id, validated);
+    const updateData = {
+      ...validated,
+      description: validated.description ?? undefined,
+    };
+    const category = await categoryRepository.update(id, updateData);
     res.json({
       success: true,
       data: category,

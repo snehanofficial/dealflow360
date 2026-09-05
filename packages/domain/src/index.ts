@@ -11,3 +11,4 @@ export * from './state-machine/index.js';
 export * from './control-tower/index.js';
 export * from './shared/index.js';
 export * from './audit/index.js';
+export * from './invoice/index.js';

@@ -80,3 +80,5 @@ For detailed business entity definitions and workflows, see [`03_ROLES_PERMISSIO
 13. **FulfillmentPlan**: Quotation FK, QuoteLine FK, Warehouse FK, allocated quantity, status (`PLANNED`, `OVERRIDDEN`, `SHIPPED`).
 14. **BillingSchedule**: Quotation FK, QuoteLine FK, billing type (`ONE_TIME` | `RECURRING`), billing date, period start/end, amount, status (`DRAFT`, `INVOICED`).
 15. **CustomerPortalSession**: Quotation FK, secure token, expiresAt, status (`ACTIVE`, `SUBMITTED`, `EXPIRED`).
+16. **Invoice**: Quotation FK, Customer FK, invoice number, status (`DRAFT`, `ISSUED`, `PAID`, `VOID`), customer snapshot details, financial snapshot totals (subtotal, total discount, taxable amount, tax amount, net total).
+17. **InvoiceLine**: Invoice FK, Product FK, item name, SKU, quantity, list price, approved selling price snapshot (`unitPrice`), discount %, discount amount, tax rate, tax amount, line total.

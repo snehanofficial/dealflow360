@@ -7,7 +7,7 @@ import {
   Home, Briefcase, FileText, Users, Box, Tag, 
   ShieldAlert, CheckSquare, ShieldCheck, 
   ShoppingCart, Package, Truck, 
-  FileSpreadsheet, CreditCard, Activity, 
+  FileSpreadsheet, CreditCard, Activity, FileCheck,
   BarChart2, PieChart, LayoutDashboard, Menu, X
 } from 'lucide-react';
 import { Badge } from '../ui/Badge.js';
@@ -104,6 +104,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       title: 'BILLING & REVENUE',
       allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'],
       items: [
+        { name: 'Invoices', icon: FileCheck, path: '/invoices', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER', 'SALES_REP'] },
         { name: 'Billing Schedules', icon: FileSpreadsheet, path: '/billing', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'] },
         { name: 'Payments & Credit', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
