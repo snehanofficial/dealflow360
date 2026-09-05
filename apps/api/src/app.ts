@@ -56,13 +56,18 @@ app.use('/api/v1/price-lists', priceListRoutes);
 app.use('/api/v1/discount-policies', discountPolicyRoutes);
 app.use('/api/v1/commercial-evaluations', commercialEvaluationRoutes);
 
+import { recommendationRoutes } from './routes/recommendationRoutes.js';
+import { controlTowerRoutes } from './routes/controlTowerRoutes.js';
+
 // Quotation & Recommendation Routes
 app.use('/api/v1/quotations', quoteRoutes);
+app.use('/api/v1/recommendations', recommendationRoutes);
 app.use('/api/v1/portal', portalRoutes);
 app.use('/api/v1/fulfillment', fulfillmentRoutes);
 app.use('/api/v1/quotes', fulfillmentRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/quotes', billingRoutes);
+app.use('/api/v1/control-tower', controlTowerRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);

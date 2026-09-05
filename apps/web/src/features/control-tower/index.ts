@@ -1,1 +1,1 @@
-export const ControlTowerFeature = {};
+export * from './ControlTowerPage.js';
