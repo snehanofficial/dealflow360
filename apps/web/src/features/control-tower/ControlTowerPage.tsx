@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api/client.js';
 import {
@@ -16,7 +16,11 @@ import {
   RefreshCw,
   Package,
   Layers,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
+import { KanbanBoard, KanbanColumn } from '../../components/kanban/index.js';
+import { QuotationKanbanCard, QuotationKanbanItem } from '../quotes/components/QuotationKanbanCard.js';
 
 interface ControlTowerMetrics {
   totalPipelineValue: number;
@@ -68,10 +72,11 @@ export const ControlTowerPage: React.FC = () => {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters & View Mode
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [riskFilter, setRiskFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'TABLE' | 'KANBAN'>('TABLE');
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -115,17 +120,6 @@ export const ControlTowerPage: React.FC = () => {
     }
   };
 
-  if (isLoading && !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#714B67] mx-auto" />
-          <p className="text-sm font-medium text-slate-600">Loading Control Tower Dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   const metrics = data?.metrics || {
     totalPipelineValue: 0,
     activeQuoteCount: 0,
@@ -138,6 +132,51 @@ export const ControlTowerPage: React.FC = () => {
 
   const alerts = data?.alerts || [];
   const quotations = data?.quotations || [];
+
+  // Group quotations into Risk Level Kanban Columns
+  const riskColumns = useMemo<KanbanColumn<QuotationItem>[]>(() => {
+    const lowRisk = quotations.filter((q) => q.riskLevel === 'LOW');
+    const mediumRisk = quotations.filter((q) => q.riskLevel === 'MEDIUM');
+    const highRisk = quotations.filter((q) => q.riskLevel === 'HIGH' || q.riskLevel === 'CRITICAL');
+
+    return [
+      {
+        id: 'LOW',
+        title: 'Low Risk Stage',
+        items: lowRisk,
+        badgeVariant: 'emerald',
+        accentColor: 'border-emerald-500',
+        emptyText: 'No low-risk deals',
+      },
+      {
+        id: 'MEDIUM',
+        title: 'Medium Risk Stage',
+        items: mediumRisk,
+        badgeVariant: 'amber',
+        accentColor: 'border-amber-500',
+        emptyText: 'No medium-risk deals',
+      },
+      {
+        id: 'HIGH',
+        title: 'High / Critical Risk Stage',
+        items: highRisk,
+        badgeVariant: 'rose',
+        accentColor: 'border-rose-500',
+        emptyText: 'No high-risk deals',
+      },
+    ];
+  }, [quotations]);
+
+  if (isLoading && !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-[#714B67] mx-auto" />
+          <p className="text-sm font-medium text-slate-600">Loading Control Tower Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -160,7 +199,7 @@ export const ControlTowerPage: React.FC = () => {
 
         <button
           onClick={fetchDashboardData}
-          className="inline-flex items-center gap-1.5 p-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center gap-1.5 p-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors shadow-xs"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Refresh Dashboard
         </button>
@@ -274,7 +313,7 @@ export const ControlTowerPage: React.FC = () => {
                         <span className="font-bold uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-white/80 border border-current">
                           {alert.alertType.replace('_', ' ')}
                         </span>
-                        <span className="font-semibold text-slate-900">
+                        <span className="font-semibold text-slate-900 font-mono">
                           {alert.quotation?.customer?.name || 'Customer'} (Quote #{alert.quotation?.quoteNumber || alert.quotationId})
                         </span>
                       </div>
@@ -305,15 +344,39 @@ export const ControlTowerPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filterable Deal Pipeline Table */}
+      {/* Filterable Deal Directory */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
         {/* Controls Header */}
         <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-600" /> Active Commercial Deals Directory
+            <Filter className="w-4 h-4 text-slate-600" /> Active Commercial Deals Governance Directory
           </h2>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-white p-1 rounded-lg border border-slate-200 shadow-xs">
+              <button
+                onClick={() => setViewMode('TABLE')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                  viewMode === 'TABLE'
+                    ? 'bg-[#714B67] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" /> Table View
+              </button>
+              <button
+                onClick={() => setViewMode('KANBAN')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                  viewMode === 'KANBAN'
+                    ? 'bg-[#714B67] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> Risk Board
+              </button>
+            </div>
+
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
               <input
@@ -353,93 +416,130 @@ export const ControlTowerPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-semibold uppercase">
-                <th className="py-3 px-4">Quote Number</th>
-                <th className="py-3 px-4">Customer Account</th>
-                <th className="py-3 px-3 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Net Value ($)</th>
-                <th className="py-3 px-4 text-center">Gross Margin %</th>
-                <th className="py-3 px-4 text-center">Risk Evaluation</th>
-                <th className="py-3 px-4 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 font-mono">
-              {quotations.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 font-sans">
-                    No commercial deals matching selected filters.
-                  </td>
-                </tr>
-              ) : (
-                quotations.map((quote) => {
-                  const isHighRisk = quote.riskLevel === 'HIGH';
-                  const isLowMargin = quote.grossMarginPercent < 25.0;
-
-                  return (
-                    <tr key={quote.id} className="hover:bg-slate-50/80">
-                      <td className="py-3.5 px-4 font-bold text-slate-900 font-mono">
-                        {quote.quoteNumber}
-                      </td>
-
-                      <td className="py-3.5 px-4 font-sans">
-                        <div className="font-semibold text-slate-900">
-                          {quote.customer?.name || 'Customer'}
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          Tier: {quote.customer?.tier || 'STANDARD'}
-                        </div>
-                      </td>
-
-                      <td className="py-3.5 px-3 text-center font-sans">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-700">
-                          {quote.status}
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                        ${quote.netValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </td>
-
-                      <td className="py-3.5 px-4 text-center font-sans">
-                        <span
-                          className={`font-semibold font-mono ${
-                            isLowMargin ? 'text-rose-700 font-bold' : 'text-emerald-700'
-                          }`}
-                        >
-                          {quote.grossMarginPercent}%
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-center font-sans">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                            isHighRisk
-                              ? 'bg-rose-100 text-rose-800 border-rose-200'
-                              : 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                          }`}
-                        >
-                          {quote.riskLevel} ({quote.riskScore})
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-center font-sans">
-                        <button
-                          onClick={() => navigate(`/quotations/${quote.id}`)}
-                          className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded text-[11px] font-semibold inline-flex items-center gap-1"
-                        >
-                          Details <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
+        {/* View Mode Switcher */}
+        {viewMode === 'KANBAN' ? (
+          <div className="p-4">
+            <KanbanBoard<QuotationItem>
+              columns={riskColumns}
+              isLoading={isLoading}
+              error={error}
+              onRetry={fetchDashboardData}
+              keyExtractor={(item) => item.id}
+              onCardClick={(item) => navigate(`/quotations/${item.id}`)}
+              renderCard={(item) => (
+                <QuotationKanbanCard
+                  quote={{
+                    id: item.id,
+                    quoteNumber: item.quoteNumber,
+                    status: item.status,
+                    subtotal: item.netValue,
+                    totalDiscount: 0,
+                    netValue: item.netValue,
+                    grossMarginPercent: item.grossMarginPercent,
+                    riskScore: item.riskScore,
+                    riskLevel: item.riskLevel,
+                    createdAt: item.updatedAt,
+                    customer: {
+                      id: 'cust',
+                      name: item.customer?.name || 'Customer',
+                      code: 'CUST',
+                      tier: item.customer?.tier || 'STANDARD',
+                    },
+                  }}
+                  onView={(id) => navigate(`/quotations/${id}`)}
+                />
               )}
-            </tbody>
-          </table>
-        </div>
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                  <th className="py-3 px-4">Quote Number</th>
+                  <th className="py-3 px-4">Customer Account</th>
+                  <th className="py-3 px-3 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Net Value ($)</th>
+                  <th className="py-3 px-4 text-center">Gross Margin %</th>
+                  <th className="py-3 px-4 text-center">Risk Evaluation</th>
+                  <th className="py-3 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 font-mono">
+                {quotations.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-500 font-sans">
+                      No commercial deals matching selected filters.
+                    </td>
+                  </tr>
+                ) : (
+                  quotations.map((quote) => {
+                    const isHighRisk = quote.riskLevel === 'HIGH';
+                    const isLowMargin = quote.grossMarginPercent < 25.0;
+
+                    return (
+                      <tr key={quote.id} className="hover:bg-slate-50/80">
+                        <td className="py-3.5 px-4 font-bold text-slate-900 font-mono">
+                          {quote.quoteNumber}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-sans">
+                          <div className="font-semibold text-slate-900">
+                            {quote.customer?.name || 'Customer'}
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            Tier: {quote.customer?.tier || 'STANDARD'}
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-3 text-center font-sans">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-700">
+                            {quote.status}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right font-bold text-slate-900 font-mono">
+                          ${quote.netValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center font-sans">
+                          <span
+                            className={`font-semibold font-mono ${
+                              isLowMargin ? 'text-rose-700 font-bold' : 'text-emerald-700'
+                            }`}
+                          >
+                            {quote.grossMarginPercent}%
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center font-sans">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                              isHighRisk
+                                ? 'bg-rose-100 text-rose-800 border-rose-200'
+                                : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            }`}
+                          >
+                            {quote.riskLevel} ({quote.riskScore})
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center font-sans">
+                          <button
+                            onClick={() => navigate(`/quotations/${quote.id}`)}
+                            className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded text-[11px] font-semibold inline-flex items-center gap-1"
+                          >
+                            Details <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
