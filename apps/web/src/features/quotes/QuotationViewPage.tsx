@@ -158,10 +158,11 @@ export const QuotationViewPage: React.FC = () => {
       const taxPct = line.taxRate || 0;
 
       const lineGross = price * qty;
-      const discAmt = (lineGross * discPct) / 100;
-      const lineTaxable = lineGross - discAmt;
+      const lineTaxable = lineGross;
       const lineTax = (lineTaxable * taxPct) / 100;
-      const netLine = lineTaxable + lineTax;
+      const grossWithTax = lineGross + lineTax;
+      const discAmt = (grossWithTax * discPct) / 100;
+      const netLine = grossWithTax - discAmt;
 
       return {
         ...line,
@@ -183,10 +184,11 @@ export const QuotationViewPage: React.FC = () => {
     for (const line of updatedLines) {
       const price = line.unitPrice || line.listPrice;
       const lineGross = price * line.quantity;
-      const discAmt = (lineGross * line.proposedDiscountPercent) / 100;
-      const lineTaxable = lineGross - discAmt;
+      const lineTaxable = lineGross;
       const lineTax = (lineTaxable * (line.taxRate || 0)) / 100;
-      const netLine = lineTaxable + lineTax;
+      const grossWithTax = lineGross + lineTax;
+      const discAmt = (grossWithTax * line.proposedDiscountPercent) / 100;
+      const netLine = grossWithTax - discAmt;
 
       subtotal += lineGross;
       totalDiscount += discAmt;
@@ -425,15 +427,6 @@ export const QuotationViewPage: React.FC = () => {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <Percent className="w-3.5 h-3.5" /> Discount
-          </span>
-          <p className="text-lg font-bold text-amber-700 font-mono mt-1">
-            -${quotation.totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
             Taxable Base
           </span>
           <p className="text-lg font-bold text-slate-800 font-mono mt-1">
@@ -447,6 +440,15 @@ export const QuotationViewPage: React.FC = () => {
           </span>
           <p className="text-lg font-bold text-blue-700 font-mono mt-1">
             +${(quotation.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+            <Percent className="w-3.5 h-3.5" /> Discount
+          </span>
+          <p className="text-lg font-bold text-amber-700 font-mono mt-1">
+            -${quotation.totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
@@ -485,8 +487,8 @@ export const QuotationViewPage: React.FC = () => {
                     <th className="py-3 px-2 text-center">Qty</th>
                     <th className="py-3 px-3 text-right">Default Price</th>
                     <th className="py-3 px-3 text-right">Selling Price</th>
-                    <th className="py-3 px-3 text-right">Disc %</th>
                     <th className="py-3 px-3 text-right">Tax</th>
+                    <th className="py-3 px-3 text-right">Disc %</th>
                     <th className="py-3 px-3 text-right">Net Total</th>
                     <th className="py-3 px-3 text-right">Margin %</th>
                     {isDraft && <th className="py-3 px-2 text-center">Action</th>}
@@ -545,6 +547,10 @@ export const QuotationViewPage: React.FC = () => {
                           </span>
                         )}
                       </td>
+                      <td className="py-3 px-3 text-right text-slate-700">
+                        <div>+${(line.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="text-[10px] text-slate-400">({line.taxRate || 0}%)</div>
+                      </td>
                       <td className="py-3 px-3 text-right">
                         {isDraft ? (
                           <input
@@ -567,10 +573,6 @@ export const QuotationViewPage: React.FC = () => {
                             {line.proposedDiscountPercent}%
                           </span>
                         )}
-                      </td>
-                      <td className="py-3 px-3 text-right text-slate-700">
-                        <div>+${(line.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div className="text-[10px] text-slate-400">({line.taxRate || 0}%)</div>
                       </td>
                       <td className="py-3 px-3 text-right font-bold text-slate-900">
                         ${line.netLinePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

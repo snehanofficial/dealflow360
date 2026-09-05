@@ -21,7 +21,7 @@ describe('quoteEngine domain logic', () => {
     expect(result.grossAmount).toBe(2000);
     expect(result.proposedDiscountPercent).toBe(10);
     expect(result.discountAmount).toBe(200); // 2000 * 0.10
-    expect(result.taxableAmount).toBe(1800);
+    expect(result.taxableAmount).toBe(2000);
     expect(result.taxAmount).toBe(0);
     expect(result.netLinePrice).toBe(1800);
     expect(result.lineCost).toBe(1200);
@@ -84,10 +84,10 @@ describe('quoteEngine domain logic', () => {
 
     expect(result.grossAmount).toBe(3000); // 1500 * 2
     expect(result.discountAmount).toBe(300); // 3000 * 10% (NOT 2000 * 10%)
-    expect(result.taxableAmount).toBe(2700); // 3000 - 300
+    expect(result.taxableAmount).toBe(3000);
   });
 
-  it('executes MANDATORY acceptance scenario correctly with tax', () => {
+  it('executes MANDATORY acceptance scenario correctly with tax and discount applied after tax', () => {
     // Acceptance scenario step 1:
     // Default catalog price = ₹1,000, edited selling price = ₹1,500, Qty = 2, Disc = 10%, Tax = 18%
     const step1 = calculateLinePricing({
@@ -100,16 +100,16 @@ describe('quoteEngine domain logic', () => {
     });
 
     expect(step1.grossAmount).toBe(3000);
-    expect(step1.discountAmount).toBe(300);
-    expect(step1.taxableAmount).toBe(2700);
-    expect(step1.taxAmount).toBe(486); // 2700 * 18% = 486
-    expect(step1.netLinePrice).toBe(3186); // 2700 + 486 = 3186
+    expect(step1.taxableAmount).toBe(3000);
+    expect(step1.taxAmount).toBe(540); // 3000 * 18% = 540
+    expect(step1.discountAmount).toBe(354); // (3000 + 540) * 10% = 354
+    expect(step1.netLinePrice).toBe(3186); // 3540 - 354 = 3186
 
     const totalsStep1 = calculateQuoteTotals([step1]);
     expect(totalsStep1.subtotal).toBe(3000);
-    expect(totalsStep1.totalDiscount).toBe(300);
-    expect(totalsStep1.taxableAmount).toBe(2700);
-    expect(totalsStep1.taxAmount).toBe(486);
+    expect(totalsStep1.taxableAmount).toBe(3000);
+    expect(totalsStep1.taxAmount).toBe(540);
+    expect(totalsStep1.totalDiscount).toBe(354);
     expect(totalsStep1.netValue).toBe(3186);
 
     // Acceptance scenario step 2:
@@ -124,20 +124,20 @@ describe('quoteEngine domain logic', () => {
     });
 
     expect(step2.grossAmount).toBe(4000);
-    expect(step2.discountAmount).toBe(400);
-    expect(step2.taxableAmount).toBe(3600);
-    expect(step2.taxAmount).toBe(648); // 3600 * 18% = 648
+    expect(step2.taxableAmount).toBe(4000);
+    expect(step2.taxAmount).toBe(720); // 4000 * 18% = 720
+    expect(step2.discountAmount).toBe(472); // (4000 + 720) * 10% = 472
     expect(step2.netLinePrice).toBe(4248);
 
     const totalsStep2 = calculateQuoteTotals([step2]);
     expect(totalsStep2.subtotal).toBe(4000);
-    expect(totalsStep2.totalDiscount).toBe(400);
-    expect(totalsStep2.taxableAmount).toBe(3600);
-    expect(totalsStep2.taxAmount).toBe(648);
+    expect(totalsStep2.taxableAmount).toBe(4000);
+    expect(totalsStep2.taxAmount).toBe(720);
+    expect(totalsStep2.totalDiscount).toBe(472);
     expect(totalsStep2.netValue).toBe(4248);
   });
 
-  it('reconciles multi-line quotation totals accurately with tax', () => {
+  it('reconciles multi-line quotation totals accurately with tax and post-tax discount', () => {
     const line1 = calculateLinePricing({
       listPrice: 500,
       unitPrice: 600,
@@ -145,7 +145,7 @@ describe('quoteEngine domain logic', () => {
       quantity: 4,
       proposedDiscountPercent: 5,
       taxRate: 18,
-    }); // gross 2400, disc 120, taxable 2280, tax 410.40, net 2690.40
+    }); // gross 2400, tax 432, totalWithTax 2832, disc 141.60, net 2690.40
 
     const line2 = calculateLinePricing({
       listPrice: 1000,
@@ -154,14 +154,14 @@ describe('quoteEngine domain logic', () => {
       quantity: 1,
       proposedDiscountPercent: 15,
       taxRate: 18,
-    }); // gross 1200, disc 180, taxable 1020, tax 183.60, net 1203.60
+    }); // gross 1200, tax 216, totalWithTax 1416, disc 212.40, net 1203.60
 
     const totals = calculateQuoteTotals([line1, line2]);
 
     expect(totals.subtotal).toBe(3600); // 2400 + 1200
-    expect(totals.totalDiscount).toBe(300); // 120 + 180
-    expect(totals.taxableAmount).toBe(3300); // 2280 + 1020
-    expect(totals.taxAmount).toBe(594); // 410.40 + 183.60
+    expect(totals.taxableAmount).toBe(3600);
+    expect(totals.taxAmount).toBe(648); // 432 + 216
+    expect(totals.totalDiscount).toBe(354); // 141.60 + 212.40
     expect(totals.netValue).toBe(3894); // 2690.40 + 1203.60
   });
 

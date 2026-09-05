@@ -56,16 +56,18 @@ export function calculateLinePricing(input: LineCalculationInput): LineCalculati
   const taxRate = input.taxRate !== undefined ? Math.min(100, Math.max(0, input.taxRate)) : 0;
 
   const grossAmount = roundMoney(unitPrice * qty);
-  const discountAmount = roundMoney(grossAmount * (discountPct / 100));
-  const taxableAmount = roundMoney(grossAmount - discountAmount);
+  const taxableAmount = roundMoney(grossAmount);
   const taxAmount = roundMoney(taxableAmount * (taxRate / 100));
-  const netLinePrice = roundMoney(taxableAmount + taxAmount);
+  const totalWithTax = roundMoney(grossAmount + taxAmount);
+  const discountAmount = roundMoney(totalWithTax * (discountPct / 100));
+  const netLinePrice = roundMoney(totalWithTax - discountAmount);
   const lineCost = roundMoney(input.standardCost * qty);
 
-  const marginAmount = roundMoney(taxableAmount - lineCost);
+  const netRevenueExclTax = roundMoney(grossAmount * (1 - discountPct / 100));
+  const marginAmount = roundMoney(netRevenueExclTax - lineCost);
   const lineMarginPercent =
-    taxableAmount > 0
-      ? roundMoney((marginAmount / taxableAmount) * 100)
+    netRevenueExclTax > 0
+      ? roundMoney((marginAmount / netRevenueExclTax) * 100)
       : 0;
 
   return {
@@ -111,11 +113,13 @@ export function calculateQuoteTotals(lines: LineCalculationResult[]): QuoteTotal
   netValue = roundMoney(netValue);
   totalCost = roundMoney(totalCost);
 
-  const marginAmount = roundMoney(taxableAmount - totalCost);
+  const totalGrossWithTax = subtotal + taxAmount;
+  const netRevenueExclTax = roundMoney(subtotal * (1 - (totalGrossWithTax > 0 ? totalDiscount / totalGrossWithTax : 0)));
+  const marginAmount = roundMoney(netRevenueExclTax - totalCost);
   const grossMarginPercent =
-    taxableAmount > 0 ? roundMoney((marginAmount / taxableAmount) * 100) : 0;
+    netRevenueExclTax > 0 ? roundMoney((marginAmount / netRevenueExclTax) * 100) : 0;
   const avgDiscountPercent =
-    subtotal > 0 ? roundMoney((totalDiscount / subtotal) * 100) : 0;
+    totalGrossWithTax > 0 ? roundMoney((totalDiscount / totalGrossWithTax) * 100) : 0;
 
   return {
     subtotal,

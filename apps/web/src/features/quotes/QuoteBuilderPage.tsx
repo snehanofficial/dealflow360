@@ -193,10 +193,11 @@ export const QuoteBuilderPage: React.FC = () => {
 
   for (const line of lines) {
     const lineGross = line.unitPrice * line.quantity;
-    const discAmt = (lineGross * line.proposedDiscountPercent) / 100;
-    const lineTaxable = lineGross - discAmt;
+    const lineTaxable = lineGross;
     const lineTax = (lineTaxable * line.taxRate) / 100;
-    const netLine = lineTaxable + lineTax;
+    const grossWithTax = lineGross + lineTax;
+    const discAmt = (grossWithTax * line.proposedDiscountPercent) / 100;
+    const netLine = grossWithTax - discAmt;
     const costLine = line.standardCost * line.quantity;
 
     subtotal += lineGross;
@@ -207,9 +208,11 @@ export const QuoteBuilderPage: React.FC = () => {
     totalCost += costLine;
   }
 
+  const totalGrossWithTax = subtotal + totalTax;
+  const netRevenueExclTax = subtotal * (1 - (totalGrossWithTax > 0 ? totalDiscount / totalGrossWithTax : 0));
   const grossMarginPercent =
-    totalTaxable > 0 ? Math.round(((totalTaxable - totalCost) / totalTaxable) * 10000) / 100 : 0;
-  const avgDiscountPercent = subtotal > 0 ? (totalDiscount / subtotal) * 100 : 0;
+    netRevenueExclTax > 0 ? Math.round(((netRevenueExclTax - totalCost) / netRevenueExclTax) * 10000) / 100 : 0;
+  const avgDiscountPercent = totalGrossWithTax > 0 ? (totalDiscount / totalGrossWithTax) * 100 : 0;
 
   let riskScore = 1.0;
   if (avgDiscountPercent > 20) riskScore += 4.0;
@@ -342,15 +345,6 @@ export const QuoteBuilderPage: React.FC = () => {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <Percent className="w-3.5 h-3.5" /> Discount
-          </span>
-          <p className="text-lg font-bold text-amber-700 font-mono mt-1">
-            -${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
             Taxable Base
           </span>
           <p className="text-lg font-bold text-slate-800 font-mono mt-1">
@@ -364,6 +358,15 @@ export const QuoteBuilderPage: React.FC = () => {
           </span>
           <p className="text-lg font-bold text-blue-700 font-mono mt-1">
             +${totalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+            <Percent className="w-3.5 h-3.5" /> Discount
+          </span>
+          <p className="text-lg font-bold text-amber-700 font-mono mt-1">
+            -${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
@@ -419,8 +422,8 @@ export const QuoteBuilderPage: React.FC = () => {
                   <th className="py-2.5 px-3 text-center">Qty</th>
                   <th className="py-2.5 px-3 text-right">Default Price</th>
                   <th className="py-2.5 px-3 text-right">Selling Price</th>
-                  <th className="py-2.5 px-3 text-right">Disc %</th>
                   <th className="py-2.5 px-3 text-right">Tax</th>
+                  <th className="py-2.5 px-3 text-right">Disc %</th>
                   <th className="py-2.5 px-3 text-right">Net Line Total</th>
                   <th className="py-2.5 px-3 text-center">Action</th>
                 </tr>
@@ -428,10 +431,11 @@ export const QuoteBuilderPage: React.FC = () => {
               <tbody className="divide-y divide-slate-200 font-mono">
                 {lines.map((line, idx) => {
                   const lineGross = line.unitPrice * line.quantity;
-                  const discAmt = (lineGross * line.proposedDiscountPercent) / 100;
-                  const lineTaxable = lineGross - discAmt;
+                  const lineTaxable = lineGross;
                   const lineTax = (lineTaxable * line.taxRate) / 100;
-                  const netLine = lineTaxable + lineTax;
+                  const grossWithTax = lineGross + lineTax;
+                  const discAmt = (grossWithTax * line.proposedDiscountPercent) / 100;
+                  const netLine = grossWithTax - discAmt;
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50">
@@ -469,6 +473,11 @@ export const QuoteBuilderPage: React.FC = () => {
                         />
                       </td>
 
+                      <td className="py-3 px-3 text-right text-slate-700">
+                        <div>+${lineTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="text-[10px] text-slate-400">({line.taxRate}%)</div>
+                      </td>
+
                       <td className="py-3 px-3 text-right">
                         <input
                           type="number"
@@ -484,11 +493,6 @@ export const QuoteBuilderPage: React.FC = () => {
                           }
                           className="w-16 text-right border border-slate-200 rounded px-2 py-1 bg-slate-50 text-amber-700 font-bold focus:border-[#714B67]"
                         />
-                      </td>
-
-                      <td className="py-3 px-3 text-right text-slate-700">
-                        <div>+${lineTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div className="text-[10px] text-slate-400">({line.taxRate}%)</div>
                       </td>
 
                       <td className="py-3 px-3 text-right font-bold text-slate-900">

@@ -199,15 +199,6 @@ export const CustomerPortalPage: React.FC = () => {
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <Percent className="w-4 h-4 text-amber-500" /> Total Discount
-            </span>
-            <p className="text-xl font-bold font-mono text-amber-700 mt-1">
-              -${quote.totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
               Taxable Base
             </span>
             <p className="text-xl font-bold font-mono text-slate-800 mt-1">
@@ -221,6 +212,15 @@ export const CustomerPortalPage: React.FC = () => {
             </span>
             <p className="text-xl font-bold font-mono text-blue-700 mt-1">
               +${(quote.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+            <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+              <Percent className="w-4 h-4 text-amber-500" /> Total Discount
+            </span>
+            <p className="text-xl font-bold font-mono text-amber-700 mt-1">
+              -${quote.totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -256,8 +256,8 @@ export const CustomerPortalPage: React.FC = () => {
                   <th className="py-3 px-5">Product / Service</th>
                   <th className="py-3 px-3 text-center">Qty</th>
                   <th className="py-3 px-4 text-right">Selling Unit Price</th>
-                  <th className="py-3 px-4 text-right">Discount</th>
                   <th className="py-3 px-4 text-right">Tax</th>
+                  <th className="py-3 px-4 text-right">Discount</th>
                   <th className="py-3 px-5 text-right">Net Line Total</th>
                 </tr>
               </thead>
@@ -276,12 +276,12 @@ export const CustomerPortalPage: React.FC = () => {
                     <td className="py-4 px-4 text-right text-slate-700">
                       ${(line.unitPrice || line.listPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
-                    <td className="py-4 px-4 text-right text-amber-700 font-bold">
-                      {line.proposedDiscountPercent}%
-                    </td>
                     <td className="py-4 px-4 text-right text-slate-700">
                       <div>+${(line.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       <div className="text-[10px] text-slate-400">({line.taxRate || 0}%)</div>
+                    </td>
+                    <td className="py-4 px-4 text-right text-amber-700 font-bold">
+                      {line.proposedDiscountPercent}%
                     </td>
                     <td className="py-4 px-5 text-right font-bold text-[#714B67]">
                       ${line.netLinePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
