@@ -102,22 +102,129 @@ model Customer {
   @@index([status])
 }
 
+model Category {
+  id        String            @id @default(uuid())
+  name      String            @unique
+  code      String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  products  ProductCategory[]
+}
+
+model ProductCategory {
+  productId  String
+  categoryId String
+  isPrimary  Boolean  @default(false)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([productId])
+  @@index([categoryId])
+}
+
 model Product {
   id                  String                  @id @default(uuid())
   sku                 String                  @unique
   name                String
-  category            String
+  description         String?
+  category            String               @default("HARDWARE")
+  unit                String               @default("Unit")
+  taxRate             Float                @default(0.0)
   listPrice           Float
   standardCost        Float
+  maxAllowedDiscount  Float                   @default(15.0)
   billingType         BillingType             @default(ONE_TIME)
   recurringPeriod     RecurringPeriod?
   isActive            Boolean                 @default(true)
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
+  categories          ProductCategory[]
+  variants            ProductVariant[]
+  priceListEntries    PriceListEntry[]
   quoteLines          QuoteLine[]
   sourceRules         RecommendationRule[]    @relation("SourceProductRules")
   recommendedRules    RecommendationRule[]    @relation("RecommendedProductRules")
   inventory           InventoryItem[]
+
+  @@index([category])
+  @@index([sku])
+}
+
+model ProductAttribute {
+  id        String                  @id @default(uuid())
+  name      String                  @unique
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  values    ProductAttributeValue[]
+}
+
+model ProductAttributeValue {
+  id          String                  @id @default(uuid())
+  attributeId String
+  attribute   ProductAttribute        @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value       String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  variants    VariantAttributeValue[]
+
+  @@unique([attributeId, value])
+  @@index([attributeId])
+}
+
+model ProductVariant {
+  id         String                  @id @default(uuid())
+  productId  String
+  product    Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku        String                  @unique
+  name       String
+  extraPrice Float                   @default(0.0)
+  isActive   Boolean                 @default(true)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  attributes VariantAttributeValue[]
+
+  @@index([productId])
+}
+
+model VariantAttributeValue {
+  variantId        String
+  attributeValueId String
+  variant          ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attributeValue   ProductAttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, attributeValueId])
+  @@index([variantId])
+  @@index([attributeValueId])
+}
+
+model PriceList {
+  id           String           @id @default(uuid())
+  name         String
+  customerTier CustomerTier?
+  currency     String           @default("USD")
+  isDefault    Boolean          @default(false)
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  entries      PriceListEntry[]
+
+  @@index([customerTier])
+  @@index([currency])
+}
+
+model PriceListEntry {
+  id          String    @id @default(uuid())
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unitPrice   Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([priceListId, productId])
+  @@index([productId])
 }
 
 model Quotation {

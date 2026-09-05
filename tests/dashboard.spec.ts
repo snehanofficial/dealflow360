@@ -17,14 +17,14 @@ test.describe('Dashboard UI', () => {
     await expect(page.locator('aside')).toBeVisible();
     await expect(page.locator('text=SALES')).toBeVisible();
     await expect(page.locator('text=RISK & APPROVALS')).toBeVisible();
-    
+
     // Check Topnav
     await expect(page.locator('input[placeholder="Search quotes, customers, products, or anything..."]')).toBeVisible();
 
     // Check Home Page Content
-    await expect(page.locator('text=Good morning,')).toBeVisible();
+    await expect(page.locator('text=Hello,')).toBeVisible();
     await expect(page.locator('button:has-text("New Quotation")')).toBeVisible();
-    
+
     // Check KPI Cards
     await expect(page.locator('text=Total Quotations')).toBeVisible();
     await expect(page.locator('text=Estimated Revenue')).toBeVisible();
