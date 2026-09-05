@@ -1,0 +1,59 @@
+import { z } from 'zod';
+export const CustomerTierEnum = z.enum([
+    'ENTERPRISE',
+    'TIER_1',
+    'TIER_2',
+    'TIER_3',
+]);
+export const CustomerStatusEnum = z.enum([
+    'ACTIVE',
+    'INACTIVE',
+    'SUSPENDED',
+]);
+export const CustomerSchema = z.object({
+    id: z.string(),
+    code: z.string(),
+    name: z.string(),
+    email: z.string().email(),
+    phone: z.string().nullable().optional(),
+    tier: CustomerTierEnum,
+    status: CustomerStatusEnum,
+    createdAt: z.string(),
+    updatedAt: z.string(),
+});
+export const CreateCustomerSchema = z.object({
+    code: z.string().min(2, 'Customer code must be at least 2 characters').max(30),
+    name: z.string().min(2, 'Customer name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    phone: z.string().optional(),
+    tier: CustomerTierEnum.default('TIER_2'),
+    status: CustomerStatusEnum.default('ACTIVE'),
+});
+export const UpdateCustomerSchema = z.object({
+    name: z.string().min(2, 'Customer name must be at least 2 characters').optional(),
+    email: z.string().email('Invalid email address').optional(),
+    phone: z.string().nullable().optional(),
+    tier: CustomerTierEnum.optional(),
+    status: CustomerStatusEnum.optional(),
+});
+export const CustomerFilterQuerySchema = z.object({
+    search: z.string().optional(),
+    tier: CustomerTierEnum.optional(),
+    status: CustomerStatusEnum.optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export const CustomerListResponseSchema = z.object({
+    items: z.array(CustomerSchema),
+    total: z.number().int(),
+    page: z.number().int(),
+    limit: z.number().int(),
+    totalPages: z.number().int(),
+});
+export const CustomerReferenceSchema = z.object({
+    id: z.string(),
+    code: z.string(),
+    name: z.string(),
+    tier: CustomerTierEnum,
+});
+//# sourceMappingURL=index.js.map

@@ -11,6 +11,7 @@ import { ProductListPage } from '../features/products/ProductListPage.js';
 import { PriceListPage } from '../features/pricelists/PriceListPage.js';
 import { PriceListDetailPage } from '../features/pricelists/PriceListDetailPage.js';
 import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
+import { DiscountPolicyListPage } from '../features/governance/DiscountPolicyListPage.js';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -126,6 +127,19 @@ export const AppRoutes: React.FC = () => {
         }
       />
 
+      <Route
+        path="/discount-policies"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DiscountPolicyListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/discount-policy" element={<Navigate to="/discount-policies" replace />} />
+      <Route bg-path="/governance/discount-policies" element={<Navigate to="/discount-policies" replace />} />
       <Route path="/pricelists" element={<Navigate to="/price-lists" replace />} />
       
       <Route path="*" element={<Navigate to="/app" replace />} />

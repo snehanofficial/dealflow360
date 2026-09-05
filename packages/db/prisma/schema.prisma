@@ -145,6 +145,7 @@ model Product {
   quoteLines          QuoteLine[]
   sourceRules         RecommendationRule[] @relation("SourceProductRules")
   recommendedRules    RecommendationRule[] @relation("RecommendedProductRules")
+  discountPolicyRules DiscountPolicyRule[]
 
   @@index([category])
   @@index([sku])
@@ -281,5 +282,27 @@ model RecommendationRule {
 
   @@index([sourceProductId])
   @@index([recommendedProductId])
+}
+
+model DiscountPolicyRule {
+  id                   String        @id @default(uuid())
+  name                 String
+  description          String?
+  customerTier         CustomerTier?
+  category             String?
+  productId            String?
+  product              Product?      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  maxDiscountPercent   Float
+  minMarginPercent     Float?
+  requiredApprovalRole Role          @default(SALES_MANAGER)
+  priority             Int           @default(10)
+  isActive             Boolean       @default(true)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([customerTier])
+  @@index([category])
+  @@index([productId])
+  @@index([isActive])
 }
 
