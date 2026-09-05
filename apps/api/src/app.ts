@@ -3,13 +3,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import { authRoutes } from './routes/authRoutes.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { env } from './config/env.js';
 
 export const app: Express = express();
 
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: env.CORS_ORIGIN,
     credentials: true,
   }),
 );
@@ -18,17 +21,29 @@ app.use(cookieParser());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use(limiter);
 
+// Health Endpoint
 app.get('/api/v1/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'dealflow360-api', timestamp: new Date().toISOString() });
+  res.json({
+    success: true,
+    data: { status: 'ok', service: 'dealflow360-api', timestamp: new Date().toISOString() },
+    message: null,
+    meta: null,
+  });
 });
 
-const PORT = process.env.PORT || 3000;
+// Auth Routes
+app.use('/api/v1/auth', authRoutes);
+
+// Centralized Error Handler
+app.use(errorHandler);
+
+const PORT = env.PORT;
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {

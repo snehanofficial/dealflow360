@@ -1,19 +1,54 @@
-# DealFlow360 — Architecture Specification
+# DealFlow360 — Canonical Architecture Specification
 
-## Overview
+For full architectural details, see [`07_FEATURE_MODULES.md`](./07_FEATURE_MODULES.md) and [`00_BASE_IMPLEMENTATION.md`](./00_BASE_IMPLEMENTATION.md).
 
-DealFlow360 is built as a modular monolith in a monorepo structure.
+---
 
-## Layers & Boundary Rules
+## 1. System Overview
 
-1. **`apps/web`**: React 19 + Vite presentation layer. Never authoritative for commercial rules.
-2. **`apps/api`**: Express 5 backend API layer owning HTTP controllers, authentication, authorization, and transactions.
-3. **`packages/contracts`**: Shared Zod schemas for request/response contracts across API and Web.
-4. **`packages/domain`**: Pure, framework-independent business logic engine (pricing, margin, policy, risk, approval, fulfillment, billing). Must not import React, Express, Prisma, or browser APIs.
-5. **`packages/db`**: Prisma 7 ORM persistence mapping to PostgreSQL 18.
+DealFlow360 is structured as a **Modular Monolith** using `pnpm` workspaces. It provides high developer velocity and shared safety while keeping domain boundaries clean.
 
-## Dependency Direction
-
+```text
+dealflow360/
+├── apps/
+│   ├── web/            # Presentation Layer: React 19 + Vite + Tailwind CSS v4
+│   └── api/            # Application & HTTP Layer: Express 5 + Zod validation
+└── packages/
+    ├── contracts/      # Interface Layer: Shared Zod DTOs & API contract types
+    ├── domain/         # Business Engine: Pure TypeScript commercial governance logic
+    └── db/             # Persistence Layer: Prisma 7 ORM + PostgreSQL 18
 ```
-web → API → application services → domain → persistence → PostgreSQL
+
+---
+
+## 2. Dependency Direction & Boundary Rules
+
+The dependency flow is strictly unidirectional:
+
+```text
+apps/web ──► apps/api ──► Application Services ──► packages/domain ──► packages/db ──► PostgreSQL
+   │                                                    ▲
+   └───────────────────► packages/contracts ────────────┘
 ```
+
+### Strict Boundary Constraints
+
+1. **`packages/domain` must remain framework-independent**:
+   - MUST NOT import React, Express, Prisma, Axios, or Browser APIs.
+   - MUST contain pure, deterministic commercial governance functions (Pricing, Margin, Policy, Risk, Approvals, Fulfillment, Billing).
+2. **`apps/web` is Presentation Only**:
+   - MUST NOT execute authoritative commercial rules or risk calculations.
+   - All pricing, risk scores, approval routing, inventory checks, and billing schedules must be derived server-side.
+3. **`apps/api` Controllers remain thin**:
+   - Controllers handle HTTP routing, request parsing, authentication, authorization, service invocation, and standardized JSON output formatting.
+4. **`packages/contracts` owns boundaries**:
+   - Zod schemas in `packages/contracts` validate input at runtime both on the client and server.
+
+---
+
+## 3. Shared Infrastructure & Security Baseline
+
+- **Authentication**: JWT access token in `Authorization: Bearer <token>` header + HttpOnly secure cookie for refresh tokens with rotation and server-side session tracking.
+- **Password Hashing**: Argon2id via `argon2` node package.
+- **Authorization**: Permission-based RBAC enforced server-side. Roles: `ADMIN`, `SALES_MANAGER`, `SALES_REP`, `FINANCE_OPERATIONS`, `CUSTOMER`.
+- **API Baseline**: Express 5, `helmet`, `cors`, `express-rate-limit`, `cookie-parser`, `pino` logger.
