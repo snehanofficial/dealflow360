@@ -14,12 +14,6 @@ enum Role {
   CUSTOMER
 }
 
-enum CustomerTier {
-  STANDARD
-  GOLD
-  PLATINUM
-}
-
 enum BillingType {
   ONE_TIME
   RECURRING
