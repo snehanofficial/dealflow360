@@ -70,13 +70,15 @@ async function main() {
     where: { id: 'cust-acme-001' },
     update: {
       name: 'Acme Enterprise Solutions',
-      tier: 'PLATINUM',
+      tier: 'ENTERPRISE',
       creditLimit: 500000,
     },
     create: {
       id: 'cust-acme-001',
+      code: 'CUST-ACME-001',
+      email: 'contact@acme.com',
       name: 'Acme Enterprise Solutions',
-      tier: 'PLATINUM',
+      tier: 'ENTERPRISE',
       creditLimit: 500000,
       region: 'US-East',
       accountManager: 'Bob Salesrep',

@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "CustomerTier" AS ENUM ('STANDARD', 'GOLD', 'PLATINUM');
-
--- CreateEnum
 CREATE TYPE "BillingType" AS ENUM ('ONE_TIME', 'RECURRING');
 
 -- CreateEnum
@@ -13,19 +10,10 @@ CREATE TYPE "QuoteStatus" AS ENUM ('DRAFT', 'PENDING_MANAGER', 'PENDING_FINANCE'
 -- CreateEnum
 CREATE TYPE "RecommendationRuleType" AS ENUM ('CO_PURCHASE', 'PROMOTION', 'CROSS_SELL', 'UPSELL');
 
--- CreateTable
-CREATE TABLE "Customer" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "tier" "CustomerTier" NOT NULL DEFAULT 'STANDARD',
-    "creditLimit" DOUBLE PRECISION NOT NULL DEFAULT 50000,
-    "region" TEXT NOT NULL DEFAULT 'US-East',
-    "accountManager" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id")
-);
+-- AlterTable
+ALTER TABLE "Customer" ADD COLUMN     "accountManager" TEXT,
+ADD COLUMN     "creditLimit" DOUBLE PRECISION NOT NULL DEFAULT 50000,
+ADD COLUMN     "region" TEXT NOT NULL DEFAULT 'US-East';
 
 -- CreateTable
 CREATE TABLE "Product" (
