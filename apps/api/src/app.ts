@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/authRoutes.js';
+import { quoteRoutes } from './routes/quoteRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
 
@@ -40,8 +41,12 @@ app.get('/api/v1/health', (_req, res) => {
 // Auth Routes
 app.use('/api/v1/auth', authRoutes);
 
+// Quotation & Recommendation Routes
+app.use('/api/v1/quotations', quoteRoutes);
+
 // Centralized Error Handler
 app.use(errorHandler);
+
 
 const PORT = env.PORT;
 
