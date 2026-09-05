@@ -106,9 +106,11 @@ model Product {
   id                  String               @id @default(uuid())
   sku                 String               @unique
   name                String
+  description         String?
   category            String
   listPrice           Float
   standardCost        Float
+  maxAllowedDiscount  Float                @default(15.0)
   billingType         BillingType          @default(ONE_TIME)
   recurringPeriod     RecurringPeriod?
   isActive            Boolean              @default(true)
@@ -117,6 +119,9 @@ model Product {
   quoteLines          QuoteLine[]
   sourceRules         RecommendationRule[] @relation("SourceProductRules")
   recommendedRules    RecommendationRule[] @relation("RecommendedProductRules")
+
+  @@index([category])
+  @@index([sku])
 }
 
 model Quotation {
