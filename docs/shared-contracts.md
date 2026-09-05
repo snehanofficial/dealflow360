@@ -1,4 +1,4 @@
-# DealFlow360 — Shared Contracts Specification
+# DealFlow360 - Shared Contracts Specification
 
 ## 1. Overview
 

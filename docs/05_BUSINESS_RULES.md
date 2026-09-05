@@ -1,4 +1,4 @@
-# DealFlow360 — Business Rules
+# DealFlow360 - Business Rules
 
 ## 1. Purpose
 
@@ -1722,7 +1722,7 @@ A business shortcut must never override authorization or validation.
 
 ---
 
-# 93. Demo Scenario A — Excessive Discount
+# 93. Demo Scenario A - Excessive Discount
 
 The application must support:
 
@@ -1752,7 +1752,7 @@ This is one of the key official quick-test scenarios. fileciteturn6file4�
 
 ---
 
-# 94. Demo Scenario B — Upsell
+# 94. Demo Scenario B - Upsell
 
 The application must support:
 
@@ -1772,7 +1772,7 @@ The source specification requires immediate total/margin impact after accepting 
 
 ---
 
-# 95. Demo Scenario C — Warehouse Split
+# 95. Demo Scenario C - Warehouse Split
 
 The application must support:
 
@@ -1792,7 +1792,7 @@ Accept / Override
 
 ---
 
-# 96. Demo Scenario D — Hybrid Billing
+# 96. Demo Scenario D - Hybrid Billing
 
 The application must support:
 
@@ -1808,7 +1808,7 @@ Recurring Schedule
 
 ---
 
-# 97. Demo Scenario E — Customer Negotiation
+# 97. Demo Scenario E - Customer Negotiation
 
 The application must support:
 
@@ -1828,7 +1828,7 @@ Approval Required?
 
 ---
 
-# 98. Demo Scenario F — Automatic Re-approval
+# 98. Demo Scenario F - Automatic Re-approval
 
 The application must support:
 
@@ -1848,7 +1848,7 @@ The official specification requires this automatic re-entry behavior. filecit
 
 ---
 
-# 99. Demo Scenario G — Payment / Invoice State
+# 99. Demo Scenario G - Payment / Invoice State
 
 After confirmation, the system should be able to record the relevant payment/billing state and update the invoice/billing status accordingly.
 

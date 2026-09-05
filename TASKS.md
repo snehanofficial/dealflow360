@@ -1,4 +1,4 @@
-# DealFlow360 — Implementation Tasks & Ownership Blueprint
+# DealFlow360 - Implementation Tasks & Ownership Blueprint
 
 ## Phase 0: Shared Foundation & Infrastructure (Completed)
 - [x] Monorepo workspace configuration (`pnpm-workspace.yaml`, `package.json`, `tsconfig.json`)
@@ -13,7 +13,7 @@
 
 ---
 
-## Phase 1: Developer A — Master Data & Governance Vertical Slices
+## Phase 1: Developer A - Master Data & Governance Vertical Slices
 - [x] Phase A1: Customer Management (Prisma model, CRUD API, Tier/Status, UI, Tests)
 - [ ] Phase A2: Product Catalog & Base Pricing (Prisma model, CRUD API, Allowed Discount limits, UI, Tests)
 - [ ] Phase A3: Discount Policy Matrix & Margin Engine (Domain pricing/margin calculation, Policy evaluation API, Tests)
@@ -22,7 +22,7 @@
 
 ---
 
-## Phase 2: Developer B — Deal Execution & Operations Vertical Slices
+## Phase 2: Developer B - Deal Execution & Operations Vertical Slices
 - [x] Phase B1: Quotation Management & Quote Builder UI (Quote & Line models, Quote Builder UI, State machine, Tests)
 
 - [x] Phase B2: Customer Negotiation Portal (Portal token security, Counteroffer submission, Responsive Portal UI, Tests)

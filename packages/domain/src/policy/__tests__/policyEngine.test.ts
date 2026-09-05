@@ -21,7 +21,7 @@ describe('policyEngine', () => {
     },
     {
       id: 'rule-t2-001',
-      name: 'Tier 2 Customer Policy',
+      name: 'Silver Customer Policy',
       description: null,
       customerTier: 'SILVER',
       category: null,

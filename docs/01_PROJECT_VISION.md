@@ -1,4 +1,4 @@
-# DealFlow360 — Project Vision
+# DealFlow360 - Project Vision
 
 ## 1. Project Name
 
@@ -802,43 +802,43 @@ These ideas belong to the future roadmap and should not complicate the hackathon
 
 All implementation decisions should follow these principles:
 
-### Principle 1 — Business flow first
+### Principle 1 - Business flow first
 
 The product should follow the actual sales process.
 
-### Principle 2 — Real logic
+### Principle 2 - Real logic
 
 Important decisions must be computed by the application.
 
-### Principle 3 — One source of truth
+### Principle 3 - One source of truth
 
 Business data must not be duplicated unnecessarily.
 
-### Principle 4 — Modular ownership
+### Principle 4 - Modular ownership
 
 Developers should be able to work independently on clearly defined modules.
 
-### Principle 5 — Stable contracts
+### Principle 5 - Stable contracts
 
 Modules communicate through clearly defined interfaces.
 
-### Principle 6 — Security by design
+### Principle 6 - Security by design
 
 Authentication and authorization must be enforced properly.
 
-### Principle 7 — Explainable automation
+### Principle 7 - Explainable automation
 
 Automated decisions should have understandable reasons.
 
-### Principle 8 — Dynamic data
+### Principle 8 - Dynamic data
 
 Production-like flows should operate on actual application state.
 
-### Principle 9 — Demo-ready
+### Principle 9 - Demo-ready
 
 Every completed capability should contribute to the end-to-end story.
 
-### Principle 10 — Keep the architecture simple
+### Principle 10 - Keep the architecture simple
 
 Do not introduce complexity that does not materially improve the product.
 

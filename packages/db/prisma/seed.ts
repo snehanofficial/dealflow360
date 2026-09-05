@@ -279,8 +279,8 @@ async function main() {
     },
     {
       id: 'rule-t1-001',
-      name: 'Tier 1 Customer Policy',
-      description: 'Standard governed discount allowance for Tier 1 key accounts',
+      name: 'Gold Customer Policy',
+      description: 'Standard governed discount allowance for Gold key accounts',
       customerTier: 'GOLD' as const,
       category: null,
       maxDiscountPercent: 15.0,
@@ -291,8 +291,8 @@ async function main() {
     },
     {
       id: 'rule-t2-001',
-      name: 'Tier 2 Customer Policy',
-      description: 'Strict discount policy for Tier 2 standard accounts',
+      name: 'Silver Customer Policy',
+      description: 'Strict discount policy for Silver standard accounts',
       customerTier: 'SILVER' as const,
       category: null,
       maxDiscountPercent: 10.0,

@@ -1,4 +1,4 @@
-# DealFlow360 — End-to-End Judge Demonstration Script
+# DealFlow360 - End-to-End Judge Demonstration Script
 
 This document details the step-by-step judge demonstration flow proving connected, policy-driven commercial governance in DealFlow360.
 

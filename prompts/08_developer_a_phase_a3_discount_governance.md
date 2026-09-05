@@ -1,4 +1,4 @@
-# Developer A — Phase A3 Discount Governance & Margin Engine Implementation Plan
+# Developer A - Phase A3 Discount Governance & Margin Engine Implementation Plan
 
 ## Goal
 Build a deterministic, server-authoritative Discount Governance & Margin Engine for DealFlow360.

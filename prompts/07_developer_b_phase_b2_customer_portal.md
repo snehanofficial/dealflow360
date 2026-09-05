@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase B2 Customer Negotiation Portal & Counteroffers
+# Implementation Prompt: Developer B - Phase B2 Customer Negotiation Portal & Counteroffers
 
 ## 1. Goal
 Implement Phase B2 of Developer B's vertical slice in DealFlow360:
@@ -26,7 +26,7 @@ Implement Phase B2 of Developer B's vertical slice in DealFlow360:
 
 ## 4. Decisions and Assumptions
 - Access to customer portal is authenticated via a secure, unguessable UUID token (`PortalToken`).
-- Portal endpoint does NOT require Bearer user login — the token itself authorizes read access to that specific quote.
+- Portal endpoint does NOT require Bearer user login - the token itself authorizes read access to that specific quote.
 - Submitting a counteroffer recalculates line net price, quote totals, gross margin %, risk score, and sets status to `NEGOTIATING` (or `PENDING_MANAGER`/`PENDING_FINANCE` depending on risk re-evaluation).
 - Token can expire or be revoked (`isRevoked: true`).
 - Responsive UI supports viewports from 360px (mobile) to 4K displays.

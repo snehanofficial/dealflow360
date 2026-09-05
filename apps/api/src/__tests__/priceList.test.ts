@@ -147,7 +147,7 @@ describe('Price List Management API Tests (Developer A Phase A2)', () => {
       .post('/api/v1/price-lists')
       .set('Authorization', `Bearer ${salesManagerToken}`)
       .send({
-        name: 'Tier 1 USD Pricing',
+        name: 'Gold USD Pricing',
         customerTier: 'GOLD',
         currency: 'USD',
         isDefault: false,
@@ -160,13 +160,13 @@ describe('Price List Management API Tests (Developer A Phase A2)', () => {
       .patch(`/api/v1/price-lists/${listId}`)
       .set('Authorization', `Bearer ${salesManagerToken}`)
       .send({
-        name: 'Tier 1 USD Pricing Updated',
+        name: 'Gold USD Pricing Updated',
         isDefault: true,
         isActive: false,
       });
 
     expect(patchRes.status).toBe(200);
-    expect(patchRes.body.data.name).toBe('Tier 1 USD Pricing Updated');
+    expect(patchRes.body.data.name).toBe('Gold USD Pricing Updated');
     expect(patchRes.body.data.isActive).toBe(false);
   });
 

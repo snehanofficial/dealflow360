@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase 2 (Upsell Margin Integration)
+# Implementation Prompt: Developer B - Phase 2 (Upsell Margin Integration)
 
 ## Goal
 Complete Phase 2 of Developer B's roadmap: Upsell Margin Integration. This phase enhances the commercial impact calculation of recommendations, ensuring dynamic revenue, cost, margin delta %, and recurring billing adjustments, integrated seamlessly with quotation recalculation and verified with comprehensive boundary and regression tests.

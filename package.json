@@ -2,7 +2,7 @@
   "name": "dealflow360-root",
   "private": true,
   "version": "0.1.0",
-  "description": "DealFlow360 — B2B Sales-to-Cash Commercial Governance Platform",
+  "description": "DealFlow360 - B2B Sales-to-Cash Commercial Governance Platform",
   "packageManager": "pnpm@10.5.2",
   "engines": {
     "node": ">=22.0.0",

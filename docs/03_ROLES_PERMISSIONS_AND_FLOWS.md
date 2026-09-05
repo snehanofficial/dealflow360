@@ -1,4 +1,4 @@
-# DealFlow360 — Roles, Permissions & Flows
+# DealFlow360 - Roles, Permissions & Flows
 
 ## 1. Purpose
 
@@ -431,7 +431,7 @@ A CUSTOMER permission does not grant access to every quotation.
 
 # 7. Permission Enforcement Levels
 
-## Level 1 — Navigation
+## Level 1 - Navigation
 
 The UI may hide navigation items that a user cannot access.
 
@@ -447,7 +447,7 @@ However, navigation visibility is only a usability feature.
 
 ---
 
-## Level 2 — Route
+## Level 2 - Route
 
 Protected pages must check permissions.
 
@@ -461,7 +461,7 @@ Requires approval.view
 
 ---
 
-## Level 3 — Action
+## Level 3 - Action
 
 Individual actions must check permissions.
 
@@ -475,7 +475,7 @@ Requires approval.action
 
 ---
 
-## Level 4 — API / Server
+## Level 4 - API / Server
 
 Protected operations must validate:
 

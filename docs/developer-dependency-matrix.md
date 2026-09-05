@@ -1,4 +1,4 @@
-# DealFlow360 — Developer Dependency & Ownership Matrix
+# DealFlow360 - Developer Dependency & Ownership Matrix
 
 ## 1. Governance & Independence Overview
 

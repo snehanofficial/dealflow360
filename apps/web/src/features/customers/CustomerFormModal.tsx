@@ -163,9 +163,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67] bg-white"
               >
                 <option value="ENTERPRISE">Enterprise</option>
-                <option value="GOLD">Tier 1</option>
-                <option value="SILVER">Tier 2</option>
-                <option value="BRONZE">Tier 3</option>
+                <option value="GOLD">Gold</option>
+                <option value="SILVER">Silver</option>
+                <option value="BRONZE">Bronze</option>
               </select>
             </div>
 

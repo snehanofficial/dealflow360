@@ -1,4 +1,4 @@
-# DealFlow360 — API Contract
+# DealFlow360 - API Contract
 
 ## 1. Purpose
 

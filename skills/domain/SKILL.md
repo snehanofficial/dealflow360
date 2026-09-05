@@ -3,7 +3,7 @@ name: domain
 description: Business rules, domain services, state transitions, policy evaluation, risk, approvals, and scenario tests for DealFlow360.
 ---
 
-# Domain Skill — DealFlow360
+# Domain Skill - DealFlow360
 
 ## Guidelines
 - `packages/domain` contains framework-independent commercial engines.

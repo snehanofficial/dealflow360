@@ -275,7 +275,7 @@ describe('A5 — Audit Trail & Commercial Event History Suite', () => {
         .post('/api/v1/price-lists')
         .set('Authorization', `Bearer ${managerToken}`)
         .send({
-          name: 'Custom Tier 1 Price List',
+          name: 'Custom Gold Price List',
           currency: 'USD',
           customerTier: 'GOLD',
         });

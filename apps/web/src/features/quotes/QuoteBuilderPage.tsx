@@ -294,7 +294,7 @@ export const QuoteBuilderPage: React.FC = () => {
           >
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} ({c.code}) — {c.tier} Tier
+                {c.name} ({c.code}) - {c.tier} Tier
               </option>
             ))}
           </select>

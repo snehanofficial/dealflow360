@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer A Phase A4 — Approval Workflow Engine & Approval Inbox UI
+# Implementation Prompt: Developer A Phase A4 - Approval Workflow Engine & Approval Inbox UI
 
 ## Goal
 Implement Module A4: Approval Workflow Engine & Approval Inbox UI for DealFlow360.

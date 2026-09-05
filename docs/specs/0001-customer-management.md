@@ -5,7 +5,7 @@
 
 ## Summary
 
-This specification defines the complete vertical slice implementation for Customer Management, owned exclusively by Developer A as outlined in Developer A Phase 1 instructions (`docs/08_DEVELOPER_A.md`). It establishes customer persistence, account tiering (Tier 1, Tier 2, Tier 3, Enterprise), status lifecycle, RBAC enforcement, and Zod validation.
+This specification defines the complete vertical slice implementation for Customer Management, owned exclusively by Developer A as outlined in Developer A Phase 1 instructions (`docs/08_DEVELOPER_A.md`). It establishes customer persistence, account tiering (Gold, Silver, Bronze, Enterprise), status lifecycle, RBAC enforcement, and Zod validation.
 
 ## Context
 
@@ -15,7 +15,7 @@ DealFlow360 relies on customer accounts and customer tiers to drive discount gov
 
 **User stories**:
 - As a Sales Rep or Admin, I want to create, update, search, and view customer accounts so that deals can be associated with valid enterprise customers.
-- As a Sales Manager or Admin, I want to configure customer tiers (e.g. Enterprise, Tier 1) and account status (Active, Inactive, Suspended) so that pricing and policy rules apply accurately.
+- As a Sales Manager or Admin, I want to configure customer tiers (e.g. Enterprise, Gold) and account status (Active, Inactive, Suspended) so that pricing and policy rules apply accurately.
 
 **Acceptance criteria**:
 - **AC-1**: Customer records support `name`, `code`, `email`, `phone`, `tier` (`ENTERPRISE`, `GOLD`, `SILVER`, `BRONZE`), and `status` (`ACTIVE`, `INACTIVE`, `SUSPENDED`).

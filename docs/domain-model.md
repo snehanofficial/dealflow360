@@ -1,4 +1,4 @@
-# DealFlow360 — Canonical Domain Model Specification
+# DealFlow360 - Canonical Domain Model Specification
 
 For detailed business entity definitions and workflows, see [`03_ROLES_PERMISSIONS_AND_FLOWS.md`](./03_ROLES_PERMISSIONS_AND_FLOWS.md) and [`05_BUSINESS_RULES.md`](./05_BUSINESS_RULES.md).
 

@@ -1,4 +1,4 @@
-# DealFlow360 — Sales-to-Cash Commercial Governance Platform
+# DealFlow360 - Sales-to-Cash Commercial Governance Platform
 
 DealFlow360 is a policy-driven B2B sales-to-cash platform designed for enterprise deal governance.
 

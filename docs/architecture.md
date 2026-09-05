@@ -1,4 +1,4 @@
-# DealFlow360 — Canonical Architecture Specification
+# DealFlow360 - Canonical Architecture Specification
 
 For full architectural details, see [`07_FEATURE_MODULES.md`](./07_FEATURE_MODULES.md) and [`00_BASE_IMPLEMENTATION.md`](./00_BASE_IMPLEMENTATION.md).
 

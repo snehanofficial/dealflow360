@@ -1,4 +1,4 @@
-# Implementation Prompt — Developer A Phase A2: Product Catalog & Base Pricing
+# Implementation Prompt - Developer A Phase A2: Product Catalog & Base Pricing
 
 ## Goal
 Implement Developer A Phase A2: Product Catalog & Base Pricing vertical slice, supporting Product CRUD, category filtering, product types (`ONE_TIME`, `RECURRING`), base selling price, standard cost price, maximum allowed discount governance limits, RBAC authorization, Zod validation, responsive UI, and automated unit/API test suite.

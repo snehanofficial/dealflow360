@@ -1,4 +1,4 @@
-# Implementation Prompt — Developer A Phase 1: Customer Foundation
+# Implementation Prompt - Developer A Phase 1: Customer Foundation
 
 ## Goal
 Implement Developer A Phase 1: Customer Foundation vertical slice, supporting full Customer CRUD, search/filtering, tier classification (`ENTERPRISE`, `GOLD`, `SILVER`, `BRONZE`), status management (`ACTIVE`, `INACTIVE`, `SUSPENDED`), RBAC enforcement, validation, and automated unit/API/UI test suite.

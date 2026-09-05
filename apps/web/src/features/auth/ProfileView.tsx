@@ -63,7 +63,7 @@ export const ProfileView: React.FC = () => {
         <Card className="md:col-span-2">
           <CardHeader
             title="Granted Role Permissions"
-            subtitle={`Role: ${role} — ${permissions.length} active permissions`}
+            subtitle={`Role: ${role} - ${permissions.length} active permissions`}
           />
           <CardBody>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

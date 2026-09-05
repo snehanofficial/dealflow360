@@ -1,4 +1,4 @@
-# Developer 0 — Base Implementation Phased Plan
+# Developer 0 - Base Implementation Phased Plan
 
 ## 1. Phase Identity
 
@@ -6,7 +6,7 @@ Developer / Foundation Owner: Base Implementation
 
 Phase ID:
 
-`PHASE 0 — BASE IMPLEMENTATION`
+`PHASE 0 - BASE IMPLEMENTATION`
 
 Purpose:
 
@@ -120,7 +120,7 @@ Explicit user approval is required before starting the next phase.
 
 ---
 
-# 5. Phase 1 — Project Foundation & Application Startup
+# 5. Phase 1 - Project Foundation & Application Startup
 
 ## Objective
 
@@ -170,7 +170,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 6. Phase 2 — Application Shell & Responsive Layout
+# 6. Phase 2 - Application Shell & Responsive Layout
 
 ## Objective
 
@@ -216,7 +216,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 7. Phase 3 — Responsive Navbar & Navigation Foundation
+# 7. Phase 3 - Responsive Navbar & Navigation Foundation
 
 ## Objective
 
@@ -262,7 +262,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 8. Phase 4 — Authentication Data & Service Foundation
+# 8. Phase 4 - Authentication Data & Service Foundation
 
 ## Objective
 
@@ -308,7 +308,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 9. Phase 5 — Signup
+# 9. Phase 5 - Signup
 
 ## Objective
 
@@ -354,7 +354,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 10. Phase 6 — Login & Logout
+# 10. Phase 6 - Login & Logout
 
 ## Objective
 
@@ -406,7 +406,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 11. Phase 7 — RBAC & Permission Foundation
+# 11. Phase 7 - RBAC & Permission Foundation
 
 ## Objective
 
@@ -462,7 +462,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 12. Phase 8 — Protected Routes & User Context
+# 12. Phase 8 - Protected Routes & User Context
 
 ## Objective
 
@@ -508,7 +508,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 13. Phase 9 — Shared UI, Validation, Loading, Errors & Notifications
+# 13. Phase 9 - Shared UI, Validation, Loading, Errors & Notifications
 
 ## Objective
 
@@ -554,7 +554,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 14. Phase 10 — Basic Dashboard & Profile
+# 14. Phase 10 - Basic Dashboard & Profile
 
 ## Objective
 
@@ -602,7 +602,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 15. Phase 11 — Seed Users, Security Hardening & Base Integration
+# 15. Phase 11 - Seed Users, Security Hardening & Base Integration
 
 ## Objective
 
@@ -656,7 +656,7 @@ Then STOP and wait for approval.
 
 ---
 
-# 16. Phase 12 — Final Base Validation & Handoff
+# 16. Phase 12 - Final Base Validation & Handoff
 
 ## Objective
 

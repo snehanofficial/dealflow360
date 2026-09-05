@@ -1,4 +1,4 @@
-# Implementation Prompt — Reusable Debounced SearchInput Component & Customer Page Search Refactor
+# Implementation Prompt - Reusable Debounced SearchInput Component & Customer Page Search Refactor
 
 ## Goal
 Create a highly performant, reusable `SearchInput` component with built-in debouncing, clear actions, visual loading/updating indicators, and keyboard shortcut support. Replace raw/ad-hoc search inputs with this component across modules, starting with `CustomerListPage` and `DashboardLayout`.
