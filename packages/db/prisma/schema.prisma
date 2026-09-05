@@ -241,6 +241,8 @@ model Quotation {
   status                 QuoteStatus             @default(DRAFT)
   subtotal               Float                   @default(0)
   totalDiscount          Float                   @default(0)
+  taxableAmount          Float                   @default(0)
+  taxAmount              Float                   @default(0)
   netValue               Float                   @default(0)
   grossMarginPercent     Float                   @default(0)
   riskScore              Float                   @default(0)
@@ -291,8 +293,11 @@ model QuoteLine {
   product                 Product                 @relation(fields: [productId], references: [id])
   quantity                Int                     @default(1)
   listPrice               Float
+  unitPrice               Float                   @default(0)
   proposedDiscountPercent Float                   @default(0)
   discountAmount          Float                   @default(0)
+  taxRate                 Float                   @default(0)
+  taxAmount               Float                   @default(0)
   netLinePrice            Float
   lineCost                Float
   lineMarginPercent       Float

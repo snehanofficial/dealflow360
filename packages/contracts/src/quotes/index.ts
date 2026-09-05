@@ -30,6 +30,7 @@ export type QuoteLineParams = z.infer<typeof QuoteLineParamsSchema>;
 export const CreateQuoteLineItemSchema = z.object({
   productId: z.string().min(1),
   quantity: z.number().int().min(1).default(1),
+  unitPrice: z.number().min(0).optional(),
   proposedDiscountPercent: z.number().min(0).max(100).default(0),
 });
 
@@ -43,6 +44,7 @@ export type CreateQuoteInput = z.infer<typeof CreateQuoteSchema>;
 
 export const UpdateQuoteLineSchema = z.object({
   quantity: z.number().int().min(1).optional(),
+  unitPrice: z.number().min(0).optional(),
   proposedDiscountPercent: z.number().min(0).max(100).optional(),
 });
 

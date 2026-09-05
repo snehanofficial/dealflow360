@@ -9,6 +9,7 @@ export type GetRecommendationsParams = z.infer<typeof GetRecommendationsParamsSc
 export const AddQuoteLineSchema = z.object({
   productId: z.string().min(1),
   quantity: z.number().int().min(1).default(1),
+  unitPrice: z.number().min(0).optional(),
   proposedDiscountPercent: z.number().min(0).max(100).default(0),
 });
 

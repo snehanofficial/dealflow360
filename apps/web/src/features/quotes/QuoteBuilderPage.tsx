@@ -30,6 +30,7 @@ interface ProductOption {
   name: string;
   category: string;
   listPrice: number;
+  taxRate: number;
   standardCost: number;
 }
 
@@ -38,6 +39,8 @@ interface DraftLine {
   productName: string;
   sku: string;
   listPrice: number;
+  unitPrice: number;
+  taxRate: number;
   standardCost: number;
   quantity: number;
   proposedDiscountPercent: number;
@@ -74,6 +77,7 @@ export const QuoteBuilderPage: React.FC = () => {
                   name: 'Enterprise ERP Subscription',
                   category: 'Software',
                   listPrice: 5000,
+                  taxRate: 18,
                   standardCost: 2000,
                 },
                 {
@@ -82,6 +86,7 @@ export const QuoteBuilderPage: React.FC = () => {
                   name: 'Implementation Consulting Services',
                   category: 'Services',
                   listPrice: 12000,
+                  taxRate: 18,
                   standardCost: 6000,
                 },
                 {
@@ -90,6 +95,7 @@ export const QuoteBuilderPage: React.FC = () => {
                   name: '24/7 Premium Support Add-on',
                   category: 'Support',
                   listPrice: 2500,
+                  taxRate: 18,
                   standardCost: 800,
                 },
               ],
@@ -115,6 +121,7 @@ export const QuoteBuilderPage: React.FC = () => {
             name: p.name,
             category: typeof p.category === 'string' ? p.category : p.category?.name || 'General',
             listPrice: p.unitPrice ?? p.listPrice ?? 0,
+            taxRate: p.taxRate ?? 0,
             standardCost: p.costPrice ?? p.standardCost ?? 0,
           }));
 
@@ -152,6 +159,8 @@ export const QuoteBuilderPage: React.FC = () => {
           productName: p.name,
           sku: p.sku,
           listPrice: p.listPrice,
+          unitPrice: p.listPrice,
+          taxRate: p.taxRate || 0,
           standardCost: p.standardCost,
           quantity: 1,
           proposedDiscountPercent: 0,
@@ -162,7 +171,7 @@ export const QuoteBuilderPage: React.FC = () => {
 
   const handleUpdateLine = (
     index: number,
-    field: 'quantity' | 'proposedDiscountPercent',
+    field: 'quantity' | 'unitPrice' | 'proposedDiscountPercent',
     val: number,
   ) => {
     const updated = [...lines];
@@ -174,26 +183,32 @@ export const QuoteBuilderPage: React.FC = () => {
     setLines(lines.filter((_, i) => i !== index));
   };
 
-  // Instant local calculations
+  // Instant local calculations using selling unit price
   let subtotal = 0;
   let totalDiscount = 0;
+  let totalTaxable = 0;
+  let totalTax = 0;
   let netValue = 0;
   let totalCost = 0;
 
   for (const line of lines) {
-    const listTotal = line.listPrice * line.quantity;
-    const discAmt = (listTotal * line.proposedDiscountPercent) / 100;
-    const netLine = listTotal - discAmt;
+    const lineGross = line.unitPrice * line.quantity;
+    const discAmt = (lineGross * line.proposedDiscountPercent) / 100;
+    const lineTaxable = lineGross - discAmt;
+    const lineTax = (lineTaxable * line.taxRate) / 100;
+    const netLine = lineTaxable + lineTax;
     const costLine = line.standardCost * line.quantity;
 
-    subtotal += listTotal;
+    subtotal += lineGross;
     totalDiscount += discAmt;
+    totalTaxable += lineTaxable;
+    totalTax += lineTax;
     netValue += netLine;
     totalCost += costLine;
   }
 
   const grossMarginPercent =
-    netValue > 0 ? Math.round(((netValue - totalCost) / netValue) * 10000) / 100 : 0;
+    totalTaxable > 0 ? Math.round(((totalTaxable - totalCost) / totalTaxable) * 10000) / 100 : 0;
   const avgDiscountPercent = subtotal > 0 ? (totalDiscount / subtotal) * 100 : 0;
 
   let riskScore = 1.0;
@@ -223,6 +238,7 @@ export const QuoteBuilderPage: React.FC = () => {
         initialLines: lines.map((l) => ({
           productId: l.productId,
           quantity: l.quantity,
+          unitPrice: l.unitPrice,
           proposedDiscountPercent: l.proposedDiscountPercent,
         })),
       };
@@ -314,40 +330,49 @@ export const QuoteBuilderPage: React.FC = () => {
       </div>
 
       {/* Financial Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <DollarSign className="w-3.5 h-3.5" /> Subtotal
+            <DollarSign className="w-3.5 h-3.5" /> Subtotal (Gross)
           </span>
-          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
-            ${subtotal.toLocaleString()}
+          <p className="text-lg font-bold text-slate-900 font-mono mt-1">
+            ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <Percent className="w-3.5 h-3.5" /> Total Discount
+            <Percent className="w-3.5 h-3.5" /> Discount
           </span>
-          <p className="text-xl font-bold text-amber-700 font-mono mt-1">
-            ${totalDiscount.toLocaleString()}
+          <p className="text-lg font-bold text-amber-700 font-mono mt-1">
+            -${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <FileText className="w-3.5 h-3.5" /> Net Value
+            Taxable Base
           </span>
-          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
-            ${netValue.toLocaleString()}
+          <p className="text-lg font-bold text-slate-800 font-mono mt-1">
+            ${totalTaxable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5 text-purple-600" /> Projected Margin
+            Tax
           </span>
-          <p className="text-xl font-bold text-purple-700 font-mono mt-1">
-            {grossMarginPercent}%
+          <p className="text-lg font-bold text-blue-700 font-mono mt-1">
+            +${totalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5" /> Grand Total
+          </span>
+          <p className="text-lg font-bold text-emerald-800 font-mono mt-1">
+            ${netValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -367,7 +392,7 @@ export const QuoteBuilderPage: React.FC = () => {
             >
               {products?.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} (${p.listPrice})
+                  {p.name} (Ref: ${p.listPrice.toLocaleString()})
                 </option>
               ))}
             </select>
@@ -392,17 +417,21 @@ export const QuoteBuilderPage: React.FC = () => {
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
                   <th className="py-2.5 px-3">Product</th>
                   <th className="py-2.5 px-3 text-center">Qty</th>
-                  <th className="py-2.5 px-3 text-right">List Price</th>
+                  <th className="py-2.5 px-3 text-right">Default Price</th>
+                  <th className="py-2.5 px-3 text-right">Selling Price</th>
                   <th className="py-2.5 px-3 text-right">Disc %</th>
-                  <th className="py-2.5 px-3 text-right">Net Line</th>
+                  <th className="py-2.5 px-3 text-right">Tax</th>
+                  <th className="py-2.5 px-3 text-right">Net Line Total</th>
                   <th className="py-2.5 px-3 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 font-mono">
                 {lines.map((line, idx) => {
-                  const listTotal = line.listPrice * line.quantity;
-                  const discAmt = (listTotal * line.proposedDiscountPercent) / 100;
-                  const netLine = listTotal - discAmt;
+                  const lineGross = line.unitPrice * line.quantity;
+                  const discAmt = (lineGross * line.proposedDiscountPercent) / 100;
+                  const lineTaxable = lineGross - discAmt;
+                  const lineTax = (lineTaxable * line.taxRate) / 100;
+                  const netLine = lineTaxable + lineTax;
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50">
@@ -419,12 +448,25 @@ export const QuoteBuilderPage: React.FC = () => {
                           onChange={(e) =>
                             handleUpdateLine(idx, 'quantity', parseInt(e.target.value) || 1)
                           }
-                          className="w-16 text-center border border-slate-200 rounded px-2 py-1 bg-slate-50 focus:border-[#714B67]"
+                          className="w-14 text-center border border-slate-200 rounded px-2 py-1 bg-slate-50 focus:border-[#714B67]"
                         />
                       </td>
 
-                      <td className="py-3 px-3 text-right text-slate-700">
-                        ${line.listPrice.toLocaleString()}
+                      <td className="py-3 px-3 text-right text-slate-500 italic">
+                        ${line.listPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+
+                      <td className="py-3 px-3 text-right">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={line.unitPrice}
+                          onChange={(e) =>
+                            handleUpdateLine(idx, 'unitPrice', parseFloat(e.target.value) || 0)
+                          }
+                          className="w-24 text-right border border-slate-300 rounded px-2 py-1 bg-white font-bold text-slate-900 focus:border-[#714B67]"
+                        />
                       </td>
 
                       <td className="py-3 px-3 text-right">
@@ -444,8 +486,13 @@ export const QuoteBuilderPage: React.FC = () => {
                         />
                       </td>
 
+                      <td className="py-3 px-3 text-right text-slate-700">
+                        <div>+${lineTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="text-[10px] text-slate-400">({line.taxRate}%)</div>
+                      </td>
+
                       <td className="py-3 px-3 text-right font-bold text-slate-900">
-                        ${netLine.toLocaleString()}
+                        ${netLine.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
 
                       <td className="py-3 px-3 text-center">

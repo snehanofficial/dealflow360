@@ -26,8 +26,11 @@ interface QuoteLineData {
   productId: string;
   quantity: number;
   listPrice: number;
+  unitPrice: number;
   proposedDiscountPercent: number;
   discountAmount: number;
+  taxRate: number;
+  taxAmount: number;
   netLinePrice: number;
   lineCost: number;
   lineMarginPercent: number;
@@ -45,6 +48,8 @@ interface QuotationData {
   status: string;
   subtotal: number;
   totalDiscount: number;
+  taxableAmount: number;
+  taxAmount: number;
   netValue: number;
   grossMarginPercent: number;
   riskScore: number;
@@ -64,6 +69,7 @@ export const QuotationViewPage: React.FC = () => {
   const [quotation, setQuotation] = useState<QuotationData | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [isRecsLoading, setIsRecsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
@@ -71,9 +77,13 @@ export const QuotationViewPage: React.FC = () => {
 
   const quoteId = id || 'quote-sample-001';
 
-  const fetchQuotationData = useCallback(async () => {
+  const fetchQuotationData = useCallback(async (showLoader = false) => {
     try {
-      setIsLoading(true);
+      if (showLoader || !quotation) {
+        setIsLoading(true);
+      } else {
+        setIsUpdating(true);
+      }
       setError(null);
       const res = await api.get<{ success: boolean; data: QuotationData }>(
         `/quotes/${quoteId}`,
@@ -83,11 +93,14 @@ export const QuotationViewPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Failed to load quotation:', err);
-      setError(err.response?.data?.message || 'Failed to load quotation');
+      if (!quotation) {
+        setError(err.response?.data?.message || 'Failed to load quotation');
+      }
     } finally {
       setIsLoading(false);
+      setIsUpdating(false);
     }
-  }, [quoteId]);
+  }, [quoteId, quotation]);
 
   const fetchRecommendations = useCallback(async () => {
     try {
@@ -106,40 +119,135 @@ export const QuotationViewPage: React.FC = () => {
   }, [quoteId]);
 
   useEffect(() => {
-    fetchQuotationData();
+    fetchQuotationData(true);
     fetchRecommendations();
-  }, [fetchQuotationData, fetchRecommendations]);
+  }, [quoteId]);
 
   const handleAddRecommendation = async (rec: RecommendationItem) => {
-    await api.post(`/quotes/${quoteId}/lines`, {
-      productId: rec.productId,
-      quantity: 1,
-      proposedDiscountPercent: rec.promotionDiscountPercent || 0,
-    });
-    await fetchQuotationData();
-    await fetchRecommendations();
+    try {
+      setIsUpdating(true);
+      await api.post(`/quotes/${quoteId}/lines`, {
+        productId: rec.productId,
+        quantity: 1,
+        proposedDiscountPercent: rec.promotionDiscountPercent || 0,
+      });
+      await fetchQuotationData(false);
+      await fetchRecommendations();
+    } catch (err) {
+      console.error('Failed to add recommendation:', err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleUpdateLine = async (lineId: string, quantity?: number, proposedDiscountPercent?: number) => {
+  const handleUpdateLine = async (
+    lineId: string,
+    quantity?: number,
+    unitPrice?: number,
+    proposedDiscountPercent?: number,
+  ) => {
+    if (!quotation) return;
+
+    // Optimistic local state update for zero-latency UI updates without focus loss
+    const updatedLines = quotation.lines.map((line) => {
+      if (line.id !== lineId) return line;
+
+      const qty = quantity !== undefined ? Math.max(1, quantity) : line.quantity;
+      const price = unitPrice !== undefined ? Math.max(0, unitPrice) : (line.unitPrice || line.listPrice);
+      const discPct = proposedDiscountPercent !== undefined ? Math.min(100, Math.max(0, proposedDiscountPercent)) : line.proposedDiscountPercent;
+      const taxPct = line.taxRate || 0;
+
+      const lineGross = price * qty;
+      const discAmt = (lineGross * discPct) / 100;
+      const lineTaxable = lineGross - discAmt;
+      const lineTax = (lineTaxable * taxPct) / 100;
+      const netLine = lineTaxable + lineTax;
+
+      return {
+        ...line,
+        quantity: qty,
+        unitPrice: price,
+        proposedDiscountPercent: discPct,
+        discountAmount: discAmt,
+        taxAmount: lineTax,
+        netLinePrice: netLine,
+      };
+    });
+
+    let subtotal = 0;
+    let totalDiscount = 0;
+    let taxableAmount = 0;
+    let taxAmount = 0;
+    let netValue = 0;
+
+    for (const line of updatedLines) {
+      const price = line.unitPrice || line.listPrice;
+      const lineGross = price * line.quantity;
+      const discAmt = (lineGross * line.proposedDiscountPercent) / 100;
+      const lineTaxable = lineGross - discAmt;
+      const lineTax = (lineTaxable * (line.taxRate || 0)) / 100;
+      const netLine = lineTaxable + lineTax;
+
+      subtotal += lineGross;
+      totalDiscount += discAmt;
+      taxableAmount += lineTaxable;
+      taxAmount += lineTax;
+      netValue += netLine;
+    }
+
+    setQuotation({
+      ...quotation,
+      subtotal,
+      totalDiscount,
+      taxableAmount,
+      taxAmount,
+      netValue,
+      lines: updatedLines,
+    });
+
     try {
-      await api.patch(`/quotes/${quoteId}/lines/${lineId}`, {
-        quantity,
-        proposedDiscountPercent,
-      });
-      await fetchQuotationData();
-      await fetchRecommendations();
+      setIsUpdating(true);
+      const res = await api.patch<{ success: boolean; data: QuotationData }>(
+        `/quotes/${quoteId}/lines/${lineId}`,
+        {
+          quantity,
+          unitPrice,
+          proposedDiscountPercent,
+        },
+      );
+      if (res.data.success) {
+        setQuotation(res.data.data);
+      }
     } catch (err: any) {
       console.error('Failed to update line:', err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleDeleteLine = async (lineId: string) => {
+    if (!quotation) return;
+
+    // Optimistically remove line locally
+    const filteredLines = quotation.lines.filter((l) => l.id !== lineId);
+    setQuotation({
+      ...quotation,
+      lines: filteredLines,
+    });
+
     try {
-      await api.delete(`/quotes/${quoteId}/lines/${lineId}`);
-      await fetchQuotationData();
+      setIsUpdating(true);
+      const res = await api.delete<{ success: boolean; data: QuotationData }>(
+        `/quotes/${quoteId}/lines/${lineId}`,
+      );
+      if (res.data.success) {
+        setQuotation(res.data.data);
+      }
       await fetchRecommendations();
     } catch (err: any) {
       console.error('Failed to delete line:', err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -305,40 +413,49 @@ export const QuotationViewPage: React.FC = () => {
       )}
 
       {/* Financial Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <DollarSign className="w-3.5 h-3.5" /> Subtotal
+            <DollarSign className="w-3.5 h-3.5" /> Subtotal (Gross)
           </span>
-          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
-            ${quotation.subtotal.toLocaleString()}
+          <p className="text-lg font-bold text-slate-900 font-mono mt-1">
+            ${quotation.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <Percent className="w-3.5 h-3.5" /> Total Discount
+            <Percent className="w-3.5 h-3.5" /> Discount
           </span>
-          <p className="text-xl font-bold text-amber-700 font-mono mt-1">
-            ${quotation.totalDiscount.toLocaleString()}
+          <p className="text-lg font-bold text-amber-700 font-mono mt-1">
+            -${quotation.totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <FileText className="w-3.5 h-3.5" /> Net Deal Value
+            Taxable Base
           </span>
-          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
-            ${quotation.netValue.toLocaleString()}
+          <p className="text-lg font-bold text-slate-800 font-mono mt-1">
+            ${(quotation.taxableAmount || (quotation.subtotal - quotation.totalDiscount)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5 text-purple-600" /> Gross Margin
+            Tax
           </span>
-          <p className="text-xl font-bold text-purple-700 font-mono mt-1">
-            {quotation.grossMarginPercent}%
+          <p className="text-lg font-bold text-blue-700 font-mono mt-1">
+            +${(quotation.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5" /> Grand Total
+          </span>
+          <p className="text-lg font-bold text-emerald-800 font-mono mt-1">
+            ${quotation.netValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -352,6 +469,11 @@ export const QuotationViewPage: React.FC = () => {
               <h2 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
                 <Package className="w-4 h-4 text-slate-600" />
                 Quotation Line Items ({quotation.lines.length})
+                {isUpdating && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-normal text-[#714B67] ml-2">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+                  </span>
+                )}
               </h2>
             </div>
 
@@ -359,23 +481,25 @@ export const QuotationViewPage: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-                    <th className="py-3 px-4">Product</th>
-                    <th className="py-3 px-3 text-center">Qty</th>
-                    <th className="py-3 px-3 text-right">List Price</th>
+                    <th className="py-3 px-3">Product</th>
+                    <th className="py-3 px-2 text-center">Qty</th>
+                    <th className="py-3 px-3 text-right">Default Price</th>
+                    <th className="py-3 px-3 text-right">Selling Price</th>
                     <th className="py-3 px-3 text-right">Disc %</th>
-                    <th className="py-3 px-4 text-right">Net Total</th>
-                    <th className="py-3 px-4 text-right">Margin %</th>
-                    {isDraft && <th className="py-3 px-3 text-center">Action</th>}
+                    <th className="py-3 px-3 text-right">Tax</th>
+                    <th className="py-3 px-3 text-right">Net Total</th>
+                    <th className="py-3 px-3 text-right">Margin %</th>
+                    {isDraft && <th className="py-3 px-2 text-center">Action</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-mono">
                   {quotation.lines.map((line) => (
                     <tr key={line.id} className="hover:bg-slate-50/80">
-                      <td className="py-3 px-4 font-sans">
+                      <td className="py-3 px-3 font-sans">
                         <div className="font-semibold text-slate-900">{line.product.name}</div>
                         <div className="text-slate-400 text-[11px]">SKU: {line.product.sku}</div>
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3 px-2 text-center">
                         {isDraft ? (
                           <input
                             type="number"
@@ -385,17 +509,41 @@ export const QuotationViewPage: React.FC = () => {
                               handleUpdateLine(
                                 line.id,
                                 parseInt(e.target.value) || 1,
+                                line.unitPrice || line.listPrice,
                                 line.proposedDiscountPercent,
                               )
                             }
-                            className="w-14 text-center border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:border-[#714B67]"
+                            className="w-12 text-center border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:border-[#714B67]"
                           />
                         ) : (
                           <span className="text-slate-800 font-semibold">{line.quantity}</span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-right text-slate-700">
-                        ${line.listPrice.toLocaleString()}
+                      <td className="py-3 px-3 text-right text-slate-500 italic">
+                        ${line.listPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        {isDraft ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={line.unitPrice || line.listPrice}
+                            onChange={(e) =>
+                              handleUpdateLine(
+                                line.id,
+                                line.quantity,
+                                parseFloat(e.target.value) || 0,
+                                line.proposedDiscountPercent,
+                              )
+                            }
+                            className="w-20 text-right border border-slate-300 rounded px-1 py-0.5 bg-white font-bold text-slate-900 focus:border-[#714B67]"
+                          />
+                        ) : (
+                          <span className="text-slate-900 font-bold">
+                            ${(line.unitPrice || line.listPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-right">
                         {isDraft ? (
@@ -408,6 +556,7 @@ export const QuotationViewPage: React.FC = () => {
                               handleUpdateLine(
                                 line.id,
                                 line.quantity,
+                                line.unitPrice || line.listPrice,
                                 parseFloat(e.target.value) || 0,
                               )
                             }
@@ -419,14 +568,18 @@ export const QuotationViewPage: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-slate-900">
-                        ${line.netLinePrice.toLocaleString()}
+                      <td className="py-3 px-3 text-right text-slate-700">
+                        <div>+${(line.taxAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="text-[10px] text-slate-400">({line.taxRate || 0}%)</div>
                       </td>
-                      <td className="py-3 px-4 text-right font-semibold text-purple-700">
+                      <td className="py-3 px-3 text-right font-bold text-slate-900">
+                        ${line.netLinePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3 px-3 text-right font-semibold text-purple-700">
                         {line.lineMarginPercent}%
                       </td>
                       {isDraft && (
-                        <td className="py-3 px-3 text-center">
+                        <td className="py-3 px-2 text-center">
                           <button
                             onClick={() => handleDeleteLine(line.id)}
                             className="p-1 text-slate-400 hover:text-rose-600 transition-colors"

@@ -228,4 +228,31 @@ describe('Quotation Management API (Developer B Phase B1)', () => {
     expect(submitRes.body.success).toBe(true);
     expect(submitRes.body.data.status).toBe('APPROVED');
   });
+
+  it('allows adding line item with higher edited unitPrice than product list price', async () => {
+    const createRes = await request(app)
+      .post('/api/v1/quotes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        customerId: 'cust-001',
+        quoteNumber: 'QT-TEST-HIGHER-PRICE',
+      });
+
+    const quoteId = createRes.body.data.id;
+
+    const lineRes = await request(app)
+      .post(`/api/v1/quotes/${quoteId}/lines`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        productId: 'prod-001',
+        quantity: 2,
+        unitPrice: 1500, // higher than default list price 1000
+        proposedDiscountPercent: 10,
+      });
+
+    expect(lineRes.status).toBe(201);
+    expect(lineRes.body.data.subtotal).toBe(3000); // 1500 * 2
+    expect(lineRes.body.data.totalDiscount).toBe(300); // 3000 * 10%
+    expect(lineRes.body.data.netValue).toBe(2700);
+  });
 });

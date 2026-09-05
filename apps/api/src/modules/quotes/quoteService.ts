@@ -239,6 +239,7 @@ export class QuoteService {
     input: {
       productId: string;
       quantity?: number;
+      unitPrice?: number;
       proposedDiscountPercent?: number;
     },
   ): Promise<QuotationWithDetails> {
@@ -253,7 +254,6 @@ export class QuoteService {
 
     const product = await this.ensureValidProduct(input.productId);
 
-
     const existingLine = quotation.lines.find((l) => l.productId === input.productId);
     const qty = existingLine ? existingLine.quantity + (input.quantity || 1) : input.quantity || 1;
     const discountPct =
@@ -262,12 +262,21 @@ export class QuoteService {
         : existingLine
         ? existingLine.proposedDiscountPercent
         : 0;
+    const unitPrice =
+      input.unitPrice !== undefined
+        ? input.unitPrice
+        : existingLine && existingLine.unitPrice > 0
+        ? existingLine.unitPrice
+        : product.listPrice;
+    const taxRate = product.taxRate || 0;
 
     const calc = calculateLinePricing({
       listPrice: product.listPrice,
+      unitPrice,
       standardCost: product.standardCost,
       quantity: qty,
       proposedDiscountPercent: discountPct,
+      taxRate,
     });
 
     if (existingLine) {
@@ -275,8 +284,11 @@ export class QuoteService {
         where: { id: existingLine.id },
         data: {
           quantity: calc.quantity,
+          unitPrice: calc.unitPrice,
           proposedDiscountPercent: calc.proposedDiscountPercent,
           discountAmount: calc.discountAmount,
+          taxRate: calc.taxRate,
+          taxAmount: calc.taxAmount,
           netLinePrice: calc.netLinePrice,
           lineCost: calc.lineCost,
           lineMarginPercent: calc.lineMarginPercent,
@@ -289,8 +301,11 @@ export class QuoteService {
           productId: product.id,
           quantity: calc.quantity,
           listPrice: calc.listPrice,
+          unitPrice: calc.unitPrice,
           proposedDiscountPercent: calc.proposedDiscountPercent,
           discountAmount: calc.discountAmount,
+          taxRate: calc.taxRate,
+          taxAmount: calc.taxAmount,
           netLinePrice: calc.netLinePrice,
           lineCost: calc.lineCost,
           lineMarginPercent: calc.lineMarginPercent,
@@ -326,20 +341,28 @@ export class QuoteService {
       input.proposedDiscountPercent !== undefined
         ? input.proposedDiscountPercent
         : line.proposedDiscountPercent;
+    const unitPrice =
+      input.unitPrice !== undefined ? input.unitPrice : line.unitPrice || line.listPrice;
+    const taxRate = line.taxRate || line.product.taxRate || 0;
 
     const calc = calculateLinePricing({
       listPrice: line.listPrice,
+      unitPrice,
       standardCost: line.product.standardCost,
       quantity: qty,
       proposedDiscountPercent: discountPct,
+      taxRate,
     });
 
     await db.quoteLine.update({
       where: { id: lineId },
       data: {
         quantity: calc.quantity,
+        unitPrice: calc.unitPrice,
         proposedDiscountPercent: calc.proposedDiscountPercent,
         discountAmount: calc.discountAmount,
+        taxRate: calc.taxRate,
+        taxAmount: calc.taxAmount,
         netLinePrice: calc.netLinePrice,
         lineCost: calc.lineCost,
         lineMarginPercent: calc.lineMarginPercent,
@@ -400,9 +423,11 @@ export class QuoteService {
     const linesCalc = refreshed.lines.map((l) =>
       calculateLinePricing({
         listPrice: l.listPrice,
+        unitPrice: l.unitPrice || l.listPrice,
         standardCost: l.product.standardCost,
         quantity: l.quantity,
         proposedDiscountPercent: l.proposedDiscountPercent,
+        taxRate: l.taxRate || l.product.taxRate || 0,
       }),
     );
 
@@ -444,9 +469,11 @@ export class QuoteService {
     const linesCalc = lines.map((l) =>
       calculateLinePricing({
         listPrice: l.listPrice,
+        unitPrice: l.unitPrice || l.listPrice,
         standardCost: l.product.standardCost,
         quantity: l.quantity,
         proposedDiscountPercent: l.proposedDiscountPercent,
+        taxRate: l.taxRate || l.product.taxRate || 0,
       }),
     );
 
@@ -458,6 +485,8 @@ export class QuoteService {
       data: {
         subtotal: totals.subtotal,
         totalDiscount: totals.totalDiscount,
+        taxableAmount: totals.taxableAmount,
+        taxAmount: totals.taxAmount,
         netValue: totals.netValue,
         grossMarginPercent: totals.grossMarginPercent,
         riskScore: risk.riskScore,
