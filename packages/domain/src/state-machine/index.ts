@@ -1,0 +1,11 @@
+export type QuoteStatus =
+  | 'DRAFT'
+  | 'PENDING_MANAGER'
+  | 'PENDING_FINANCE'
+  | 'APPROVED'
+  | 'NEGOTIATING'
+  | 'FULFILLMENT'
+  | 'BILLING'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'SUPERSEDED';
