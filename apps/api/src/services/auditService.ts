@@ -216,6 +216,16 @@ export async function getAuditLogs(query: AuditFilterQuery): Promise<AuditListRe
     ];
   }
 
+  if (!(db as any)?.auditLog?.findMany) {
+    return {
+      items: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 1,
+    };
+  }
+
   const [items, total] = await Promise.all([
     db.auditLog.findMany({
       where: whereClause,
@@ -250,6 +260,10 @@ export async function getEntityAuditLogs(
   entityType: string,
   entityId: string,
 ): Promise<AuditLogDto[]> {
+  if (!(db as any)?.auditLog?.findMany) {
+    return [];
+  }
+
   const items = await db.auditLog.findMany({
     where: { entityType, entityId },
     orderBy: { createdAt: 'desc' },
