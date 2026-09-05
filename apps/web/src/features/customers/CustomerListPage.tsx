@@ -84,9 +84,9 @@ export const CustomerListPage: React.FC = () => {
 
   const tierBadgeMap: Record<CustomerTier, 'purple' | 'info' | 'warning' | 'default'> = {
     ENTERPRISE: 'purple',
-    TIER_1: 'info',
-    TIER_2: 'warning',
-    TIER_3: 'default',
+    GOLD: 'info',
+    SILVER: 'warning',
+    BRONZE: 'default',
   };
 
   const statusBadgeMap: Record<CustomerStatus, 'success' | 'default' | 'danger'> = {
@@ -144,9 +144,9 @@ export const CustomerListPage: React.FC = () => {
             >
               <option value="">All Tiers</option>
               <option value="ENTERPRISE">Enterprise</option>
-              <option value="TIER_1">Tier 1</option>
-              <option value="TIER_2">Tier 2</option>
-              <option value="TIER_3">Tier 3</option>
+              <option value="GOLD">Tier 1</option>
+              <option value="SILVER">Tier 2</option>
+              <option value="BRONZE">Tier 3</option>
             </select>
           </div>
 

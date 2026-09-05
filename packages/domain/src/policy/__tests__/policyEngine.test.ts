@@ -23,7 +23,7 @@ describe('policyEngine', () => {
       id: 'rule-t2-001',
       name: 'Tier 2 Customer Policy',
       description: null,
-      customerTier: 'TIER_2',
+      customerTier: 'SILVER',
       category: null,
       productId: null,
       maxDiscountPercent: 10.0,
@@ -95,7 +95,7 @@ describe('policyEngine', () => {
 
   it('detects discount limit policy violations and routes to Sales Manager', () => {
     const deal = evaluateCommercialDeal({
-      customerTier: 'TIER_2',
+      customerTier: 'SILVER',
       activeRules: sampleRules,
       lines: [
         {
@@ -109,7 +109,7 @@ describe('policyEngine', () => {
           },
           quantity: 1,
           effectiveUnitPrice: 1000,
-          proposedDiscountPercent: 15, // TIER_2 max allowed is 10%
+          proposedDiscountPercent: 15, // SILVER max allowed is 10%
         },
       ],
     });

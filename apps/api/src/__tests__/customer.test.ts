@@ -29,7 +29,7 @@ vi.mock('@dealflow360/db', () => {
             name: data.name,
             email: data.email,
             phone: data.phone || null,
-            tier: data.tier || 'TIER_2',
+            tier: data.tier || 'SILVER',
             status: data.status || 'ACTIVE',
             createdAt: new Date(),
             updatedAt: new Date(),

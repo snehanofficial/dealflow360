@@ -1,7 +1,7 @@
 # Implementation Prompt — Developer A Phase 1: Customer Foundation
 
 ## Goal
-Implement Developer A Phase 1: Customer Foundation vertical slice, supporting full Customer CRUD, search/filtering, tier classification (`ENTERPRISE`, `TIER_1`, `TIER_2`, `TIER_3`), status management (`ACTIVE`, `INACTIVE`, `SUSPENDED`), RBAC enforcement, validation, and automated unit/API/UI test suite.
+Implement Developer A Phase 1: Customer Foundation vertical slice, supporting full Customer CRUD, search/filtering, tier classification (`ENTERPRISE`, `GOLD`, `SILVER`, `BRONZE`), status management (`ACTIVE`, `INACTIVE`, `SUSPENDED`), RBAC enforcement, validation, and automated unit/API/UI test suite.
 
 ## Relevant Skills Read
 - `skills/develop/SKILL.md`
@@ -17,7 +17,7 @@ Implement Developer A Phase 1: Customer Foundation vertical slice, supporting fu
 - `apps/web/src/routes/`
 
 ## Decisions & Assumptions
-1. **Database Schema**: Add `CustomerTier` (`ENTERPRISE`, `TIER_1`, `TIER_2`, `TIER_3`), `CustomerStatus` (`ACTIVE`, `INACTIVE`, `SUSPENDED`), and `Customer` model to `packages/db/prisma/schema.prisma`.
+1. **Database Schema**: Add `CustomerTier` (`ENTERPRISE`, `GOLD`, `SILVER`, `BRONZE`), `CustomerStatus` (`ACTIVE`, `INACTIVE`, `SUSPENDED`), and `Customer` model to `packages/db/prisma/schema.prisma`.
 2. **Contracts**: Create `packages/contracts/src/customer/index.ts` with Zod schemas for Customer creation, updating, filter queries, and API response types.
 3. **Backend API**: Implement `apps/api/src/modules/customer/` with `customer.repository.ts` and `customer.service.ts`, plus `apps/api/src/controllers/customer.controller.ts` and `apps/api/src/routes/customer.routes.ts`.
 4. **Frontend UI**: Create `apps/web/src/features/customers/` containing `CustomerListPage.tsx`, `CustomerDetailsModal.tsx`, `CustomerFormModal.tsx`, and customer TanStack Query API hooks. Add `/customers` route to `apps/web/src/routes/app-routes.tsx` and Navbar link.
@@ -53,7 +53,7 @@ Implement Developer A Phase 1: Customer Foundation vertical slice, supporting fu
 - Enforce RBAC authorization checks via `requireRole` middleware.
 
 ## Domain / Business-Rule Considerations
-- Customer tier (`ENTERPRISE`, `TIER_1`, etc.) directly feeds into Phase 5 Discount Matrix rules.
+- Customer tier (`ENTERPRISE`, `GOLD`, etc.) directly feeds into Phase 5 Discount Matrix rules.
 - Suspended customers cannot be assigned to new quotations.
 
 ## Acceptance Criteria

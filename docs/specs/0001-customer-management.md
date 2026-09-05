@@ -18,7 +18,7 @@ DealFlow360 relies on customer accounts and customer tiers to drive discount gov
 - As a Sales Manager or Admin, I want to configure customer tiers (e.g. Enterprise, Tier 1) and account status (Active, Inactive, Suspended) so that pricing and policy rules apply accurately.
 
 **Acceptance criteria**:
-- **AC-1**: Customer records support `name`, `code`, `email`, `phone`, `tier` (`ENTERPRISE`, `TIER_1`, `TIER_2`, `TIER_3`), and `status` (`ACTIVE`, `INACTIVE`, `SUSPENDED`).
+- **AC-1**: Customer records support `name`, `code`, `email`, `phone`, `tier` (`ENTERPRISE`, `GOLD`, `SILVER`, `BRONZE`), and `status` (`ACTIVE`, `INACTIVE`, `SUSPENDED`).
 - **AC-2**: Search and filter endpoints allow searching customers by name, code, tier, and status with pagination.
 - **AC-3**: Customer status transitions (e.g., `ACTIVE` -> `SUSPENDED`) are audited and enforced server-side.
 - **AC-4**: RBAC permits only authorized roles (`SALES_REP`, `SALES_MANAGER`, `ADMIN`) to mutate customer records, while `FINANCE` and `CUSTOMER` have appropriate read/restricted access.
@@ -48,7 +48,7 @@ A clean vertical slice provides a solid, isolated foundation for Customer Manage
 
 **Data model sketch**:
 - Entity: `Customer`
-- Fields: `id` (UUID), `name` (String), `code` (String, Unique), `email` (String), `phone` (String?), `tier` (Enum: `ENTERPRISE` | `TIER_1` | `TIER_2` | `TIER_3`), `status` (Enum: `ACTIVE` | `INACTIVE` | `SUSPENDED`), `createdAt`, `updatedAt`.
+- Fields: `id` (UUID), `name` (String), `code` (String, Unique), `email` (String), `phone` (String?), `tier` (Enum: `ENTERPRISE` | `GOLD` | `SILVER` | `BRONZE`), `status` (Enum: `ACTIVE` | `INACTIVE` | `SUSPENDED`), `createdAt`, `updatedAt`.
 
 **API surface**:
 | Endpoint | Method | Key inputs | Key outputs | Auth | Key errors |

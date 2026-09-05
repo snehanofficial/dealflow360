@@ -300,61 +300,55 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
         <div className="flex border-b border-slate-200 space-x-6 text-xs font-semibold overflow-x-auto custom-scrollbar">
           <button
             onClick={() => setActiveTab('general')}
-            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${
-              activeTab === 'general'
-                ? 'border-[#714B67] text-[#714B67]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${activeTab === 'general'
+              ? 'border-[#714B67] text-[#714B67]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             GENERAL INFO
           </button>
           <button
             onClick={() => setActiveTab('pricing')}
-            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${
-              activeTab === 'pricing'
-                ? 'border-[#714B67] text-[#714B67]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${activeTab === 'pricing'
+              ? 'border-[#714B67] text-[#714B67]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             PRICING & MARGINS
           </button>
           <button
             onClick={() => setActiveTab('categories')}
-            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${
-              activeTab === 'categories'
-                ? 'border-[#714B67] text-[#714B67]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${activeTab === 'categories'
+              ? 'border-[#714B67] text-[#714B67]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             CATEGORIES ({currentProduct.categories?.length || 1})
           </button>
           <button
             onClick={() => setActiveTab('variants')}
-            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${
-              activeTab === 'variants'
-                ? 'border-[#714B67] text-[#714B67]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${activeTab === 'variants'
+              ? 'border-[#714B67] text-[#714B67]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             ATTRIBUTES & VARIANTS ({currentProduct.variants?.length || 0})
           </button>
           <button
             onClick={() => setActiveTab('price-lists')}
-            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${
-              activeTab === 'price-lists'
-                ? 'border-[#714B67] text-[#714B67]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`pb-2.5 border-b-2 transition-colors shrink-0 ${activeTab === 'price-lists'
+              ? 'border-[#714B67] text-[#714B67]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             PRICE LISTS
           </button>
           <button
             onClick={() => setActiveTab('inspector')}
-            className={`pb-2.5 border-b-2 transition-colors shrink-0 flex items-center ${
-              activeTab === 'inspector'
-                ? 'border-[#714B67] text-[#714B67]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`pb-2.5 border-b-2 transition-colors shrink-0 flex items-center ${activeTab === 'inspector'
+              ? 'border-[#714B67] text-[#714B67]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             <Calculator className="w-3.5 h-3.5 mr-1" />
             EFFECTIVE PRICE INSPECTOR
@@ -578,13 +572,12 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
                 return (
                   <div
                     key={cat.id}
-                    className={`p-3.5 rounded-xl border space-y-2 transition-colors ${
-                      isPrimary
-                        ? 'bg-[#F3E9F1] border-[#714B67]'
-                        : isAssigned
+                    className={`p-3.5 rounded-xl border space-y-2 transition-colors ${isPrimary
+                      ? 'bg-[#F3E9F1] border-[#714B67]'
+                      : isAssigned
                         ? 'bg-slate-50 border-slate-300 text-slate-900'
                         : 'bg-white border-slate-200 text-slate-500'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -791,7 +784,7 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
                   <span>B2B Customer Tier & Currency Price List Governance</span>
                 </div>
                 <p className="text-slate-500 text-[11px]">
-                  Price Lists define contractual unit prices for specific Customer Tiers (ENTERPRISE, TIER_1, TIER_2, TIER_3) and Currencies (USD, EUR, GBP, INR). When a customer builds a quotation, the server automatically resolves the exact matching price list override.
+                  Price Lists define contractual unit prices for specific Customer Tiers (ENTERPRISE, GOLD, SILVER, BRONZE) and Currencies (USD, EUR, GBP, INR). When a customer builds a quotation, the server automatically resolves the exact matching price list override.
                 </p>
               </div>
               <Link to="/price-lists" className="shrink-0">
@@ -812,9 +805,9 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
 
                   const tierColorMap: Record<string, string> = {
                     ENTERPRISE: 'bg-amber-100 text-amber-800 border-amber-300',
-                    TIER_1: 'bg-purple-100 text-purple-800 border-purple-300',
-                    TIER_2: 'bg-blue-100 text-blue-800 border-blue-300',
-                    TIER_3: 'bg-slate-100 text-slate-800 border-slate-300',
+                    GOLD: 'bg-purple-100 text-purple-800 border-purple-300',
+                    SILVER: 'bg-blue-100 text-blue-800 border-blue-300',
+                    BRONZE: 'bg-slate-100 text-slate-800 border-slate-300',
                   };
 
                   return (
@@ -901,9 +894,9 @@ export const ProductDetailModal: React.FC<ProductDetailPageProps> = ({
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#714B67]"
                   >
                     <option value="ENTERPRISE">ENTERPRISE</option>
-                    <option value="TIER_1">TIER_1</option>
-                    <option value="TIER_2">TIER_2</option>
-                    <option value="TIER_3">TIER_3</option>
+                    <option value="GOLD">GOLD</option>
+                    <option value="SILVER">SILVER</option>
+                    <option value="BRONZE">BRONZE</option>
                   </select>
                 </div>
 

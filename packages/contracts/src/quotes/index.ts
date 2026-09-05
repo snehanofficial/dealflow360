@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+export const QuoteStatusEnum = z.enum([
+  'DRAFT',
+  'PENDING_MANAGER',
+  'PENDING_FINANCE',
+  'APPROVED',
+  'REJECTED',
+  'NEGOTIATING',
+  'FULFILLMENT',
+  'BILLING',
+  'COMPLETED',
+]);
+
+export type QuoteStatus = z.infer<typeof QuoteStatusEnum>;
+
 export const QuoteIdParamSchema = z.object({
   id: z.string().min(1),
 });

@@ -62,24 +62,24 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+      <div className="bg-[#714B67] text-white px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-500/30">
+          <div className="p-2 bg-white/10 text-white rounded-md border border-white/20">
             <Sparkles className="w-5 h-5 animate-pulse" />
           </div>
           <div>
             <h2 className="font-semibold text-base tracking-tight text-white flex items-center gap-2">
               Upsell & Cross-Sell Recommendations
-              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-white/15 text-[#F3E9F1] border border-white/20">
                 Rule-Engine Driven
               </span>
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#F3E9F1]/80">
               Commercial impact evaluation and ranked co-purchase suggestions
             </p>
           </div>
         </div>
-        <span className="text-xs font-mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700">
+        <span className="text-xs font-mono bg-white/10 text-white px-2.5 py-1 rounded-md border border-white/20">
           {activeRecommendations.length} Suggested
         </span>
       </div>
@@ -87,12 +87,12 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
       {/* Body */}
       <div className="p-5">
         {activeRecommendations.length === 0 ? (
-          <div className="text-center py-8 px-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
-            <h3 className="text-sm font-semibold text-slate-800">
+          <div className="text-center py-8 px-4 bg-[#F8F9FA] rounded-md border border-dashed border-slate-200">
+            <CheckCircle2 className="w-10 h-10 text-[#28A745] mx-auto mb-2 opacity-80" />
+            <h3 className="text-sm font-semibold text-[#212529]">
               No Additional Recommendations
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+            <p className="text-xs text-[#6C757D] max-w-sm mx-auto mt-1">
               All relevant cross-sell items and active promotions have been added or dismissed for this commercial quote.
             </p>
           </div>
@@ -106,31 +106,31 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
               return (
                 <div
                   key={rec.ruleId}
-                  className="group relative bg-slate-50 hover:bg-white border border-slate-200 hover:border-purple-300 rounded-xl p-4 transition-all duration-200 shadow-xs hover:shadow-md"
+                  className="group relative bg-[#F8F9FA] hover:bg-white border border-slate-200 hover:border-[#714B67]/40 rounded-lg p-4 transition-all duration-200 shadow-xs hover:shadow-md"
                 >
                   {/* Top Row: Badges & Dismiss */}
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200/70 text-slate-700">
-                        <Layers className="w-3 h-3 text-slate-500" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F3F5] text-[#6C757D]">
+                        <Layers className="w-3 h-3 text-[#6C757D]" />
                         {rec.category}
                       </span>
 
                       {hasPromo && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300/60">
-                          <Tag className="w-3 h-3 text-amber-600" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/30">
+                          <Tag className="w-3 h-3 text-[#D97706]" />
                           {rec.promotionDiscountPercent}% Promo Bundle
                         </span>
                       )}
 
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono bg-purple-50 text-purple-700 border border-purple-200">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono bg-[#F3E9F1] text-[#714B67] border border-[#E2CEE0]">
                         Rank #{rec.priority}
                       </span>
                     </div>
 
                     <button
                       onClick={() => handleDismiss(rec.ruleId)}
-                      className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors"
+                      className="text-[#6C757D] hover:text-[#212529] p-1.5 rounded-md hover:bg-[#F1F3F5] transition-colors"
                       title="Dismiss recommendation"
                       aria-label="Dismiss recommendation"
                     >
@@ -141,16 +141,16 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
                   {/* Main Info */}
                   <div className="mb-3">
                     <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="font-semibold text-slate-900 text-base">
+                      <h3 className="font-semibold text-[#212529] text-base">
                         {rec.productName}
                       </h3>
                       <div className="text-right font-mono">
-                        <span className="text-sm font-bold text-slate-900">
+                        <span className="text-sm font-bold text-[#212529]">
                           {currencySymbol}
                           {rec.marginImpact.additionalRevenue.toLocaleString()}
                         </span>
                         {hasPromo && (
-                          <span className="block text-xs text-slate-400 line-through">
+                          <span className="block text-xs text-[#6C757D] line-through">
                             {currencySymbol}
                             {rec.listPrice.toLocaleString()}
                           </span>
@@ -159,36 +159,36 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
                     </div>
 
                     {/* Reason Metadata */}
-                    <div className="mt-1.5 flex items-start gap-1.5 text-xs text-slate-600 bg-white/80 border border-slate-200/80 p-2 rounded-lg">
-                      <Info className="w-3.5 h-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div className="mt-1.5 flex items-start gap-1.5 text-xs text-[#6C757D] bg-white border border-slate-200 p-2.5 rounded-md">
+                      <Info className="w-3.5 h-3.5 text-[#714B67] mt-0.5 shrink-0" />
                       <span>
-                        <strong className="text-slate-800 font-medium">Reason: </strong>
+                        <strong className="text-[#212529] font-medium">Reason: </strong>
                         {rec.reason}
                       </span>
                     </div>
                   </div>
 
                   {/* Commercial Margin Delta Impact */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-100/70 p-2.5 rounded-lg mb-3 border border-slate-200/60 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-[#F1F3F5] p-2.5 rounded-md mb-3 border border-slate-200 text-xs">
                     <div>
-                      <span className="text-slate-500 block">Revenue Impact</span>
-                      <span className="font-semibold text-emerald-700 font-mono">
+                      <span className="text-[#6C757D] block">Revenue Impact</span>
+                      <span className="font-semibold text-[#28A745] font-mono">
                         +{currencySymbol}
                         {rec.marginImpact.additionalRevenue.toLocaleString()}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">Est. Cost</span>
-                      <span className="font-medium text-slate-700 font-mono">
+                      <span className="text-[#6C757D] block">Est. Cost</span>
+                      <span className="font-medium text-[#212529] font-mono">
                         {currencySymbol}
                         {rec.marginImpact.additionalCost.toLocaleString()}
                       </span>
                     </div>
                     <div className="col-span-2 sm:col-span-1">
-                      <span className="text-slate-500 block">Margin Impact</span>
+                      <span className="text-[#6C757D] block">Margin Impact</span>
                       <span
                         className={`font-semibold font-mono flex items-center gap-0.5 ${
-                          marginDelta >= 0 ? 'text-purple-700' : 'text-amber-700'
+                          marginDelta >= 0 ? 'text-[#714B67]' : 'text-[#DC3545]'
                         }`}
                       >
                         <TrendingUp className="w-3 h-3" />
@@ -200,14 +200,14 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono">
+                    <div className="flex items-center gap-1.5 text-xs text-[#6C757D] font-mono">
                       {rec.billingType === 'RECURRING' ? (
-                        <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                        <span className="inline-flex items-center gap-1 text-[#714B67] bg-[#F3E9F1] px-2 py-0.5 rounded border border-[#E2CEE0]">
                           <Clock className="w-3 h-3" />
                           Recurring ({rec.recurringPeriod})
                         </span>
                       ) : (
-                        <span className="text-slate-600">One-time product</span>
+                        <span className="text-[#6C757D]">One-time product</span>
                       )}
                       <span>· SKU: {rec.sku}</span>
                     </div>
@@ -215,7 +215,7 @@ export const UpsellPanel: React.FC<UpsellPanelProps> = ({
                     <button
                       onClick={() => handleAdd(rec)}
                       disabled={isAdding}
-                      className="inline-flex items-center gap-1.5 bg-[#714B67] hover:bg-[#5c3c54] text-white text-xs font-medium px-3.5 py-2 rounded-lg transition-colors shadow-xs disabled:opacity-50 min-h-[36px] cursor-pointer"
+                      className="inline-flex items-center gap-1.5 bg-[#714B67] hover:bg-[#5F3D56] text-white text-xs font-medium px-3.5 py-2 rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[#714B67] focus:ring-offset-2 disabled:opacity-50 min-h-[36px] cursor-pointer"
                     >
                       {isAdding ? (
                         <>

@@ -106,9 +106,9 @@ export const PolicySimulatorSection: React.FC = () => {
                 className="px-2.5 py-1.5 border border-slate-300 rounded-md text-xs font-semibold text-slate-800 bg-white outline-none focus:ring-2 focus:ring-[#714B67]"
               >
                 <option value="ENTERPRISE">ENTERPRISE</option>
-                <option value="TIER_1">TIER_1</option>
-                <option value="TIER_2">TIER_2</option>
-                <option value="TIER_3">TIER_3</option>
+                <option value="GOLD">GOLD</option>
+                <option value="SILVER">SILVER</option>
+                <option value="BRONZE">BRONZE</option>
               </select>
             </div>
 

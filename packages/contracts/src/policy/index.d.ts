@@ -3,7 +3,7 @@ export declare const DiscountPolicyRuleSchema: z.ZodObject<{
     id: z.ZodString;
     name: z.ZodString;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    customerTier: z.ZodOptional<z.ZodNullable<z.ZodEnum<["ENTERPRISE", "TIER_1", "TIER_2", "TIER_3"]>>>;
+    customerTier: z.ZodOptional<z.ZodNullable<z.ZodEnum<["ENTERPRISE", "GOLD", "SILVER", "BRONZE"]>>>;
     category: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     productId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     maxDiscountPercent: z.ZodNumber;
@@ -23,7 +23,7 @@ export declare const DiscountPolicyRuleSchema: z.ZodObject<{
     createdAt: string;
     updatedAt: string;
     description?: string | null | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     category?: string | null | undefined;
     productId?: string | null | undefined;
     minMarginPercent?: number | null | undefined;
@@ -34,7 +34,7 @@ export declare const DiscountPolicyRuleSchema: z.ZodObject<{
     createdAt: string;
     updatedAt: string;
     description?: string | null | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     category?: string | null | undefined;
     productId?: string | null | undefined;
     minMarginPercent?: number | null | undefined;
@@ -46,7 +46,7 @@ export type DiscountPolicyRuleDto = z.infer<typeof DiscountPolicyRuleSchema>;
 export declare const CreateDiscountPolicyRuleSchema: z.ZodObject<{
     name: z.ZodString;
     description: z.ZodOptional<z.ZodString>;
-    customerTier: z.ZodOptional<z.ZodNullable<z.ZodEnum<["ENTERPRISE", "TIER_1", "TIER_2", "TIER_3"]>>>;
+    customerTier: z.ZodOptional<z.ZodNullable<z.ZodEnum<["ENTERPRISE", "GOLD", "SILVER", "BRONZE"]>>>;
     category: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     productId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     maxDiscountPercent: z.ZodNumber;
@@ -61,7 +61,7 @@ export declare const CreateDiscountPolicyRuleSchema: z.ZodObject<{
     priority: number;
     isActive: boolean;
     description?: string | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     category?: string | null | undefined;
     productId?: string | null | undefined;
     minMarginPercent?: number | null | undefined;
@@ -69,7 +69,7 @@ export declare const CreateDiscountPolicyRuleSchema: z.ZodObject<{
     name: string;
     maxDiscountPercent: number;
     description?: string | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     category?: string | null | undefined;
     productId?: string | null | undefined;
     minMarginPercent?: number | null | undefined;
@@ -81,7 +81,7 @@ export type CreateDiscountPolicyRuleRequest = z.infer<typeof CreateDiscountPolic
 export declare const UpdateDiscountPolicyRuleSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     description: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    customerTier: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<["ENTERPRISE", "TIER_1", "TIER_2", "TIER_3"]>>>>;
+    customerTier: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodEnum<["ENTERPRISE", "GOLD", "SILVER", "BRONZE"]>>>>;
     category: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     productId: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     maxDiscountPercent: z.ZodOptional<z.ZodNumber>;
@@ -92,7 +92,7 @@ export declare const UpdateDiscountPolicyRuleSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     name?: string | undefined;
     description?: string | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     category?: string | null | undefined;
     productId?: string | null | undefined;
     maxDiscountPercent?: number | undefined;
@@ -103,7 +103,7 @@ export declare const UpdateDiscountPolicyRuleSchema: z.ZodObject<{
 }, {
     name?: string | undefined;
     description?: string | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     category?: string | null | undefined;
     productId?: string | null | undefined;
     maxDiscountPercent?: number | undefined;
@@ -161,7 +161,7 @@ export declare const EvaluationLineInputSchema: z.ZodObject<{
 export type EvaluationLineInput = z.infer<typeof EvaluationLineInputSchema>;
 export declare const EvaluateCommercialScenarioSchema: z.ZodObject<{
     customerId: z.ZodOptional<z.ZodString>;
-    customerTier: z.ZodOptional<z.ZodEnum<["ENTERPRISE", "TIER_1", "TIER_2", "TIER_3"]>>;
+    customerTier: z.ZodOptional<z.ZodEnum<["ENTERPRISE", "GOLD", "SILVER", "BRONZE"]>>;
     currency: z.ZodDefault<z.ZodOptional<z.ZodString>>;
     lines: z.ZodArray<z.ZodObject<{
         productId: z.ZodString;
@@ -191,7 +191,7 @@ export declare const EvaluateCommercialScenarioSchema: z.ZodObject<{
         variantId?: string | undefined;
         unitPriceOverride?: number | undefined;
     }[];
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | undefined;
     customerId?: string | undefined;
 }, {
     lines: {
@@ -201,7 +201,7 @@ export declare const EvaluateCommercialScenarioSchema: z.ZodObject<{
         variantId?: string | undefined;
         unitPriceOverride?: number | undefined;
     }[];
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | undefined;
     customerId?: string | undefined;
     currency?: string | undefined;
 }>;

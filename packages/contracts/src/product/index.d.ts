@@ -356,7 +356,7 @@ export declare const PriceListSchema: z.ZodObject<{
 export type PriceListDto = z.infer<typeof PriceListSchema>;
 export declare const CreatePriceListSchema: z.ZodObject<{
     name: z.ZodString;
-    customerTier: z.ZodNullable<z.ZodOptional<z.ZodEnum<["ENTERPRISE", "TIER_1", "TIER_2", "TIER_3"]>>>;
+    customerTier: z.ZodNullable<z.ZodOptional<z.ZodEnum<["ENTERPRISE", "GOLD", "SILVER", "BRONZE"]>>>;
     currency: z.ZodDefault<z.ZodString>;
     isDefault: z.ZodDefault<z.ZodBoolean>;
     isActive: z.ZodDefault<z.ZodBoolean>;
@@ -379,14 +379,14 @@ export declare const CreatePriceListSchema: z.ZodObject<{
         productId: string;
         unitPrice: number;
     }[] | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
 }, {
     name: string;
     entries?: {
         productId: string;
         unitPrice: number;
     }[] | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     isActive?: boolean | undefined;
     currency?: string | undefined;
     isDefault?: boolean | undefined;
@@ -394,19 +394,19 @@ export declare const CreatePriceListSchema: z.ZodObject<{
 export type CreatePriceListRequest = z.infer<typeof CreatePriceListSchema>;
 export declare const UpdatePriceListSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
-    customerTier: z.ZodNullable<z.ZodOptional<z.ZodEnum<["ENTERPRISE", "TIER_1", "TIER_2", "TIER_3"]>>>;
+    customerTier: z.ZodNullable<z.ZodOptional<z.ZodEnum<["ENTERPRISE", "GOLD", "SILVER", "BRONZE"]>>>;
     currency: z.ZodOptional<z.ZodString>;
     isDefault: z.ZodOptional<z.ZodBoolean>;
     isActive: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     name?: string | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     isActive?: boolean | undefined;
     currency?: string | undefined;
     isDefault?: boolean | undefined;
 }, {
     name?: string | undefined;
-    customerTier?: "ENTERPRISE" | "TIER_1" | "TIER_2" | "TIER_3" | null | undefined;
+    customerTier?: "ENTERPRISE" | "GOLD" | "SILVER" | "BRONZE" | null | undefined;
     isActive?: boolean | undefined;
     currency?: string | undefined;
     isDefault?: boolean | undefined;

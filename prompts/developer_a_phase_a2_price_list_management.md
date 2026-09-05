@@ -29,7 +29,7 @@ Complete the Price List Management experience end-to-end for Developer A Phase A
    - Add sidebar navigation item under `SALES` in `DashboardLayout.tsx` pointing to `/price-lists`.
 2. **Dedicated Price List Management UI**:
    - Build a full-page `/price-lists` management interface (`PriceListPage.tsx` & `PriceListDetailPage.tsx`).
-   - Feature summary stats, search by name, filter by Customer Tier (`ENTERPRISE`, `TIER_1`, `TIER_2`, `TIER_3`, `GLOBAL`), Currency (`USD`, `EUR`, `GBP`, `INR`), and Status (`Active`, `Inactive`).
+   - Feature summary stats, search by name, filter by Customer Tier (`ENTERPRISE`, `GOLD`, `SILVER`, `BRONZE`, `GLOBAL`), Currency (`USD`, `EUR`, `GBP`, `INR`), and Status (`Active`, `Inactive`).
    - Enable Create Price List, Edit Price List parameters, Activate/Deactivate toggle, and Delete Price List with safety confirmation.
 3. **Product Entry Management**:
    - Provide a searchable Product Selector modal (`AddProductToPriceListModal.tsx`) showing products missing from the Price List, preventing duplicate entries.
