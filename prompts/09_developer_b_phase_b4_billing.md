@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase B4 Subscription & Hybrid Billing Engine
+# Implementation Prompt: Developer B - Phase B4 Subscription & Hybrid Billing Engine
 
 ## 1. Goal
 Implement Phase B4 of Developer B's vertical slice in DealFlow360:

@@ -14,6 +14,13 @@ import { productRepository } from '../../repositories/productRepository.js';
 import { priceListRepository } from '../../repositories/priceListRepository.js';
 import { AppError } from '../../middleware/errorHandler.js';
 import { CustomerTier } from '@dealflow360/db';
+import { recordAuditEvent } from '../../services/auditService.js';
+
+export interface ServiceActor {
+  id?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
 
 export const roundMoney = (val: number): number => Math.round((val + Number.EPSILON) * 100) / 100;
 
@@ -111,21 +118,34 @@ export function mapToProductReferenceDto(product: any, effectiveUnitPrice?: numb
   };
 }
 
-export async function createProduct(data: CreateProductRequest): Promise<ProductDto> {
+export async function createProduct(
+  data: CreateProductRequest,
+  actor?: ServiceActor | null,
+): Promise<ProductDto> {
   const existingSku = await productRepository.findBySku(data.sku);
   if (existingSku) {
     throw new AppError('DUPLICATE_SKU', `Product with SKU '${data.sku}' already exists.`, 409);
   }
 
   const product = await productRepository.createProduct(data);
-  return mapToProductDto(product);
+  const dto = mapToProductDto(product);
+
+  await recordAuditEvent({
+    eventType: 'PRODUCT_CREATED',
+    action: `Created Product ${product.name} (${product.sku})`,
+    entityType: 'Product',
+    entityId: product.id,
+    actor,
+    newState: product,
+  });
+
+  return dto;
 }
 
 export async function getProducts(query: ProductFilterQuery): Promise<ProductListResponse> {
   const { items, total } = await productRepository.findMany(query);
   const totalPages = Math.ceil(total / query.limit) || 1;
 
-  // Resolve effective pricing for each product if tier or currency query provided
   const mappedItems = await Promise.all(
     items.map(async (p) => {
       if (query.tier || query.currency) {
@@ -174,12 +194,34 @@ export async function getProductById(
   return mapToProductDto(product, effectivePrice);
 }
 
-export async function updateProduct(id: string, data: UpdateProductRequest): Promise<ProductDto> {
+export async function updateProduct(
+  id: string,
+  data: UpdateProductRequest,
+  actor?: ServiceActor | null,
+): Promise<ProductDto> {
   const existing = await productRepository.findByIdWithDetails(id);
   if (!existing) {
     throw new AppError('NOT_FOUND', `Product with ID '${id}' not found.`, 404);
   }
 
   const updated = await productRepository.updateProduct(id, data);
-  return mapToProductDto(updated);
+  const dto = mapToProductDto(updated);
+
+  const priceChanged =
+    data.unitPrice !== undefined && data.unitPrice !== existing.listPrice;
+  const eventType = priceChanged ? 'PRODUCT_PRICE_CHANGED' : 'PRODUCT_UPDATED';
+
+  await recordAuditEvent({
+    eventType,
+    action: priceChanged
+      ? `Changed Product price for ${updated.name} from ₹${existing.listPrice} to ₹${updated.listPrice}`
+      : `Updated Product ${updated.name} (${updated.sku})`,
+    entityType: 'Product',
+    entityId: updated.id,
+    actor,
+    previousState: existing,
+    newState: updated,
+  });
+
+  return dto;
 }

@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase B5 Upsell & Cross-sell Recommendation Engine
+# Implementation Prompt: Developer B - Phase B5 Upsell & Cross-sell Recommendation Engine
 
 ## 1. Goal
 Implement Phase B5 of Developer B's vertical slice in DealFlow360:

@@ -1,4 +1,4 @@
-# Developer A — Phase A2 Price List Management Implementation Plan
+# Developer A - Phase A2 Price List Management Implementation Plan
 
 ## Goal
 Complete the Price List Management experience end-to-end for Developer A Phase A2. Introduce a dedicated `/price-lists` management page and route, full CRUD capabilities for Price Lists and Price List Entries, filtering by Customer Tier, Currency, and Status, search, default/active status toggling, deletion with safety confirmation, customer-tier and currency pricing visibility, server-calculated effective price visibility, and full integration with Product Detail & Navigation.

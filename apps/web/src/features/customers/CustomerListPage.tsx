@@ -144,9 +144,9 @@ export const CustomerListPage: React.FC = () => {
             >
               <option value="">All Tiers</option>
               <option value="ENTERPRISE">Enterprise</option>
-              <option value="GOLD">Tier 1</option>
-              <option value="SILVER">Tier 2</option>
-              <option value="BRONZE">Tier 3</option>
+              <option value="GOLD">Gold</option>
+              <option value="SILVER">Silver</option>
+              <option value="BRONZE">Bronze</option>
             </select>
           </div>
 
@@ -221,7 +221,7 @@ export const CustomerListPage: React.FC = () => {
                           <span>{customer.phone}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 italic">—</span>
+                        <span className="text-slate-400 italic">-</span>
                       )}
                     </td>
                     <td className="py-3 px-4">

@@ -7,8 +7,18 @@ import {
   CustomerDto,
 } from '@dealflow360/contracts';
 import { AppError } from '../../middleware/errorHandler.js';
+import { recordAuditEvent } from '../../services/auditService.js';
 
-export async function createCustomer(data: CreateCustomerRequest): Promise<CustomerDto> {
+export interface ServiceActor {
+  id?: string | null;
+  name?: string | null;
+  role?: string | null;
+}
+
+export async function createCustomer(
+  data: CreateCustomerRequest,
+  actor?: ServiceActor | null,
+): Promise<CustomerDto> {
   const existingCode = await db.customer.findUnique({
     where: { code: data.code },
   });
@@ -28,11 +38,22 @@ export async function createCustomer(data: CreateCustomerRequest): Promise<Custo
     },
   });
 
-  return {
+  const dto: CustomerDto = {
     ...customer,
     createdAt: customer.createdAt.toISOString(),
     updatedAt: customer.updatedAt.toISOString(),
   };
+
+  await recordAuditEvent({
+    eventType: 'CUSTOMER_CREATED',
+    action: `Created Customer ${customer.name} (${customer.code})`,
+    entityType: 'Customer',
+    entityId: customer.id,
+    actor,
+    newState: customer,
+  });
+
+  return dto;
 }
 
 export async function getCustomers(query: CustomerFilterQuery): Promise<CustomerListResponse> {
@@ -102,6 +123,7 @@ export async function getCustomerById(id: string): Promise<CustomerDto> {
 export async function updateCustomer(
   id: string,
   data: UpdateCustomerRequest,
+  actor?: ServiceActor | null,
 ): Promise<CustomerDto> {
   const existing = await db.customer.findUnique({
     where: { id },
@@ -122,9 +144,21 @@ export async function updateCustomer(
     },
   });
 
-  return {
+  const dto: CustomerDto = {
     ...updated,
     createdAt: updated.createdAt.toISOString(),
     updatedAt: updated.updatedAt.toISOString(),
   };
+
+  await recordAuditEvent({
+    eventType: 'CUSTOMER_UPDATED',
+    action: `Updated Customer ${updated.name} (${updated.code})`,
+    entityType: 'Customer',
+    entityId: updated.id,
+    actor,
+    previousState: existing,
+    newState: updated,
+  });
+
+  return dto;
 }

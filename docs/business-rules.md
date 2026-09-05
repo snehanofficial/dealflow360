@@ -1,4 +1,4 @@
-# DealFlow360 — Canonical Business Rules & Commercial Governance
+# DealFlow360 - Canonical Business Rules & Commercial Governance
 
 For detailed mathematical formulations and policy thresholds, see [`05_BUSINESS_RULES.md`](./05_BUSINESS_RULES.md).
 

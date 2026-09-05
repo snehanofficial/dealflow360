@@ -1,4 +1,4 @@
-# DealFlow360 — Requirements & Scope
+# DealFlow360 - Requirements & Scope
 
 ## 1. Purpose
 

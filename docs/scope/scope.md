@@ -1,4 +1,4 @@
-# Scope: DealFlow360 — B2B Sales-to-Cash Policy Governance Platform
+# Scope: DealFlow360 - B2B Sales-to-Cash Policy Governance Platform
 
 DealFlow360 is an enterprise sales-to-cash platform governed by strict commercial risk, policy evaluation, multi-warehouse fulfillment, hybrid billing, customer negotiation, and deal control tower monitoring.
 

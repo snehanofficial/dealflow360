@@ -3,7 +3,7 @@ name: prisma
 description: Prisma 7 schema management, migrations, client generation, and transaction handling for DealFlow360.
 ---
 
-# Prisma Skill — DealFlow360
+# Prisma Skill - DealFlow360
 
 ## Guidelines
 - Database schema lives in `packages/db/prisma/schema.prisma`.

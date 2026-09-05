@@ -6,15 +6,15 @@ Refactor `UpsellPanel.tsx` in `apps/web/src/features/quotes/components/` to stri
 ---
 
 ## Relevant Skills Read
-- `DESIGN.md` — Visual Guidelines, Color Tokens, Typography, Spacing, & Component Patterns
-- `AGENTS.md` — UI work rules & governance visual requirements
+- `DESIGN.md` - Visual Guidelines, Color Tokens, Typography, Spacing, & Component Patterns
+- `AGENTS.md` - UI work rules & governance visual requirements
 
 ---
 
 ## Code & Config Inspected
-- `apps/web/src/features/quotes/components/UpsellPanel.tsx` — Current implementation using generic `slate-900`, `purple-500/20`, `indigo-700`, hardcoded `bg-[#714B67] hover:bg-[#5c3c54]`, `emerald-500`, etc.
-- `apps/web/src/styles/index.css` — CSS variables & Tailwind v4 theme configuration
-- `apps/web/src/components/ui/Badge.tsx` & `Button.tsx` — Design token standard references
+- `apps/web/src/features/quotes/components/UpsellPanel.tsx` - Current implementation using generic `slate-900`, `purple-500/20`, `indigo-700`, hardcoded `bg-[#714B67] hover:bg-[#5c3c54]`, `emerald-500`, etc.
+- `apps/web/src/styles/index.css` - CSS variables & Tailwind v4 theme configuration
+- `apps/web/src/components/ui/Badge.tsx` & `Button.tsx` - Design token standard references
 
 ---
 

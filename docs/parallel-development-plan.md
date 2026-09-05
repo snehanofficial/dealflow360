@@ -1,4 +1,4 @@
-# DealFlow360 — Parallel Development & Execution Plan
+# DealFlow360 - Parallel Development & Execution Plan
 
 ## 1. Overview & Strategy
 

@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase B3 Multi-Warehouse Fulfillment & Splitting
+# Implementation Prompt: Developer B - Phase B3 Multi-Warehouse Fulfillment & Splitting
 
 ## 1. Goal
 Implement Phase B3 of Developer B's vertical slice in DealFlow360:

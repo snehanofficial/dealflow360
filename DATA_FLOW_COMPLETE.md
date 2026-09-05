@@ -1,4 +1,4 @@
-# DealFlow360 — Complete Top-to-Bottom Data Flow Guide
+# DealFlow360 - Complete Top-to-Bottom Data Flow Guide
 
 ## Overview
 This document traces how data flows through the entire system from user interaction to database storage and back.
@@ -9,9 +9,9 @@ This document traces how data flows through the entire system from user interact
 
 ### Layer 1: Frontend Entry Point
 **Key Files:**
-- `apps/web/src/main.tsx` — React app initialization & root DOM render
-- `apps/web/src/app/App.tsx` — Root component with providers
-- `apps/web/src/routes/AppRoutes.tsx` — All route definitions and protected routes
+- `apps/web/src/main.tsx` - React app initialization & root DOM render
+- `apps/web/src/app/App.tsx` - Root component with providers
+- `apps/web/src/routes/AppRoutes.tsx` - All route definitions and protected routes
 
 **Flow:**
 ```
@@ -36,9 +36,9 @@ AppRoutes.tsx matches URL → renders appropriate page component
 
 ### Layer 2: Frontend API Client
 **Key Files:**
-- `apps/web/src/features/auth/LoginForm.tsx` — Form component
+- `apps/web/src/features/auth/LoginForm.tsx` - Form component
 - `apps/web/src/lib/api.ts` (if exists) or direct fetch calls
-- `apps/web/src/features/auth/AuthContext.tsx` — Global auth state
+- `apps/web/src/features/auth/AuthContext.tsx` - Global auth state
 
 **Example Login Flow:**
 ```typescript
@@ -76,9 +76,9 @@ const LoginForm = () => {
 
 ### Layer 3: Express Server Initialization
 **Key Files:**
-- `apps/api/src/app.ts` — Express app configuration
-- `apps/api/src/config/env.ts` — Environment variables
-- `apps/api/src/server.ts` or entry point — Listen & start server
+- `apps/api/src/app.ts` - Express app configuration
+- `apps/api/src/config/env.ts` - Environment variables
+- `apps/api/src/server.ts` or entry point - Listen & start server
 
 **Request Reception:**
 ```typescript
@@ -111,10 +111,10 @@ app.use(errorHandler); // Global error handler (last middleware)
 ### Layer 4: Route Matching & Middleware Chain
 
 **Key Files:**
-- `apps/api/src/routes/authRoutes.ts` — Auth endpoint definitions
-- `apps/api/src/routes/customerRoutes.ts` — Customer endpoints
-- `apps/api/src/routes/quoteRoutes.ts` — Quote endpoints
-- `apps/api/src/middleware/auth.ts` — JWT verification & RBAC
+- `apps/api/src/routes/authRoutes.ts` - Auth endpoint definitions
+- `apps/api/src/routes/customerRoutes.ts` - Customer endpoints
+- `apps/api/src/routes/quoteRoutes.ts` - Quote endpoints
+- `apps/api/src/middleware/auth.ts` - JWT verification & RBAC
 
 **Auth Routes Example:**
 ```typescript
@@ -182,9 +182,9 @@ Next middleware/controller executes with user context
 
 ### Layer 5: Authentication Middleware
 **Key Files:**
-- `apps/api/src/middleware/auth.ts` — authenticate() & requirePermission()
-- `apps/api/src/auth/token.ts` — JWT generation & verification
-- `apps/api/src/auth/password.ts` — Argon2id hashing
+- `apps/api/src/middleware/auth.ts` - authenticate() & requirePermission()
+- `apps/api/src/auth/token.ts` - JWT generation & verification
+- `apps/api/src/auth/password.ts` - Argon2id hashing
 
 **JWT Flow:**
 ```
@@ -293,8 +293,8 @@ export const ROLE_PERMISSIONS = {
 
 ### Layer 6: Controller Functions
 **Key Files:**
-- `apps/api/src/controllers/authController.ts` — Auth operations
-- `apps/api/src/controllers/customerController.ts` — Customer CRUD
+- `apps/api/src/controllers/authController.ts` - Auth operations
+- `apps/api/src/controllers/customerController.ts` - Customer CRUD
 - More controllers in `apps/api/src/controllers/`
 
 **Example: Login Controller**
@@ -349,8 +349,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
 ### Layer 7: Application Services
 **Key Files:**
-- `apps/api/src/services/authService.ts` — Auth operations
-- `apps/api/src/services/quoteService.ts` — Quote operations (if exists)
+- `apps/api/src/services/authService.ts` - Auth operations
+- `apps/api/src/services/quoteService.ts` - Quote operations (if exists)
 - More services in `apps/api/src/services/`
 
 **Example: Auth Service**
@@ -421,14 +421,14 @@ export class AuthService {
 
 ### Layer 8: Pure Business Engine
 **Key Files:**
-- `packages/domain/src/pricing/` — Price calculations
-- `packages/domain/src/margin/` — Margin calculations
-- `packages/domain/src/policy/` — Policy rule validation
-- `packages/domain/src/approval/` — Approval routing logic
-- `packages/domain/src/risk/` — Risk scoring engine
-- `packages/domain/src/quote/` — Quotation state machine
-- `packages/domain/src/fulfillment/` — Warehouse allocation
-- `packages/domain/src/billing/` — Invoice scheduling
+- `packages/domain/src/pricing/` - Price calculations
+- `packages/domain/src/margin/` - Margin calculations
+- `packages/domain/src/policy/` - Policy rule validation
+- `packages/domain/src/approval/` - Approval routing logic
+- `packages/domain/src/risk/` - Risk scoring engine
+- `packages/domain/src/quote/` - Quotation state machine
+- `packages/domain/src/fulfillment/` - Warehouse allocation
+- `packages/domain/src/billing/` - Invoice scheduling
 
 **Critical Constraint: No Framework Dependencies**
 ```
@@ -561,8 +561,8 @@ export function evaluateCommercial(
 
 ### Layer 9: Repository Pattern
 **Key Files:**
-- `apps/api/src/repositories/userRepository.ts` — User data access
-- `apps/api/src/repositories/` — More repositories (one per domain entity)
+- `apps/api/src/repositories/userRepository.ts` - User data access
+- `apps/api/src/repositories/` - More repositories (one per domain entity)
 
 **Example: User Repository**
 ```typescript
@@ -610,9 +610,9 @@ export class UserRepository {
 
 ### Layer 10: Prisma ORM & Database Schema
 **Key Files:**
-- `packages/db/prisma/schema.prisma` — Database schema definition
-- `packages/db/prisma/migrations/` — Migration history
-- `packages/db/prisma.config.ts` — Prisma configuration
+- `packages/db/prisma/schema.prisma` - Database schema definition
+- `packages/db/prisma/migrations/` - Migration history
+- `packages/db/prisma.config.ts` - Prisma configuration
 
 **Schema Overview:**
 ```prisma
@@ -746,9 +746,9 @@ Response returns to client
 
 ### Layer 11: Shared Contracts & Zod Schemas
 **Key Files:**
-- `packages/contracts/src/auth/index.ts` — Auth DTOs
-- `packages/contracts/src/customer/index.ts` — Customer DTOs
-- `packages/contracts/src/quotes/index.ts` — Quote DTOs
+- `packages/contracts/src/auth/index.ts` - Auth DTOs
+- `packages/contracts/src/customer/index.ts` - Customer DTOs
+- `packages/contracts/src/quotes/index.ts` - Quote DTOs
 - More in `packages/contracts/src/`
 
 **Contracts Pattern:**
@@ -1002,66 +1002,66 @@ FRONTEND UPDATE
 ## 11. CRITICAL FILE REFERENCE BY RESPONSIBILITY
 
 ### Authentication & Security
-- `apps/api/src/app.ts` — Express security setup
-- `apps/api/src/middleware/auth.ts` — JWT verification & RBAC
-- `apps/api/src/auth/token.ts` — Token generation & verification
-- `apps/api/src/auth/password.ts` — Argon2id hashing
-- `packages/contracts/src/auth/index.ts` — Auth DTOs & role definitions
+- `apps/api/src/app.ts` - Express security setup
+- `apps/api/src/middleware/auth.ts` - JWT verification & RBAC
+- `apps/api/src/auth/token.ts` - Token generation & verification
+- `apps/api/src/auth/password.ts` - Argon2id hashing
+- `packages/contracts/src/auth/index.ts` - Auth DTOs & role definitions
 
 ### Frontend
-- `apps/web/src/main.tsx` — React app entry
-- `apps/web/src/app/App.tsx` — Root component with providers
-- `apps/web/src/routes/AppRoutes.tsx` — All routes & protected routes
-- `apps/web/src/features/auth/AuthContext.tsx` — Auth state management
+- `apps/web/src/main.tsx` - React app entry
+- `apps/web/src/app/App.tsx` - Root component with providers
+- `apps/web/src/routes/AppRoutes.tsx` - All routes & protected routes
+- `apps/web/src/features/auth/AuthContext.tsx` - Auth state management
 - Feature folders for each module (customers, quotes, portal, etc.)
 
 ### API Routes & Controllers
-- `apps/api/src/app.ts` — Route registration
-- `apps/api/src/routes/authRoutes.ts` — Auth endpoints
-- `apps/api/src/routes/customerRoutes.ts` — Customer endpoints
-- `apps/api/src/routes/quoteRoutes.ts` — Quote endpoints
+- `apps/api/src/app.ts` - Route registration
+- `apps/api/src/routes/authRoutes.ts` - Auth endpoints
+- `apps/api/src/routes/customerRoutes.ts` - Customer endpoints
+- `apps/api/src/routes/quoteRoutes.ts` - Quote endpoints
 - Other route files for fulfillment, billing, portal, etc.
 
 ### Services & Business Orchestration
-- `apps/api/src/services/authService.ts` — Auth operations
+- `apps/api/src/services/authService.ts` - Auth operations
 - Additional service files in `apps/api/src/services/`
 
 ### Domain Business Logic (Pure)
-- `packages/domain/src/pricing/` — Price calculations
-- `packages/domain/src/margin/` — Margin calculations
-- `packages/domain/src/policy/` — Policy rule validation
-- `packages/domain/src/approval/` — Approval routing
-- `packages/domain/src/risk/` — Risk scoring
-- `packages/domain/src/quote/` — Quote state machine
-- `packages/domain/src/fulfillment/` — Warehouse allocation
-- `packages/domain/src/billing/` — Invoice scheduling
+- `packages/domain/src/pricing/` - Price calculations
+- `packages/domain/src/margin/` - Margin calculations
+- `packages/domain/src/policy/` - Policy rule validation
+- `packages/domain/src/approval/` - Approval routing
+- `packages/domain/src/risk/` - Risk scoring
+- `packages/domain/src/quote/` - Quote state machine
+- `packages/domain/src/fulfillment/` - Warehouse allocation
+- `packages/domain/src/billing/` - Invoice scheduling
 
 ### Data Access (Repositories)
-- `apps/api/src/repositories/userRepository.ts` — User data access
+- `apps/api/src/repositories/userRepository.ts` - User data access
 - Additional repository files in `apps/api/src/repositories/`
 
 ### Database
-- `packages/db/prisma/schema.prisma` — Database schema
-- `packages/db/prisma/migrations/` — Schema migration history
-- `packages/db/prisma.config.ts` — Prisma configuration
+- `packages/db/prisma/schema.prisma` - Database schema
+- `packages/db/prisma/migrations/` - Schema migration history
+- `packages/db/prisma.config.ts` - Prisma configuration
 
 ### Contracts & Validation
-- `packages/contracts/src/index.ts` — Main export
-- `packages/contracts/src/auth/index.ts` — Auth contracts
-- `packages/contracts/src/customer/index.ts` — Customer contracts
-- `packages/contracts/src/quotes/index.ts` — Quote contracts
+- `packages/contracts/src/index.ts` - Main export
+- `packages/contracts/src/auth/index.ts` - Auth contracts
+- `packages/contracts/src/customer/index.ts` - Customer contracts
+- `packages/contracts/src/quotes/index.ts` - Quote contracts
 - Similar files for other domains (billing, fulfillment, portal, etc.)
 
 ### Shared Middleware
-- `apps/api/src/middleware/auth.ts` — Authentication & authorization
-- `apps/api/src/middleware/errorHandler.ts` — Global error handling
-- `apps/api/src/middleware/index.ts` — Middleware exports
+- `apps/api/src/middleware/auth.ts` - Authentication & authorization
+- `apps/api/src/middleware/errorHandler.ts` - Global error handling
+- `apps/api/src/middleware/index.ts` - Middleware exports
 
 ### Configuration
-- `apps/api/src/config/env.ts` — Environment variables
-- `apps/api/package.json` — API dependencies
-- `apps/web/vite.config.ts` — Frontend build configuration
-- Root `pnpm-workspace.yaml` — Monorepo configuration
+- `apps/api/src/config/env.ts` - Environment variables
+- `apps/api/package.json` - API dependencies
+- `apps/web/vite.config.ts` - Frontend build configuration
+- Root `pnpm-workspace.yaml` - Monorepo configuration
 
 ---
 
@@ -1114,18 +1114,18 @@ req.user (from authenticate middleware)
 
 **Data flows through 12 layers:**
 
-1. **Frontend UI** — React components collect user input
-2. **Frontend API Client** — Send HTTP requests with auth
-3. **Express Server** — Receive & route requests
-4. **Middleware Chain** — Security, auth, parsing
-5. **Route Matching** — Find correct handler
-6. **Controllers** — Parse input, call services, format response
-7. **Services** — Orchestrate business operations
-8. **Domain Logic** — Pure business rules (single source of truth)
-9. **Repositories** — Abstract database access
-10. **Prisma ORM** — SQL generation & execution
-11. **PostgreSQL Database** — Store & retrieve data
-12. **Response Formatting** — Send standardized JSON back to frontend
+1. **Frontend UI** - React components collect user input
+2. **Frontend API Client** - Send HTTP requests with auth
+3. **Express Server** - Receive & route requests
+4. **Middleware Chain** - Security, auth, parsing
+5. **Route Matching** - Find correct handler
+6. **Controllers** - Parse input, call services, format response
+7. **Services** - Orchestrate business operations
+8. **Domain Logic** - Pure business rules (single source of truth)
+9. **Repositories** - Abstract database access
+10. **Prisma ORM** - SQL generation & execution
+11. **PostgreSQL Database** - Store & retrieve data
+12. **Response Formatting** - Send standardized JSON back to frontend
 
 **Every request:**
 - Validated against Zod schemas (contracts)

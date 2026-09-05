@@ -24,8 +24,8 @@ export class ControlTowerController {
   async resolveAlert(req: Request, res: Response, next: NextFunction) {
     try {
       const alertId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-
-      const result = await controlTowerService.resolveAlert(alertId);
+      const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+      const result = await controlTowerService.resolveAlert(alertId, actor);
 
       res.json({
         success: true,

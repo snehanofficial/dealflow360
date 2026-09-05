@@ -1,4 +1,4 @@
-# Developer A — Phased Implementation Plan (Updated for True A/B Independence)
+# Developer A - Phased Implementation Plan (Updated for True A/B Independence)
 
 ## 1. Ownership Overview & Scope Boundary
 

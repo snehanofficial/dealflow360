@@ -1,4 +1,4 @@
-# DealFlow360 — Feature & Module Architecture
+# DealFlow360 - Feature & Module Architecture
 
 ## 1. Purpose
 
@@ -50,7 +50,7 @@ The source problem statement defines the core capabilities around discount gover
 
 # 2. Architecture Principles
 
-## Principle 1 — Vertical module ownership
+## Principle 1 - Vertical module ownership
 
 Each developer owns complete business modules.
 
@@ -80,7 +80,7 @@ Each module may contain:
 
 ---
 
-## Principle 2 — Clear boundaries
+## Principle 2 - Clear boundaries
 
 A module owns its business responsibility.
 
@@ -103,7 +103,7 @@ Warehouse allocation logic
 
 ---
 
-## Principle 3 — Contract-based communication
+## Principle 3 - Contract-based communication
 
 Modules communicate through:
 
@@ -116,7 +116,7 @@ Do not rely on direct access to another module's internals.
 
 ---
 
-## Principle 4 — Minimize shared files
+## Principle 4 - Minimize shared files
 
 Shared files are the main source of merge conflicts.
 
@@ -130,7 +130,7 @@ Therefore:
 
 ---
 
-## Principle 5 — One authoritative business rule
+## Principle 5 - One authoritative business rule
 
 A business rule must have one authoritative implementation.
 
@@ -173,7 +173,7 @@ Visibility/reporting capabilities.
 
 # 4. FOUNDATION MODULE
 
-## Module F1 — Base Application Foundation
+## Module F1 - Base Application Foundation
 
 ### Owner
 
@@ -218,7 +218,7 @@ After Phase 0, this module should be treated as stable shared infrastructure.
 
 ---
 
-# 5. CORE MODULES — DEVELOPER A
+# 5. CORE MODULES - DEVELOPER A
 
 Developer A owns:
 
@@ -233,7 +233,7 @@ A6 Audit Trail
 
 ---
 
-# 6. MODULE A1 — Customer Management
+# 6. MODULE A1 - Customer Management
 
 ## Purpose
 
@@ -294,7 +294,7 @@ Developer A
 
 ---
 
-# 7. MODULE A2 — Product & Pricing Management
+# 7. MODULE A2 - Product & Pricing Management
 
 ## Purpose
 
@@ -357,7 +357,7 @@ Developer A
 
 ---
 
-# 8. MODULE A3 — Quotation Management
+# 8. MODULE A3 - Quotation Management
 
 ## Purpose
 
@@ -435,7 +435,7 @@ Developer A
 
 ---
 
-# 9. MODULE A4 — Discount Governance
+# 9. MODULE A4 - Discount Governance
 
 ## Purpose
 
@@ -494,7 +494,7 @@ Developer A
 
 ---
 
-# 10. MODULE A5 — Approval Workflow
+# 10. MODULE A5 - Approval Workflow
 
 ## Purpose
 
@@ -555,7 +555,7 @@ Developer A
 
 ---
 
-# 11. MODULE A6 — Audit Trail
+# 11. MODULE A6 - Audit Trail
 
 ## Purpose
 
@@ -604,7 +604,7 @@ Developer A
 
 ---
 
-# 12. CORE MODULES — DEVELOPER B
+# 12. CORE MODULES - DEVELOPER B
 
 Developer B owns:
 
@@ -619,7 +619,7 @@ B6 Operational Dashboard
 
 ---
 
-# 13. MODULE B1 — Upsell & Cross-sell
+# 13. MODULE B1 - Upsell & Cross-sell
 
 ## Purpose
 
@@ -679,7 +679,7 @@ Developer B
 
 ---
 
-# 14. MODULE B2 — Warehouse Fulfillment & Splitting
+# 14. MODULE B2 - Warehouse Fulfillment & Splitting
 
 ## Purpose
 
@@ -740,7 +740,7 @@ Developer B
 
 ---
 
-# 15. MODULE B3 — Subscription & Hybrid Billing
+# 15. MODULE B3 - Subscription & Hybrid Billing
 
 ## Purpose
 
@@ -801,7 +801,7 @@ Developer B
 
 ---
 
-# 16. MODULE B4 — Customer Negotiation Portal
+# 16. MODULE B4 - Customer Negotiation Portal
 
 ## Purpose
 
@@ -861,7 +861,7 @@ Developer B
 
 ---
 
-# 17. MODULE B5 — Deal Health & Alerts
+# 17. MODULE B5 - Deal Health & Alerts
 
 ## Purpose
 
@@ -925,7 +925,7 @@ Developer B
 
 ---
 
-# 18. MODULE B6 — Operational Dashboard
+# 18. MODULE B6 - Operational Dashboard
 
 ## Purpose
 
@@ -994,16 +994,16 @@ Developer B
 
 | Module | Customer | Product | Quotation | Discount | Approval | Inventory | Billing | Negotiation | Deal Health |
 |---|---|---|---|---|---|---|---|---|---|
-| Customer | — | No | No | No | No | No | No | No | No |
-| Product | No | — | No | No | No | No | No | No | No |
-| Quotation | Yes | Yes | — | Yes | Yes | No | No | No | No |
-| Discount | Yes | Yes | Yes | — | Yes | No | No | Yes | No |
-| Approval | No | No | Yes | Yes | — | No | No | Yes | No |
+| Customer | - | No | No | No | No | No | No | No | No |
+| Product | No | - | No | No | No | No | No | No | No |
+| Quotation | Yes | Yes | - | Yes | Yes | No | No | No | No |
+| Discount | Yes | Yes | Yes | - | Yes | No | No | Yes | No |
+| Approval | No | No | Yes | Yes | - | No | No | Yes | No |
 | Upsell | No | Yes | Yes | Read | No | No | No | No | No |
 | Fulfillment | No | Yes | Yes | No | Read | Yes | No | No | No |
-| Billing | No | Yes | Yes | No | Read | No | — | No | No |
-| Negotiation | Yes | Read | Yes | Read | Read/Trigger | No | Read | — | No |
-| Deal Health | Read | Read | Yes | Read | Read | Read | Read | Read | — |
+| Billing | No | Yes | Yes | No | Read | No | - | No | No |
+| Negotiation | Yes | Read | Yes | Read | Read/Trigger | No | Read | - | No |
+| Deal Health | Read | Read | Yes | Read | Read | Read | Read | Read | - |
 | Dashboard | Read | Read | Read | Read | Read | Read | Read | Read | Read |
 
 Legend:
@@ -1021,7 +1021,7 @@ Read/Trigger
 No
 = Should remain independent
 
-—
+-
 = Own module
 ```
 

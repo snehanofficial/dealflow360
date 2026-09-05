@@ -1,4 +1,4 @@
-# DealFlow360 — Documentation Governance & Source-of-Truth Map
+# DealFlow360 - Documentation Governance & Source-of-Truth Map
 
 This document establishes the official governance hierarchy, ownership boundaries, and canonical relationships for all DealFlow360 documentation.
 

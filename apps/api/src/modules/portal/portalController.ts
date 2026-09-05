@@ -13,8 +13,8 @@ export async function generatePortalToken(
 ): Promise<void> {
   try {
     const { quotationId, expiresInHours } = CreatePortalTokenSchema.parse(req.body);
-
-    const token = await portalService.generatePortalToken(quotationId, expiresInHours);
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+    const token = await portalService.generatePortalToken(quotationId, expiresInHours, actor);
 
     res.status(201).json({
       success: true,

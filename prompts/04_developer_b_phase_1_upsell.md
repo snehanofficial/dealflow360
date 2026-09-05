@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase 1 (Upsell & Cross-sell Foundation)
+# Implementation Prompt: Developer B - Phase 1 (Upsell & Cross-sell Foundation)
 
 ## Goal
 Implement the complete Phase 1 Upsell & Cross-sell vertical slice for DealFlow360. This includes recommendation rule persistence, deterministic recommendation & co-purchase logic, promotion-aware recommendation evaluation, deterministic ranking, explainable reason metadata, commercial margin delta impact calculation, recommendation retrieval API (`GET /api/v1/quotations/:quotationId/recommendations`), Upsell Panel UI with "Add to Quote" and "Dismiss" actions, validation, authorization, seed data, and unit/integration tests.

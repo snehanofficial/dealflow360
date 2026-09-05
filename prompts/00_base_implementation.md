@@ -1,4 +1,4 @@
-# Implementation Prompt — Phase 0: Base Implementation & Authentication Foundation
+# Implementation Prompt - Phase 0: Base Implementation & Authentication Foundation
 
 ## 1. Goal
 Establish the shared technical foundation and authentication infrastructure for DealFlow360 before Developer A and Developer B begin vertical feature implementation. This includes monorepo scaffold verification, database schema for auth/users, JWT + HttpOnly refresh cookie authentication, Argon2id password hashing, permission-based RBAC, centralized Axios client with refresh handling, responsive application shell UI, shared design tokens/primitives, API error/loading/notification handling, development seed users, and base tests.
@@ -6,10 +6,10 @@ Establish the shared technical foundation and authentication infrastructure for 
 ---
 
 ## 2. Relevant Skills Read
-- `skills/domain/SKILL.md` — Domain engine boundaries & pure TypeScript business layer rules.
-- `skills/frontend/SKILL.md` — Visual guidelines, Odoo-inspired light professional UI design tokens, components, state management.
-- `skills/prisma/SKILL.md` — Prisma 7 schema management, migrations, client configuration, and PostgreSQL safety.
-- `skills/testing/SKILL.md` — Vitest unit, API integration, and auth workflow testing.
+- `skills/domain/SKILL.md` - Domain engine boundaries & pure TypeScript business layer rules.
+- `skills/frontend/SKILL.md` - Visual guidelines, Odoo-inspired light professional UI design tokens, components, state management.
+- `skills/prisma/SKILL.md` - Prisma 7 schema management, migrations, client configuration, and PostgreSQL safety.
+- `skills/testing/SKILL.md` - Vitest unit, API integration, and auth workflow testing.
 
 ---
 
@@ -34,32 +34,32 @@ Establish the shared technical foundation and authentication infrastructure for 
 ## 5. Expected Files to Change / Create
 
 ### Database (`packages/db/`)
-- `prisma/schema.prisma` — Add `User`, `RefreshSession`, `Role` enum, and password hash fields.
-- `prisma/seed.ts` — Seed default users for each role (`admin@dealflow360.com`, `sales.manager@dealflow360.com`, `sales.rep@dealflow360.com`, `finance@dealflow360.com`, `customer@dealflow360.com`).
+- `prisma/schema.prisma` - Add `User`, `RefreshSession`, `Role` enum, and password hash fields.
+- `prisma/seed.ts` - Seed default users for each role (`admin@dealflow360.com`, `sales.manager@dealflow360.com`, `sales.rep@dealflow360.com`, `finance@dealflow360.com`, `customer@dealflow360.com`).
 
 ### Shared Contracts (`packages/contracts/`)
-- `src/auth/index.ts` — Zod schemas & types for Signup, Login, Refresh, Logout, and User/Me responses.
+- `src/auth/index.ts` - Zod schemas & types for Signup, Login, Refresh, Logout, and User/Me responses.
 
 ### Backend API (`apps/api/`)
-- `src/config/env.ts` — Environment variables configuration (JWT secrets, DB URL, CORS).
-- `src/auth/token.ts` — JWT generation, verification, refresh cookie options.
-- `src/auth/password.ts` — Argon2id password hashing and verification.
-- `src/middleware/auth.ts` — Bearer token authentication & permission/role authorization middleware.
-- `src/controllers/authController.ts` — Signup, Login, Refresh, Logout, Me endpoints.
-- `src/services/authService.ts` — User creation, authentication logic, refresh rotation.
-- `src/repositories/userRepository.ts` — User persistence operations via Prisma.
-- `src/routes/authRoutes.ts` — Express route bindings for `/api/v1/auth/*`.
-- `src/app.ts` — Register auth routes, error handling middleware.
+- `src/config/env.ts` - Environment variables configuration (JWT secrets, DB URL, CORS).
+- `src/auth/token.ts` - JWT generation, verification, refresh cookie options.
+- `src/auth/password.ts` - Argon2id password hashing and verification.
+- `src/middleware/auth.ts` - Bearer token authentication & permission/role authorization middleware.
+- `src/controllers/authController.ts` - Signup, Login, Refresh, Logout, Me endpoints.
+- `src/services/authService.ts` - User creation, authentication logic, refresh rotation.
+- `src/repositories/userRepository.ts` - User persistence operations via Prisma.
+- `src/routes/authRoutes.ts` - Express route bindings for `/api/v1/auth/*`.
+- `src/app.ts` - Register auth routes, error handling middleware.
 
 ### Frontend Presentation (`apps/web/`)
-- `src/styles/index.css` — Design system CSS custom properties & utility classes based on `DESIGN.md`.
-- `src/lib/api/client.ts` — Centralized Axios instance with Bearer token injection & automatic 401 refresh interceptor.
-- `src/features/auth/AuthContext.tsx` — Auth state provider (login, signup, logout, refresh session initialization).
-- `src/components/ui/` — Reusable UI primitives (Button, Input, Badge, Alert, Card, Navbar).
-- `src/routes/AppRoutes.tsx` — Protected routes & Public/Auth routing logic.
-- `src/app/App.tsx` — Root application wrapper with QueryClientProvider & AuthProvider.
-- `src/features/auth/LoginForm.tsx`, `src/features/auth/SignupForm.tsx` — Auth forms with React Hook Form & Zod validation.
-- `src/features/auth/ProfileView.tsx` — Authenticated profile & role/permissions dashboard.
+- `src/styles/index.css` - Design system CSS custom properties & utility classes based on `DESIGN.md`.
+- `src/lib/api/client.ts` - Centralized Axios instance with Bearer token injection & automatic 401 refresh interceptor.
+- `src/features/auth/AuthContext.tsx` - Auth state provider (login, signup, logout, refresh session initialization).
+- `src/components/ui/` - Reusable UI primitives (Button, Input, Badge, Alert, Card, Navbar).
+- `src/routes/AppRoutes.tsx` - Protected routes & Public/Auth routing logic.
+- `src/app/App.tsx` - Root application wrapper with QueryClientProvider & AuthProvider.
+- `src/features/auth/LoginForm.tsx`, `src/features/auth/SignupForm.tsx` - Auth forms with React Hook Form & Zod validation.
+- `src/features/auth/ProfileView.tsx` - Authenticated profile & role/permissions dashboard.
 
 ### Tests (`apps/api/src/auth/__tests__/`, `apps/web/src/`)
 - Integration tests for auth signup, login, refresh, me, logout, and protected route RBAC middleware.

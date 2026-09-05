@@ -168,7 +168,7 @@ export const PolicySimulatorSection: React.FC = () => {
                   >
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} ({p.sku}) — Base ${p.unitPrice} (Cost ${p.costPrice})
+                        {p.name} ({p.sku}) - Base ${p.unitPrice} (Cost ${p.costPrice})
                       </option>
                     ))}
                   </select>

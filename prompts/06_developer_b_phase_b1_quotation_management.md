@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer B — Phase B1 Quotation Management & Quote Builder UI
+# Implementation Prompt: Developer B - Phase B1 Quotation Management & Quote Builder UI
 
 ## 1. Goal
 Complete Phase B1 of Developer B's vertical slice in DealFlow360:

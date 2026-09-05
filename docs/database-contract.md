@@ -1,4 +1,4 @@
-# DealFlow360 — Database Ownership & Model Contract
+# DealFlow360 - Database Ownership & Model Contract
 
 ## 1. Overview
 

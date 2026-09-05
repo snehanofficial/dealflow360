@@ -17,6 +17,11 @@ import {
   getProductById,
   updateProduct,
 } from '../modules/products/product.service.js';
+import {
+  createPriceListService,
+  updatePriceListService,
+  upsertPriceListEntryService,
+} from '../services/priceListService.js';
 import { categoryRepository } from '../repositories/categoryRepository.js';
 import { priceListRepository } from '../repositories/priceListRepository.js';
 import { attributeRepository } from '../repositories/attributeRepository.js';
@@ -29,7 +34,8 @@ export async function createProductHandler(
 ): Promise<void> {
   try {
     const validated = CreateProductSchema.parse(req.body);
-    const product = await createProduct(validated);
+    const actor = (req as any).user;
+    const product = await createProduct(validated, actor);
     res.status(201).json({
       success: true,
       data: product,
@@ -90,7 +96,8 @@ export async function updateProductHandler(
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const validated = UpdateProductSchema.parse(req.body);
-    const product = await updateProduct(id, validated);
+    const actor = (req as any).user;
+    const product = await updateProduct(id, validated, actor);
     res.json({
       success: true,
       data: product,
@@ -174,7 +181,8 @@ export async function createPriceListHandler(
 ): Promise<void> {
   try {
     const validated = CreatePriceListSchema.parse(req.body);
-    const priceList = await priceListRepository.create(validated);
+    const actor = (req as any).user;
+    const priceList = await createPriceListService(validated, actor);
     res.status(201).json({
       success: true,
       data: priceList,
@@ -355,7 +363,8 @@ export async function updatePriceListHandler(
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const validated = UpdatePriceListSchema.parse(req.body);
-    const priceList = await priceListRepository.update(id, validated as any);
+    const actor = (req as any).user;
+    const priceList = await updatePriceListService(id, validated as any, actor);
     res.json({
       success: true,
       data: priceList,
@@ -394,7 +403,8 @@ export async function upsertPriceListEntryHandler(
   try {
     const priceListId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { productId, unitPrice } = UpsertPriceListEntrySchema.parse(req.body);
-    const entry = await priceListRepository.upsertEntry(priceListId, productId, unitPrice);
+    const actor = (req as any).user;
+    const entry = await upsertPriceListEntryService(priceListId, productId, unitPrice, actor);
     res.json({
       success: true,
       data: entry,

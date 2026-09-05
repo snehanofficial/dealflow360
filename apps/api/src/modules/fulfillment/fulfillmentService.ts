@@ -7,6 +7,7 @@ import {
 } from '@dealflow360/domain';
 import { FulfillmentOverrideInput } from '@dealflow360/contracts';
 import { AppError } from '../../middleware/errorHandler.js';
+import { recordAuditEvent } from '../../services/auditService.js';
 
 export class FulfillmentService {
   async ensureWarehousesAndInventory(): Promise<Warehouse[]> {
@@ -118,6 +119,7 @@ export class FulfillmentService {
   async overrideFulfillment(
     quotationId: string,
     input: FulfillmentOverrideInput,
+    actor?: { id?: string; name?: string; role?: string } | null,
   ): Promise<{ message: string; allocations: FulfillmentAllocation[] }> {
     const quotation = await db.quotation.findUnique({
       where: { id: quotationId },
@@ -165,6 +167,15 @@ export class FulfillmentService {
     await db.quotation.update({
       where: { id: quotationId },
       data: { status: 'FULFILLMENT' },
+    });
+
+    await recordAuditEvent({
+      eventType: 'FULFILLMENT_ALLOCATED',
+      action: `Saved warehouse fulfillment allocations for quotation ${quotation.quoteNumber}`,
+      entityType: 'FulfillmentAllocation',
+      entityId: createdAllocations[0]?.id || quotationId,
+      actor,
+      newState: { quotationId, allocationsCount: createdAllocations.length },
     });
 
     return {

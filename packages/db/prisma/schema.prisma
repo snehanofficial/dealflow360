@@ -497,5 +497,23 @@ model ApprovalStep {
   @@index([status])
 }
 
+model AuditLog {
+  id            String   @id @default(uuid())
+  eventType     String
+  action        String
+  entityType    String
+  entityId      String
+  actorId       String?
+  actorName     String?
+  actorRole     Role?
+  previousState Json?
+  newState      Json?
+  changes       Json?
+  metadata      Json?
+  createdAt     DateTime @default(now())
 
-
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([eventType])
+}

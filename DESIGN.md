@@ -1,4 +1,4 @@
-# DealFlow360 — Design System & Visual Guidelines
+# DealFlow360 - Design System & Visual Guidelines
 
 Inspired by Odoo's clean enterprise aesthetics, DealFlow360 uses a structured, semantic design token system to ensure visual consistency, accessibility, and financial clarity across all surfaces.
 
@@ -135,10 +135,10 @@ Consistent rhythm across margins, paddings, and component gaps:
 
 ## 7. Borders & Dividers
 
-- **Default Border**: `1px solid #E5E7EB` (`border-gray-200`) — standard card borders, table dividers.
-- **Hover Border**: `1px solid #D1D5DB` (`border-gray-300`) — input hover, card hover state.
-- **Focus Border**: `2px solid #714B67` (`border-primary`) — focused inputs, active selection outlines.
-- **Error Border**: `1px solid #DC3545` (`border-danger`) — form field validation errors.
+- **Default Border**: `1px solid #E5E7EB` (`border-gray-200`) - standard card borders, table dividers.
+- **Hover Border**: `1px solid #D1D5DB` (`border-gray-300`) - input hover, card hover state.
+- **Focus Border**: `2px solid #714B67` (`border-primary`) - focused inputs, active selection outlines.
+- **Error Border**: `1px solid #DC3545` (`border-danger`) - form field validation errors.
 
 ---
 

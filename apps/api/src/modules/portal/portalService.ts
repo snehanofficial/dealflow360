@@ -7,6 +7,7 @@ import {
 } from '@dealflow360/domain';
 import { SubmitCounterOfferInput } from '@dealflow360/contracts';
 import { AppError } from '../../middleware/errorHandler.js';
+import { recordAuditEvent } from '../../services/auditService.js';
 
 export interface SanitizedPortalQuoteLine {
 
@@ -51,7 +52,11 @@ export interface SanitizedPortalQuote {
 }
 
 export class PortalService {
-  async generatePortalToken(quotationId: string, expiresInHours = 72): Promise<string> {
+  async generatePortalToken(
+    quotationId: string,
+    expiresInHours = 72,
+    actor?: { id?: string; name?: string; role?: string } | null,
+  ): Promise<string> {
     const quotation = await db.quotation.findUnique({
       where: { id: quotationId },
     });
@@ -68,6 +73,15 @@ export class PortalService {
         expiresAt,
         isRevoked: false,
       },
+    });
+
+    await recordAuditEvent({
+      eventType: 'PORTAL_TOKEN_GENERATED',
+      action: `Generated customer portal access token for quotation ${quotation.quoteNumber}`,
+      entityType: 'PortalToken',
+      entityId: portalToken.id,
+      actor,
+      newState: { quotationId, expiresAt: expiresAt.toISOString() },
     });
 
     return portalToken.token;
@@ -215,7 +229,7 @@ export class PortalService {
     }
 
     // Persist counteroffer record
-    await db.counterOffer.create({
+    const counterOfferRecord = await db.counterOffer.create({
       data: {
         quotationId: quotation.id,
         proposedDiscountPercent: avgProposedDiscount,
@@ -257,6 +271,15 @@ export class PortalService {
         riskScore: risk.riskScore,
         riskLevel: risk.riskLevel,
       },
+    });
+
+    await recordAuditEvent({
+      eventType: 'COUNTEROFFER_SUBMITTED',
+      action: `Customer (${quotation.customer?.name || 'Customer'}) submitted counteroffer on quotation ${quotation.quoteNumber}`,
+      entityType: 'CounterOffer',
+      entityId: counterOfferRecord.id,
+      actor: { id: quotation.customerId, name: quotation.customer?.name || 'Customer', role: 'CUSTOMER' },
+      newState: counterOfferRecord,
     });
 
     const updatedQuote = await this.getQuoteByPortalToken(token);

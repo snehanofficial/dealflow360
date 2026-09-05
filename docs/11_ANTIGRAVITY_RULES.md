@@ -1,4 +1,4 @@
-# Antigravity Execution Rules — DealFlow360
+# Antigravity Execution Rules - DealFlow360
 
 ## 1. Purpose
 

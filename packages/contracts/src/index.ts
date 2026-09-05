@@ -10,5 +10,4 @@ export * from './policy/index.js';
 export * from './portal/index.js';
 export * from './control-tower/index.js';
 export * from './common/index.js';
-
-
+export * from './audit/index.js';

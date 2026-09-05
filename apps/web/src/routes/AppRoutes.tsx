@@ -16,6 +16,7 @@ import { QuotationViewPage } from '../features/quotes/QuotationViewPage.js';
 import { DiscountPolicyListPage } from '../features/governance/DiscountPolicyListPage.js';
 import { ApprovalInboxPage } from '../features/approvals/ApprovalInboxPage.js';
 import { ApprovalDetailPage } from '../features/approvals/ApprovalDetailPage.js';
+import { AuditTrailPage } from '../features/audit/AuditTrailPage.js';
 import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
 import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
 import { BillingSchedulePage } from '../features/billing/BillingSchedulePage.js';
@@ -230,6 +231,17 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <ApprovalDetailPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/audit"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <AuditTrailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
