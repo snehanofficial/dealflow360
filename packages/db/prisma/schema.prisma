@@ -40,3 +40,31 @@ model RefreshSession {
 
   @@index([userId])
 }
+
+enum CustomerTier {
+  ENTERPRISE
+  TIER_1
+  TIER_2
+  TIER_3
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model Customer {
+  id        String         @id @default(uuid())
+  code      String         @unique
+  name      String
+  email     String
+  phone     String?
+  tier      CustomerTier   @default(TIER_2)
+  status    CustomerStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([tier])
+  @@index([status])
+}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthContext.js';
 import { 
   Search, Bell, HelpCircle, Settings, LogOut, ChevronDown, 
@@ -16,8 +16,9 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, role, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -25,50 +26,97 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     navigate('/login');
   };
 
-  const navGroups = [
+  const roleVariantMap: Record<
+    string,
+    'purple' | 'success' | 'warning' | 'info' | 'default' | 'danger'
+  > = {
+    ADMIN: 'danger',
+    SALES_MANAGER: 'purple',
+    SALES_REP: 'info',
+    FINANCE_OPERATIONS: 'warning',
+    FINANCE: 'warning',
+    CUSTOMER: 'default',
+  };
+
+  interface NavItem {
+    name: string;
+    icon: React.ElementType;
+    path: string;
+    badge?: number;
+    allowedRoles?: string[];
+  }
+
+  interface NavGroup {
+    title: string;
+    allowedRoles?: string[];
+    items: NavItem[];
+  }
+
+  const rawNavGroups: NavGroup[] = [
     {
       title: 'SALES',
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'],
       items: [
-        { name: 'Opportunities', icon: Briefcase, path: '#' },
-        { name: 'Quotations', icon: FileText, path: '/app' },
-        { name: 'Customers', icon: Users, path: '#' },
-        { name: 'Products', icon: Box, path: '#' },
-        { name: 'Price Lists', icon: Tag, path: '#' },
+        { name: 'Quotations', icon: FileText, path: '/app', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Customers', icon: Users, path: '/customers', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Products', icon: Box, path: '/products', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
+        { name: 'Price Lists', icon: Tag, path: '/pricelists', allowedRoles: ['ADMIN', 'SALES_MANAGER'] },
       ]
     },
     {
       title: 'RISK & APPROVALS',
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'],
       items: [
-        { name: 'Risk Analysis', icon: ShieldAlert, path: '#' },
-        { name: 'Approvals', icon: CheckSquare, path: '#', badge: 3 },
-        { name: 'Policies', icon: ShieldCheck, path: '#' },
+        { name: 'Approvals', icon: CheckSquare, path: '/approvals', badge: 3, allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Policies', icon: ShieldCheck, path: '/policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {
       title: 'FULFILLMENT',
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'],
       items: [
-        { name: 'Orders', icon: ShoppingCart, path: '#' },
-        { name: 'Inventory', icon: Package, path: '#' },
-        { name: 'Deliveries', icon: Truck, path: '#' },
+        { name: 'Orders', icon: ShoppingCart, path: '/orders', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
+        { name: 'Inventory', icon: Package, path: '/inventory', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Deliveries', icon: Truck, path: '/deliveries', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {
       title: 'BILLING',
+      allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'],
       items: [
-        { name: 'Invoices', icon: FileSpreadsheet, path: '#' },
-        { name: 'Payments', icon: CreditCard, path: '#' },
-        { name: 'Credit Control', icon: Activity, path: '#' },
+        { name: 'Invoices', icon: FileSpreadsheet, path: '/invoices', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'] },
+        { name: 'Payments', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Credit Control', icon: Activity, path: '/credit-control', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
+      ]
+    },
+    {
+      title: 'CUSTOMER PORTAL',
+      allowedRoles: ['CUSTOMER', 'ADMIN'],
+      items: [
+        { name: 'My Quotations', icon: FileText, path: '/portal', allowedRoles: ['CUSTOMER', 'ADMIN'] },
       ]
     },
     {
       title: 'INSIGHTS',
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'],
       items: [
-        { name: 'Analytics', icon: BarChart2, path: '#' },
-        { name: 'Reports', icon: PieChart, path: '#' },
-        { name: 'Control Tower', icon: LayoutDashboard, path: '#' },
+        { name: 'Control Tower', icon: LayoutDashboard, path: '/control-tower', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Analytics', icon: BarChart2, path: '/analytics', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        { name: 'Audit History', icon: PieChart, path: '/audit-trail', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     }
   ];
+
+  // Filter groups and items based on current RBAC role
+  const userRole = role || 'SALES_REP';
+  const filteredNavGroups = rawNavGroups
+    .filter(group => !group.allowedRoles || group.allowedRoles.includes(userRole))
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.allowedRoles || item.allowedRoles.includes(userRole))
+    }))
+    .filter(group => group.items.length > 0);
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden">
@@ -111,35 +159,46 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             <Link 
               to="/app" 
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-[#F3E9F1] text-[#714B67]"
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                location.pathname === '/app' || location.pathname === '/'
+                  ? 'bg-[#F3E9F1] text-[#714B67]'
+                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+              }`}
             >
               <Home className="w-4 h-4 mr-3" />
               Home
             </Link>
           </div>
 
-          {navGroups.map((group) => (
+          {filteredNavGroups.map((group) => (
             <div key={group.title}>
               <h3 className="px-3 text-xs font-semibold text-slate-500 tracking-wider mb-2">{group.title}</h3>
               <div className="space-y-0.5">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="w-4 h-4 mr-3 text-slate-400" />
-                      {item.name}
-                    </div>
-                    {item.badge && (
-                      <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                ))}
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        isActive
+                          ? 'bg-[#F3E9F1] text-[#714B67]'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <item.icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#714B67]' : 'text-slate-400'}`} />
+                        {item.name}
+                      </div>
+                      {item.badge && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -198,16 +257,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </button>
 
             <div className="pl-2 sm:pl-4 border-l border-slate-200 flex items-center">
-              <button className="flex items-center space-x-2 text-sm focus:outline-none">
+              <div className="flex items-center space-x-2.5 text-sm">
                 <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-white font-medium text-xs">
-                  {user?.name?.substring(0, 2).toUpperCase() || 'JD'}
+                  {user?.name?.substring(0, 2).toUpperCase() || 'US'}
                 </div>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="font-semibold text-slate-700 leading-tight">{user?.name || 'John Doe'}</span>
-                  <span className="text-[10px] text-slate-500 leading-tight">Acme Corporation</span>
+                  <span className="font-semibold text-slate-700 leading-tight">{user?.name || 'User'}</span>
+                  <Badge variant={roleVariantMap[userRole] || 'default'} size="sm" className="mt-0.5 text-[9px] px-1.5 py-0">
+                    {userRole.replace('_', ' ')}
+                  </Badge>
                 </div>
-                <ChevronDown className="h-4 w-4 text-slate-400 hidden md:block" />
-              </button>
+              </div>
             </div>
           </div>
         </header>

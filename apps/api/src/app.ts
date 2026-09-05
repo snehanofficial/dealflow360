@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import { authRoutes } from './routes/authRoutes.js';
+import { customerRoutes } from './routes/customerRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { env } from './config/env.js';
 
@@ -37,8 +38,9 @@ app.get('/api/v1/health', (_req, res) => {
   });
 });
 
-// Auth Routes
+// Auth & Business Module Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/customers', customerRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);
