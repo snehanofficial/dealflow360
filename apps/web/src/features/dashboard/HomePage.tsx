@@ -60,7 +60,7 @@ export const HomePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            Hello, {user?.name?.split(' ')[0] || 'John'}! <span className="text-xl sm:text-2xl">👋</span>
+            Hello, {user?.name?.split(' ')[0] || 'User'}! <span className="text-xl sm:text-2xl">👋</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">Here's what's happening with your deals today.</p>
         </div>
