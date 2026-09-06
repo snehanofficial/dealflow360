@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge.js';
+import { PaymentModal } from './components/PaymentModal.js';
 
 export const InvoiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,7 @@ export const InvoiceDetailPage: React.FC = () => {
   const [isActing, setIsActing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const fetchInvoice = useCallback(async () => {
     if (!id) return;
@@ -69,23 +71,13 @@ export const InvoiceDetailPage: React.FC = () => {
     }
   };
 
-  const handleMarkPaid = async () => {
-    if (!invoice) return;
-    try {
-      setIsActing(true);
-      setActionSuccess(null);
-      const res = await api.post<{ success: boolean; data: InvoiceDto; message: string }>(
-        `/invoices/${invoice.id}/pay`,
-      );
-      if (res.data.success) {
-        setInvoice(res.data.data);
-        setActionSuccess('Invoice marked as PAID and quotation completed');
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to mark invoice as paid');
-    } finally {
-      setIsActing(false);
-    }
+  const handleRecordPayment = () => {
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    fetchInvoice();
+    setActionSuccess('Payment recorded successfully');
   };
 
   const handleVoidInvoice = async () => {
@@ -208,12 +200,11 @@ export const InvoiceDetailPage: React.FC = () => {
 
           {invoice.status === 'ISSUED' && (
             <button
-              onClick={handleMarkPaid}
+              onClick={handleRecordPayment}
               disabled={isActing}
-              className="inline-flex items-center gap-1.5 bg-[#714B67] hover:bg-[#5b3c53] text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50"
             >
-              {isActing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-              Mark as Paid
+              <DollarSign className="w-3.5 h-3.5" /> Record Payment
             </button>
           )}
 
@@ -392,6 +383,17 @@ export const InvoiceDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {isPaymentModalOpen && invoice && (
+        <PaymentModal
+          invoiceId={invoice.id}
+          invoiceNumber={invoice.invoiceNumber}
+          outstandingAmount={
+            invoice.totalAmount - ((invoice as any).payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0)
+          }
+          onClose={() => setIsPaymentModalOpen(false)}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };

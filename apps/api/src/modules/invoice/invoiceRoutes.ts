@@ -14,6 +14,7 @@ invoiceRoutes.get('/quotation/:quotationId', requirePermission(Permissions.INVOI
 invoiceRoutes.get('/:id', requirePermission(Permissions.INVOICE_VIEW), (req, res, next) => invoiceController.getInvoiceById(req, res, next));
 invoiceRoutes.post('/', requirePermission(Permissions.INVOICE_MANAGE), (req, res, next) => invoiceController.createInvoice(req, res, next));
 invoiceRoutes.post('/:id/issue', requirePermission(Permissions.INVOICE_MANAGE), (req, res, next) => invoiceController.issueInvoice(req, res, next));
-invoiceRoutes.post('/:id/pay', requirePermission(Permissions.PAYMENT_RECORD), (req, res, next) => invoiceController.markInvoicePaid(req, res, next));
+invoiceRoutes.get('/:id/payments', requirePermission(Permissions.INVOICE_VIEW), (req, res, next) => invoiceController.listPayments(req, res, next));
+invoiceRoutes.post('/:id/payments', requirePermission(Permissions.PAYMENT_RECORD), (req, res, next) => invoiceController.recordPayment(req, res, next));
 invoiceRoutes.post('/:id/void', requirePermission(Permissions.INVOICE_MANAGE), (req, res, next) => invoiceController.voidInvoice(req, res, next));
 

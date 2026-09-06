@@ -140,9 +140,10 @@ vi.mock('@dealflow360/db', () => {
           return newCo;
         }),
       },
-    },
   };
+  return { db: { ...dbMock, $transaction: async (cb: any) => cb(dbMock) } };
 });
+
 
 describe('Customer Negotiation Portal API (Developer B Phase B2)', () => {
   let repToken: string;

@@ -44,21 +44,22 @@ enum RecommendationRuleType {
 }
 
 model User {
-  id              String           @id @default(uuid())
-  email           String           @unique
-  passwordHash    String
-  name            String
-  role            Role             @default(SALES_REP)
-  customerId      String?
-  customer        Customer?        @relation(fields: [customerId], references: [id])
-  isActive        Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  refreshSessions RefreshSession[]
-  quotations      Quotation[]
-  approvalRequests ApprovalRequest[]
+  id                 String            @id @default(uuid())
+  email              String            @unique
+  passwordHash       String
+  name               String
+  role               Role              @default(SALES_REP)
+  customerId         String?
+  customer           Customer?         @relation(fields: [customerId], references: [id])
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  refreshSessions    RefreshSession[]
+  quotations         Quotation[]
+  approvalRequests   ApprovalRequest[]
   actedApprovalSteps ApprovalStep[]
-  invoices        Invoice[]
+  invoices           Invoice[]
+  payments           Payment[]
 
   @@index([customerId])
 }
@@ -92,22 +93,22 @@ enum CustomerStatus {
 }
 
 model Customer {
-  id        String         @id @default(uuid())
-  code      String         @unique
-  name      String
-  email     String
-  phone     String?
-  tier      CustomerTier   @default(SILVER)
-  status    CustomerStatus @default(ACTIVE)
-  creditLimit    Float        @default(50000)
-  region         String       @default("US-East")
+  id             String         @id @default(uuid())
+  code           String         @unique
+  name           String
+  email          String
+  phone          String?
+  tier           CustomerTier   @default(SILVER)
+  status         CustomerStatus @default(ACTIVE)
+  creditLimit    Float          @default(50000)
+  region         String         @default("US-East")
   accountManager String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
   quotations     Quotation[]
   invoices       Invoice[]
   users          User[]
-  
+
   @@index([tier])
   @@index([status])
 }
@@ -135,8 +136,8 @@ model ProductCategory {
 }
 
 model Product {
-  id                  String                  @id @default(uuid())
-  sku                 String                  @unique
+  id                  String               @id @default(uuid())
+  sku                 String               @unique
   name                String
   description         String?
   category            String               @default("HARDWARE")
@@ -144,19 +145,19 @@ model Product {
   taxRate             Float                @default(0.0)
   listPrice           Float
   standardCost        Float
-  maxAllowedDiscount  Float                   @default(15.0)
-  billingType         BillingType             @default(ONE_TIME)
+  maxAllowedDiscount  Float                @default(15.0)
+  billingType         BillingType          @default(ONE_TIME)
   recurringPeriod     RecurringPeriod?
-  isActive            Boolean                 @default(true)
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   categories          ProductCategory[]
   variants            ProductVariant[]
   priceListEntries    PriceListEntry[]
   quoteLines          QuoteLine[]
   discountPolicyRules DiscountPolicyRule[]
-  sourceRules         RecommendationRule[]    @relation("SourceProductRules")
-  recommendedRules    RecommendationRule[]    @relation("RecommendedProductRules")
+  sourceRules         RecommendationRule[] @relation("SourceProductRules")
+  recommendedRules    RecommendationRule[] @relation("RecommendedProductRules")
   inventory           InventoryItem[]
   inventoryMovements  InventoryMovement[]
   backorders          Backorder[]
@@ -289,14 +290,14 @@ model PortalToken {
 }
 
 model CounterOffer {
-  id                      String    @id @default(uuid())
+  id                      String             @id @default(uuid())
   quotationId             String
-  quotation               Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  quotation               Quotation          @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   proposedDiscountPercent Float
   customerNotes           String?
-  status                  String    @default("SUBMITTED")
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  status                  CounterOfferStatus @default(SUBMITTED)
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
 
   @@index([quotationId])
 }
@@ -326,20 +327,19 @@ model QuoteLine {
   @@index([productId])
 }
 
-
 model RecommendationRule {
-  id                      String                 @id @default(uuid())
-  sourceProductId         String?
-  sourceProduct           Product?               @relation("SourceProductRules", fields: [sourceProductId], references: [id], onDelete: Cascade)
-  recommendedProductId    String
-  recommendedProduct      Product                @relation("RecommendedProductRules", fields: [recommendedProductId], references: [id], onDelete: Cascade)
-  ruleType                RecommendationRuleType @default(CO_PURCHASE)
-  reasonTemplate          String
-  priority                Int                    @default(10)
+  id                       String                 @id @default(uuid())
+  sourceProductId          String?
+  sourceProduct            Product?               @relation("SourceProductRules", fields: [sourceProductId], references: [id], onDelete: Cascade)
+  recommendedProductId     String
+  recommendedProduct       Product                @relation("RecommendedProductRules", fields: [recommendedProductId], references: [id], onDelete: Cascade)
+  ruleType                 RecommendationRuleType @default(CO_PURCHASE)
+  reasonTemplate           String
+  priority                 Int                    @default(10)
   promotionDiscountPercent Float?
-  isActive                Boolean                @default(true)
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
+  isActive                 Boolean                @default(true)
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
 
   @@index([sourceProductId])
   @@index([recommendedProductId])
@@ -368,18 +368,18 @@ model DiscountPolicyRule {
 }
 
 model Warehouse {
-  id           String                  @id @default(uuid())
-  code         String                  @unique
-  name         String
-  description  String?
-  location     String
-  priority     Int                     @default(10)
-  isActive     Boolean                 @default(true)
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
-  inventory    InventoryItem[]
-  allocations  FulfillmentAllocation[]
-  movements    InventoryMovement[]
+  id          String                  @id @default(uuid())
+  code        String                  @unique
+  name        String
+  description String?
+  location    String
+  priority    Int                     @default(10)
+  isActive    Boolean                 @default(true)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  inventory   InventoryItem[]
+  allocations FulfillmentAllocation[]
+  movements   InventoryMovement[]
 }
 
 model InventoryItem {
@@ -412,7 +412,7 @@ model FulfillmentAllocation {
   warehouse           Warehouse           @relation(fields: [warehouseId], references: [id])
   allocatedQuantity   Int
   backorderedQuantity Int                 @default(0)
-  status              String              @default("RESERVED")
+  status              AllocationStatus    @default(RESERVED)
   explanation         Json?
   isOverride          Boolean             @default(false)
   overrideReason      String?
@@ -501,34 +501,34 @@ model Backorder {
 }
 
 model BillingSchedule {
-  id                    String        @id @default(uuid())
-  quotationId           String        @unique
-  quotation             Quotation     @relation(fields: [quotationId], references: [id], onDelete: Cascade)
-  totalOneTimeAmount    Float         @default(0)
-  totalRecurringMonthly Float         @default(0)
-  totalRecurringAnnual  Float         @default(0)
-  billingStartDate      DateTime      @default(now())
-  status                String        @default("ACTIVE")
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  id                    String                @id @default(uuid())
+  quotationId           String                @unique
+  quotation             Quotation             @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  totalOneTimeAmount    Float                 @default(0)
+  totalRecurringMonthly Float                 @default(0)
+  totalRecurringAnnual  Float                 @default(0)
+  billingStartDate      DateTime              @default(now())
+  status                BillingScheduleStatus @default(ACTIVE)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
   lines                 BillingLine[]
 }
 
 model BillingLine {
-  id                String           @id @default(uuid())
+  id                String                @id @default(uuid())
   billingScheduleId String
-  billingSchedule   BillingSchedule  @relation(fields: [billingScheduleId], references: [id], onDelete: Cascade)
+  billingSchedule   BillingSchedule       @relation(fields: [billingScheduleId], references: [id], onDelete: Cascade)
   quoteLineId       String?
   productName       String
-  billingType       BillingType      @default(ONE_TIME)
+  billingType       BillingType           @default(ONE_TIME)
   recurringPeriod   RecurringPeriod?
   billingDate       DateTime
   amount            Float
   proratedDays      Int?
-  isProrated        Boolean          @default(false)
-  status            String           @default("PENDING")
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  isProrated        Boolean               @default(false)
+  status            BillingScheduleStatus @default(PENDING)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   @@index([billingScheduleId])
 }
@@ -635,31 +635,32 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id            String        @id @default(uuid())
-  invoiceNumber String        @unique
-  quotationId   String        @unique
-  quotation     Quotation     @relation(fields: [quotationId], references: [id])
-  customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id])
-  customerName  String
-  customerEmail String
-  customerPhone String?
-  customerTier  CustomerTier  @default(SILVER)
-  customerRegion String       @default("US-East")
-  status        InvoiceStatus @default(ISSUED)
-  issueDate     DateTime      @default(now())
-  dueDate       DateTime?
-  subtotal      Float         @default(0)
-  totalDiscount Float         @default(0)
-  taxableAmount Float         @default(0)
-  taxAmount     Float         @default(0)
-  totalAmount   Float         @default(0)
-  notes         String?
-  createdById   String?
-  createdBy     User?         @relation(fields: [createdById], references: [id])
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  lines         InvoiceLine[]
+  id             String        @id @default(uuid())
+  invoiceNumber  String        @unique
+  quotationId    String        @unique
+  quotation      Quotation     @relation(fields: [quotationId], references: [id])
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  customerName   String
+  customerEmail  String
+  customerPhone  String?
+  customerTier   CustomerTier  @default(SILVER)
+  customerRegion String        @default("US-East")
+  status         InvoiceStatus @default(ISSUED)
+  issueDate      DateTime      @default(now())
+  dueDate        DateTime?
+  subtotal       Float         @default(0)
+  totalDiscount  Float         @default(0)
+  taxableAmount  Float         @default(0)
+  taxAmount      Float         @default(0)
+  totalAmount    Float         @default(0)
+  notes          String?
+  createdById    String?
+  createdBy      User?         @relation(fields: [createdById], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lines          InvoiceLine[]
+  payments       Payment[]
 
   @@index([customerId])
   @@index([quotationId])
@@ -691,3 +692,54 @@ model InvoiceLine {
   @@index([productId])
 }
 
+enum CounterOfferStatus {
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  SUPERSEDED
+}
+
+enum AllocationStatus {
+  RESERVED
+  PICKING
+  PACKED
+  ALLOCATED
+  SHIPPED
+  CANCELLED
+}
+
+enum BillingScheduleStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id           String        @id @default(uuid())
+  invoiceId    String
+  invoice      Invoice       @relation(fields: [invoiceId], references: [id])
+  amount       Float
+  method       String
+  reference    String?
+  status       PaymentStatus @default(COMPLETED)
+  recordedById String
+  recordedBy   User          @relation(fields: [recordedById], references: [id])
+  createdAt    DateTime      @default(now())
+
+  @@index([invoiceId])
+  @@index([status])
+}
+
+model SystemConfig {
+  id          String   @id @default("default")
+  configKey   String   @unique
+  configValue Json
+  updatedAt   DateTime @updatedAt
+}

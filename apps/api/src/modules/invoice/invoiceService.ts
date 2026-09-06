@@ -287,22 +287,13 @@ export class InvoiceService {
         throw new AppError('NOT_FOUND', `Invoice ${id} not found`, 404);
       }
 
-      if (!isInvoiceStatusTransitionValid(invoice.status as any, 'PAID')) {
-        throw new AppError('INVALID_STATE', `Cannot transition invoice from ${invoice.status} to PAID`, 400);
+      if (invoice.status === 'VOID') {
+        throw new AppError('INVALID_STATE', 'Cannot mark a voided invoice as paid', 400);
       }
 
-      const updatedCount = await tx.invoice.updateMany({
-        where: { id, status: invoice.status },
-        data: { status: 'PAID' },
-      });
-
-      if (updatedCount.count === 0) {
-        throw new AppError('CONFLICT', 'Invoice was modified concurrently.', 409);
-      }
-
-      const updated = await tx.invoice.findUnique({
+      const updated = await tx.invoice.update({
         where: { id },
-        include: { customer: true, lines: true },
+        data: { status: 'PAID' },
       });
 
       await tx.quotation.update({
@@ -324,6 +315,83 @@ export class InvoiceService {
     };
 
     return txClient ? run(txClient) : db.$transaction(run);
+  }
+
+  async recordPayment(
+    id: string,
+    amount: number,
+    method: string,
+    reference?: string,
+    actor?: { id?: string; name?: string; role?: string } | null,
+    txClient?: TxClient
+  ) {
+    const run = async (tx: TxClient) => {
+      const invoice = await tx.invoice.findUnique({ 
+        where: { id },
+        include: { payments: true, quotation: true }
+      });
+
+      if (!invoice) {
+        throw new AppError('NOT_FOUND', `Invoice ${id} not found`, 404);
+      }
+
+      if (invoice.status === 'VOID' || invoice.status === 'PAID') {
+        throw new AppError('INVALID_STATE', `Cannot record payment for invoice in ${invoice.status} status`, 400);
+      }
+
+      const payment = await tx.payment.create({
+        data: {
+          invoiceId: id,
+          amount,
+          method,
+          reference: reference || null,
+          recordedById: actor?.id || invoice.createdById || "system",
+        }
+      });
+
+      // Calculate total paid so far
+      const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0) + amount;
+      
+      let newStatus: any = invoice.status;
+      if (totalPaid >= Number(invoice.totalAmount)) {
+        newStatus = 'PAID';
+      }
+
+      if (newStatus !== invoice.status) {
+        await tx.invoice.update({
+          where: { id },
+          data: { status: newStatus }
+        });
+        
+        if (newStatus === 'PAID' && invoice.quotation) {
+          // If the invoice is paid, complete the quote
+          await tx.quotation.update({
+            where: { id: invoice.quotationId },
+            data: { status: 'COMPLETED' },
+          });
+        }
+      }
+
+      await recordAuditEvent({
+        eventType: 'PAYMENT_RECORDED',
+        action: `Recorded payment of ${amount} for invoice ${invoice.invoiceNumber}. Status is now ${newStatus}.`,
+        entityType: 'Invoice',
+        entityId: id,
+        actor,
+        newState: { payment, newStatus } as any,
+      }, tx as any);
+
+      return payment;
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
+  }
+
+  async listPayments(invoiceId: string) {
+    return db.payment.findMany({
+      where: { invoiceId },
+      orderBy: { createdAt: 'desc' }
+    });
   }
 
   async voidInvoice(

@@ -102,7 +102,7 @@ export class BillingService {
           totalRecurringMonthly: computed.totalRecurringMonthly,
           totalRecurringAnnual: computed.totalRecurringAnnual,
           billingStartDate: computed.billingStartDate,
-          status: 'ACTIVE',
+          status: 'ACTIVE' as any,
           lines: {
             create: computed.lines.map((line) => ({
               quoteLineId: line.quoteLineId,
@@ -113,7 +113,7 @@ export class BillingService {
               amount: line.amount,
               proratedDays: line.proratedDays,
               isProrated: line.isProrated,
-              status: line.status,
+              status: line.status as any,
             })),
           },
         },
@@ -178,7 +178,7 @@ export class BillingService {
 
       await tx.billingLine.updateMany({
         where: { billingScheduleId: quotation.billingSchedule.id },
-        data: { status: 'BILLED' },
+        data: { status: 'COMPLETED' as any },
       });
 
       await tx.billingSchedule.update({

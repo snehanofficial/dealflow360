@@ -137,9 +137,10 @@ vi.mock('@dealflow360/db', () => {
           return null;
         }),
       },
-    },
   };
+  return { db: { ...dbMock, $transaction: async (cb: any) => cb(dbMock) } };
 });
+
 
 describe('Quotation Management API (Developer B Phase B1)', () => {
   let token: string;

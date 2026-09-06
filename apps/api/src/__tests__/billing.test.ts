@@ -79,9 +79,10 @@ vi.mock('@dealflow360/db', () => {
           return newSched;
         }),
       },
-    },
   };
+  return { db: { ...dbMock, $transaction: async (cb: any) => cb(dbMock) } };
 });
+
 
 describe('Subscription & Hybrid Billing API (Developer B Phase B4)', () => {
   let token: string;

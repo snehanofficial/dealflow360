@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -113,12 +113,12 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href="/quotations/new"
+            <Link
+              to="/quotations/new"
               className="px-4 py-2 text-sm font-medium text-white bg-[#714B67] hover:bg-[#5F3D56] rounded-md transition-colors flex items-center gap-2 shadow-sm"
             >
               <span className="text-lg leading-none">+</span> New Quotation
-            </a>
+            </Link>
           </div>
         </div>
       </div>
