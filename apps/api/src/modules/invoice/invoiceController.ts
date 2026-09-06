@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { CreateInvoiceSchema, InvoiceQuerySchema } from '@dealflow360/contracts';
 import { invoiceService } from './invoiceService.js';
+import { invoiceExportService } from './invoiceExportService.js';
 import { AppError } from '../../middleware/errorHandler.js';
 
 export class InvoiceController {
@@ -142,6 +143,62 @@ export class InvoiceController {
         message: `Invoice ${invoice.invoiceNumber} voided successfully`,
         data: invoice,
       });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async exportInvoicePdf(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const customerIdContext = req.user?.role === 'CUSTOMER' ? req.user.customerId : undefined;
+      const invoice = await invoiceService.getInvoiceById(id, customerIdContext);
+
+      const buffer = invoiceExportService.generateInvoicePdfBuffer(invoice);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      return res.send(buffer);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async exportInvoiceXlsx(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const customerIdContext = req.user?.role === 'CUSTOMER' ? req.user.customerId : undefined;
+      const invoice = await invoiceService.getInvoiceById(id, customerIdContext);
+
+      const buffer = invoiceExportService.generateInvoiceXlsxBuffer(invoice);
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.xlsx"`);
+      return res.send(buffer);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async exportInvoicesListXlsx(req: Request, res: Response, next: NextFunction) {
+    try {
+      const queryFilter = InvoiceQuerySchema.parse(req.query);
+
+      if (req.user?.role === 'CUSTOMER') {
+        if (!req.user.customerId) {
+          throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+        }
+        queryFilter.customerId = req.user.customerId;
+      }
+      queryFilter.limit = 1000;
+
+      const result = await invoiceService.listInvoices(queryFilter);
+      const buffer = invoiceExportService.generateInvoicesListXlsxBuffer(result.items);
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoices-Export-${dateStr}.xlsx"`);
+      return res.send(buffer);
     } catch (error) {
       return next(error);
     }

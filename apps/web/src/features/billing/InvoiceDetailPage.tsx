@@ -16,8 +16,11 @@ import {
   Loader2,
   FileText,
   AlertCircle,
+  FileDown,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge.js';
+import { downloadInvoicePdf, downloadInvoiceXlsx } from './exportUtils.js';
 
 export const InvoiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +29,8 @@ export const InvoiceDetailPage: React.FC = () => {
   const [invoice, setInvoice] = useState<InvoiceDto | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isActing, setIsActing] = useState<boolean>(false);
+  const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+  const [isExportingXlsx, setIsExportingXlsx] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -91,7 +96,7 @@ export const InvoiceDetailPage: React.FC = () => {
   const handleVoidInvoice = async () => {
     if (!invoice) return;
     const reason = window.prompt('Please enter reason for voiding this invoice:');
-    if (reason === null) return; // User cancelled
+    if (reason === null) return;
 
     try {
       setIsActing(true);
@@ -108,6 +113,32 @@ export const InvoiceDetailPage: React.FC = () => {
       setError(err.response?.data?.error?.message || 'Failed to void invoice');
     } finally {
       setIsActing(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!invoice) return;
+    try {
+      setIsExportingPdf(true);
+      await downloadInvoicePdf(invoice.id, invoice.invoiceNumber);
+    } catch (err: any) {
+      console.error('Failed to export PDF:', err);
+      setError('Failed to download PDF export');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportXlsx = async () => {
+    if (!invoice) return;
+    try {
+      setIsExportingXlsx(true);
+      await downloadInvoiceXlsx(invoice.id, invoice.invoiceNumber);
+    } catch (err: any) {
+      console.error('Failed to export XLSX:', err);
+      setError('Failed to download Excel export');
+    } finally {
+      setIsExportingXlsx(false);
     }
   };
 
@@ -194,7 +225,27 @@ export const InvoiceDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* PDF Export Button */}
+          <button
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="inline-flex items-center gap-1.5 text-purple-900 bg-purple-50 border border-purple-200 hover:bg-purple-100 px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+          >
+            {isExportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5 text-purple-700" />}
+            Download PDF
+          </button>
+
+          {/* XLSX Export Button */}
+          <button
+            onClick={handleExportXlsx}
+            disabled={isExportingXlsx}
+            className="inline-flex items-center gap-1.5 text-emerald-900 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+          >
+            {isExportingXlsx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />}
+            Export XLSX
+          </button>
+
           {invoice.status === 'DRAFT' && (
             <button
               onClick={handleIssueInvoice}
@@ -231,7 +282,7 @@ export const InvoiceDetailPage: React.FC = () => {
             onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors"
           >
-            <Printer className="w-3.5 h-3.5" /> Print / PDF
+            <Printer className="w-3.5 h-3.5" /> Print
           </button>
         </div>
       </div>

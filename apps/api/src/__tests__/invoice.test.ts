@@ -240,4 +240,46 @@ describe('Invoicing & Billing API Module Integration Tests', () => {
     expect(payRes.body.success).toBe(true);
     expect(payRes.body.data.status).toBe('PAID');
   });
+
+  it('exports invoice as PDF document', async () => {
+    const listRes = await request(app)
+      .get('/api/v1/invoices')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    const invoiceId = listRes.body.data[0].id;
+
+    const exportRes = await request(app)
+      .get(`/api/v1/invoices/${invoiceId}/export/pdf`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(exportRes.status).toBe(200);
+    expect(exportRes.headers['content-type']).toContain('application/pdf');
+    expect(exportRes.headers['content-disposition']).toContain('attachment');
+  });
+
+  it('exports invoice as XLSX spreadsheet', async () => {
+    const listRes = await request(app)
+      .get('/api/v1/invoices')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    const invoiceId = listRes.body.data[0].id;
+
+    const exportRes = await request(app)
+      .get(`/api/v1/invoices/${invoiceId}/export/xlsx`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(exportRes.status).toBe(200);
+    expect(exportRes.headers['content-type']).toContain('spreadsheetml');
+    expect(exportRes.headers['content-disposition']).toContain('attachment');
+  });
+
+  it('exports bulk invoices list as XLSX spreadsheet', async () => {
+    const exportRes = await request(app)
+      .get('/api/v1/invoices/export/xlsx')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(exportRes.status).toBe(200);
+    expect(exportRes.headers['content-type']).toContain('spreadsheetml');
+    expect(exportRes.headers['content-disposition']).toContain('attachment');
+  });
 });

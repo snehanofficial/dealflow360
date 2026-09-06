@@ -14,8 +14,11 @@ import {
   Loader2,
   DollarSign,
   Plus,
+  FileSpreadsheet,
+  FileDown,
 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge.js';
+import { downloadInvoicePdf, downloadInvoiceXlsx, downloadInvoicesListXlsx } from './exportUtils.js';
 
 export const InvoiceListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +27,8 @@ export const InvoiceListPage: React.FC = () => {
 
   const [invoices, setInvoices] = useState<InvoiceDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isExportingBulk, setIsExportingBulk] = useState<boolean>(false);
+  const [activeExportId, setActiveExportId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -68,6 +73,46 @@ export const InvoiceListPage: React.FC = () => {
       searchParams.set('status', status);
     }
     setSearchParams(searchParams);
+  };
+
+  const handleBulkExportXlsx = async () => {
+    try {
+      setIsExportingBulk(true);
+      const params: Record<string, string> = {};
+      if (currentStatusTab !== 'ALL') params.status = currentStatusTab;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+
+      await downloadInvoicesListXlsx(params);
+    } catch (err: any) {
+      console.error('Failed to export invoices list:', err);
+      setError('Failed to export invoices spreadsheet');
+    } finally {
+      setIsExportingBulk(false);
+    }
+  };
+
+  const handleRowExportPdf = async (e: React.MouseEvent, inv: InvoiceDto) => {
+    e.stopPropagation();
+    try {
+      setActiveExportId(`${inv.id}_pdf`);
+      await downloadInvoicePdf(inv.id, inv.invoiceNumber);
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+    } finally {
+      setActiveExportId(null);
+    }
+  };
+
+  const handleRowExportXlsx = async (e: React.MouseEvent, inv: InvoiceDto) => {
+    e.stopPropagation();
+    try {
+      setActiveExportId(`${inv.id}_xlsx`);
+      await downloadInvoiceXlsx(inv.id, inv.invoiceNumber);
+    } catch (err) {
+      console.error('Failed to export XLSX:', err);
+    } finally {
+      setActiveExportId(null);
+    }
   };
 
   const getStatusBadge = (status: InvoiceStatus) => {
@@ -119,12 +164,23 @@ export const InvoiceListPage: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => navigate('/quotations')}
-          className="inline-flex items-center justify-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Create Invoice from Quote
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleBulkExportXlsx}
+            disabled={isExportingBulk}
+            className="inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+          >
+            {isExportingBulk ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+            Export Invoices (.xlsx)
+          </button>
+
+          <button
+            onClick={() => navigate('/quotations')}
+            className="inline-flex items-center justify-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Create Invoice from Quote
+          </button>
+        </div>
       </div>
 
       {/* KPI Financial Overview Cards */}
@@ -243,7 +299,7 @@ export const InvoiceListPage: React.FC = () => {
                   <th className="py-3 px-3">Due Date</th>
                   <th className="py-3 px-4 text-right">Amount</th>
                   <th className="py-3 px-3 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3 px-4 text-right">Export & Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 font-sans">
@@ -275,15 +331,41 @@ export const InvoiceListPage: React.FC = () => {
                       {getStatusBadge(inv.status)}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/invoices/${inv.id}`);
-                        }}
-                        className="inline-flex items-center text-slate-500 hover:text-slate-900 font-semibold text-xs"
-                      >
-                        Details <ChevronRight className="w-4 h-4 ml-0.5" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={(e) => handleRowExportPdf(e, inv)}
+                          title="Download PDF"
+                          className="p-1.5 text-purple-700 hover:bg-purple-100 rounded-md transition-colors"
+                        >
+                          {activeExportId === `${inv.id}_pdf` ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <FileDown className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={(e) => handleRowExportXlsx(e, inv)}
+                          title="Export Excel (.xlsx)"
+                          className="p-1.5 text-emerald-700 hover:bg-emerald-100 rounded-md transition-colors"
+                        >
+                          {activeExportId === `${inv.id}_xlsx` ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/invoices/${inv.id}`);
+                          }}
+                          className="inline-flex items-center text-slate-500 hover:text-slate-900 font-semibold text-xs ml-1"
+                        >
+                          Details <ChevronRight className="w-4 h-4 ml-0.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
