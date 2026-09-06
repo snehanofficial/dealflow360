@@ -10,6 +10,7 @@ import {
   Role,
 } from '@dealflow360/contracts';
 import { AuthenticatedUser } from '../../middleware/auth.js';
+import { AppError } from '../../middleware/errorHandler.js';
 
 export class DashboardService {
   async getDashboard(user: AuthenticatedUser): Promise<DashboardResponseDto> {
@@ -613,38 +614,39 @@ export class DashboardService {
   }
 
   private async getCustomerDashboard(user: AuthenticatedUser): Promise<DashboardResponseDto> {
-    const customer = await db.customer.findFirst({
-      where: {
-        OR: [
-          { email: { equals: user.email, mode: 'insensitive' } },
-          { name: { contains: user.email.split('@')[0], mode: 'insensitive' } },
-        ],
-      },
-    });
+    let customerId = user.customerId;
+    let customerName = user.email.split('@')[0];
 
-    if (!customer) {
-      return {
-        role: 'CUSTOMER',
-        user: { id: user.userId, name: user.email.split('@')[0], email: user.email },
-        kpis: [
-          {
-            id: 'cust-quotes',
-            label: 'My Quotations',
-            value: 0,
-            formattedValue: '0',
-            icon: 'FileText',
-            actionUrl: '/quotations',
-          },
-        ],
-        alerts: [],
-        pipeline: [],
-        recentQuotations: [],
-        pendingApprovals: [],
-        recentActivity: [],
-      };
+    if (!customerId) {
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.userId);
+        const dbUser = await db.user.findFirst({
+          where: isUuid
+            ? { OR: [{ id: user.userId }, { email: user.email }] }
+            : { email: user.email },
+          include: { customer: true },
+        });
+        if (dbUser?.customerId && dbUser.customer) {
+          customerId = dbUser.customerId;
+          customerName = dbUser.customer.name;
+        }
+      } catch {
+        // Ignore DB query errors for synthetic/non-UUID test tokens
+      }
+    } else {
+      try {
+        const cust = await db.customer.findUnique({ where: { id: customerId } });
+        if (cust) {
+          customerName = cust.name;
+        }
+      } catch {
+        // Ignore DB query errors
+      }
     }
 
-    const customerId = customer.id;
+    if (!customerId) {
+      throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+    }
 
     const [
       custQuotesCount,
@@ -733,14 +735,14 @@ export class DashboardService {
 
     return {
       role: 'CUSTOMER',
-      user: { id: user.userId, name: customer.name, email: user.email },
+      user: { id: user.userId, name: customerName, email: user.email },
       kpis,
       alerts,
       pipeline: [],
       recentQuotations: recentQuotes.map((q) => ({
         id: q.id,
         quoteNumber: q.quoteNumber,
-        customerName: customer.name,
+        customerName: customerName,
         value: q.netValue,
         formattedValue: this.formatCurrency(q.netValue),
         riskLevel: q.riskLevel,

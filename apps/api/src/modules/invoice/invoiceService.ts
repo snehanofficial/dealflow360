@@ -99,7 +99,7 @@ export class InvoiceService {
     }
 
     if (actorCustomerContextId && invoice.customerId !== actorCustomerContextId) {
-      throw new AppError('FORBIDDEN', 'You do not have permission to view this invoice', 403);
+      throw new AppError('NOT_FOUND', `Invoice ${id} not found`, 404);
     }
 
     return invoice;

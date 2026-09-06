@@ -8,6 +8,7 @@ import {
   AddQuoteLineSchema,
 } from '@dealflow360/contracts';
 import { quoteService } from './quoteService.js';
+import { AppError } from '../../middleware/errorHandler.js';
 
 export async function createQuotation(
   req: Request,
@@ -41,7 +42,14 @@ export async function listQuotations(
   try {
     const query = ListQuotesQuerySchema.parse(req.query);
 
-    const result = await quoteService.listQuotations(query);
+    if (req.user?.role === 'CUSTOMER') {
+      if (!req.user.customerId) {
+        throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+      }
+      query.customerId = req.user.customerId;
+    }
+
+    const result = await quoteService.listQuotations(query, req.user?.role === 'CUSTOMER');
 
     res.json({
       success: true,
@@ -62,7 +70,14 @@ export async function getQuotation(
   try {
     const { id } = QuoteIdParamSchema.parse(req.params);
 
-    const quotation = await quoteService.getQuotationById(id);
+    if (req.user?.role === 'CUSTOMER' && !req.user.customerId) {
+      throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+    }
+
+    const quotation = await quoteService.getQuotationById(id, {
+      role: req.user?.role,
+      customerId: req.user?.customerId,
+    });
 
     if (!quotation) {
       res.status(404).json({

@@ -199,6 +199,7 @@ export class AuthService {
     email: string;
     name: string;
     role: string;
+    customerId?: string | null;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -208,6 +209,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       role: user.role as Role,
+      customerId: user.customerId || null,
       isActive: user.isActive,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),

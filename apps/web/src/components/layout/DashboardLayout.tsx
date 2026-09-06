@@ -23,8 +23,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pendingApprovalCount, setPendingApprovalCount] = useState<number | null>(null);
 
+  const userRole = role || 'SALES_REP';
+  const canViewApprovals = ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'].includes(userRole);
+
   useEffect(() => {
-    if (user) {
+    if (user && canViewApprovals) {
       api
         .get('/approvals', { params: { status: 'PENDING', limit: 1 } })
         .then((res) => {
@@ -35,8 +38,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         .catch(() => {
           setPendingApprovalCount(null);
         });
+    } else {
+      setPendingApprovalCount(null);
     }
-  }, [user, location.pathname]);
+  }, [user, canViewApprovals, location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -72,10 +77,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const rawNavGroups: NavGroup[] = [
     {
       title: 'SALES',
-      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'],
+      allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE', 'CUSTOMER'],
       items: [
-        { name: 'Quotations', icon: FileText, path: '/quotations', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        // { name: 'New Quotation', icon: Briefcase, path: '/quotations/new', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
+        { name: 'Quotations', icon: FileText, path: '/quotations', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE', 'CUSTOMER'] },
         { name: 'Customers', icon: Users, path: '/customers', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Products', icon: Box, path: '/products', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
         { name: 'Price Lists', icon: Tag, path: '/price-lists', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'FINANCE'] },
@@ -104,18 +108,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     },
     {
       title: 'BILLING & REVENUE',
-      allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'],
+      allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER', 'CUSTOMER'],
       items: [
-        { name: 'Invoices', icon: FileCheck, path: '/invoices', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER', 'SALES_REP'] },
+        { name: 'Invoices', icon: FileCheck, path: '/invoices', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER', 'SALES_REP', 'CUSTOMER'] },
         { name: 'Billing Schedules', icon: FileSpreadsheet, path: '/billing', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'] },
         { name: 'Payments & Credit', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {
       title: 'CUSTOMER PORTAL',
-      allowedRoles: ['CUSTOMER', 'ADMIN', 'SALES_REP', 'SALES_MANAGER'],
+      allowedRoles: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'],
       items: [
-        { name: 'Customer View', icon: ShoppingCart, path: '/portal', allowedRoles: ['CUSTOMER', 'ADMIN', 'SALES_REP', 'SALES_MANAGER'] },
+        { name: 'Customer View', icon: ShoppingCart, path: '/portal', allowedRoles: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'] },
       ]
     },
     {
@@ -129,7 +133,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   ];
 
   // Filter groups and items based on current RBAC role
-  const userRole = role || 'SALES_REP';
   const filteredNavGroups = rawNavGroups
     .filter(group => !group.allowedRoles || group.allowedRoles.includes(userRole))
     .map(group => ({
@@ -156,7 +159,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       `}>
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
-          <Link to="/app" className="flex items-center space-x-2">
+          <Link to={userRole === 'CUSTOMER' ? '/portal' : '/app'} className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded bg-[#714B67] flex items-center justify-center text-white shadow-sm">
               <LayersIcon />
             </div>
@@ -177,16 +180,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6 custom-scrollbar">
           <div>
             <Link 
-              to="/app" 
+              to={userRole === 'CUSTOMER' ? '/portal' : '/app'} 
               onClick={() => setMobileMenuOpen(false)}
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                location.pathname === '/app' || location.pathname === '/'
+                (userRole === 'CUSTOMER' && (location.pathname === '/portal' || location.pathname === '/app' || location.pathname === '/')) ||
+                (userRole !== 'CUSTOMER' && (location.pathname === '/app' || location.pathname === '/'))
                   ? 'bg-[#F3E9F1] text-[#714B67]'
                   : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <Home className="w-4 h-4 mr-3" />
-              Home
+              {userRole === 'CUSTOMER' ? 'Portal Overview' : 'Home'}
             </Link>
           </div>
 

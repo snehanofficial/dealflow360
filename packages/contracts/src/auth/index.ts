@@ -90,6 +90,10 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.DISCOUNT_CONFIGURE,
   ],
   CUSTOMER: [
+    Permissions.DASHBOARD_VIEW,
+    Permissions.QUOTATION_VIEW,
+    Permissions.FULFILLMENT_VIEW,
+    Permissions.BILLING_VIEW,
     Permissions.PROFILE_VIEW,
     Permissions.PORTAL_NEGOTIATE,
     Permissions.PORTAL_CONFIRM,
@@ -122,6 +126,7 @@ export const UserSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   role: RoleEnum,
+  customerId: z.string().nullable().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),

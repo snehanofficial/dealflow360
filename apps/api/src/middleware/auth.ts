@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../auth/token.js';
 import { Role, ROLE_PERMISSIONS, Permission } from '@dealflow360/contracts';
+import { db } from '@dealflow360/db';
 import { AppError } from './errorHandler.js';
 
 export interface AuthenticatedUser {
@@ -8,6 +9,7 @@ export interface AuthenticatedUser {
   email: string;
   role: Role;
   permissions: Permission[];
+  customerId?: string;
 }
 
 declare global {
@@ -18,7 +20,7 @@ declare global {
   }
 }
 
-export function authenticate(req: Request, _res: Response, next: NextFunction): void {
+export async function authenticate(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return next(
@@ -32,11 +34,30 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     const role = payload.role as Role;
     const permissions = (ROLE_PERMISSIONS[role] ? [...ROLE_PERMISSIONS[role]] : []) as Permission[];
 
+    let customerId: string | undefined = undefined;
+    if (role === 'CUSTOMER') {
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.sub);
+        const dbUser = await db.user.findFirst({
+          where: isUuid
+            ? { OR: [{ id: payload.sub }, { email: payload.email }] }
+            : { email: payload.email },
+          select: { customerId: true },
+        });
+        if (dbUser?.customerId) {
+          customerId = dbUser.customerId;
+        }
+      } catch {
+        // Ignore DB query errors for synthetic test tokens
+      }
+    }
+
     req.user = {
       userId: payload.sub,
       email: payload.email,
       role,
       permissions,
+      customerId,
     };
 
     next();

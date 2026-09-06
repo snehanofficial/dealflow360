@@ -67,7 +67,7 @@ export const QuotationKanbanCard: React.FC<QuotationKanbanCardProps> = ({ quote,
           ) : (
             <CheckCircle className="w-3 h-3 text-emerald-600 shrink-0" />
           )}
-          {quote.riskLevel} ({quote.riskScore.toFixed(1)})
+          {quote.riskLevel} ({quote.riskScore?.toFixed(1)})
         </span>
       </div>
 
@@ -96,7 +96,7 @@ export const QuotationKanbanCard: React.FC<QuotationKanbanCardProps> = ({ quote,
               className={`w-3 h-3 ${isLowMargin ? 'text-rose-600' : 'text-purple-600'}`}
             />
             <span className={isLowMargin ? 'text-rose-700' : 'text-purple-700'}>
-              {quote.grossMarginPercent.toFixed(1)}%
+              {quote.grossMarginPercent?.toFixed(1)}%
             </span>
           </div>
         </div>

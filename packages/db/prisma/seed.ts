@@ -19,6 +19,28 @@ async function main() {
     type: argon2.argon2id,
   });
 
+  // Seed Customer first so User can reference it
+  const acmeCorp = await prisma.customer.upsert({
+    where: { id: 'cust-acme-001' },
+    update: {
+      name: 'Acme Enterprise Solutions',
+      email: 'customer@dealflow360.com',
+      tier: 'ENTERPRISE',
+      creditLimit: 500000,
+    },
+    create: {
+      id: 'cust-acme-001',
+      code: 'CUST-ACME-001',
+      email: 'customer@dealflow360.com',
+      name: 'Acme Enterprise Solutions',
+      tier: 'ENTERPRISE',
+      creditLimit: 500000,
+      region: 'US-East',
+      accountManager: 'Bob Salesrep',
+    },
+  });
+  console.log(`Seeded customer: ${acmeCorp.name}`);
+
   const seedUsers = [
     {
       email: 'admin@dealflow360.com',
@@ -48,6 +70,7 @@ async function main() {
       email: 'customer@dealflow360.com',
       name: 'Acme Procurement',
       role: Role.CUSTOMER,
+      customerId: acmeCorp.id,
       passwordHash: defaultPasswordHash,
     },
   ];
@@ -58,33 +81,13 @@ async function main() {
       update: {
         name: user.name,
         role: user.role,
+        customerId: user.customerId || null,
         passwordHash: user.passwordHash,
       },
       create: user,
     });
     console.log(`Seeded user: ${user.email} (${user.role})`);
   }
-
-  // Seed Customer
-  const acmeCorp = await prisma.customer.upsert({
-    where: { id: 'cust-acme-001' },
-    update: {
-      name: 'Acme Enterprise Solutions',
-      tier: 'ENTERPRISE',
-      creditLimit: 500000,
-    },
-    create: {
-      id: 'cust-acme-001',
-      code: 'CUST-ACME-001',
-      email: 'contact@acme.com',
-      name: 'Acme Enterprise Solutions',
-      tier: 'ENTERPRISE',
-      creditLimit: 500000,
-      region: 'US-East',
-      accountManager: 'Bob Salesrep',
-    },
-  });
-  console.log(`Seeded customer: ${acmeCorp.name}`);
 
   // Seed Products
   const serverProduct = await prisma.product.upsert({

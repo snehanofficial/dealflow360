@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -22,7 +23,11 @@ const iconMap: Record<string, React.FC<{ className?: string }>> = {
 };
 
 export const HomePage: React.FC = () => {
-  const { user: authUser } = useAuth();
+  const { user: authUser, role } = useAuth();
+
+  if (role === 'CUSTOMER' || authUser?.role === 'CUSTOMER') {
+    return <Navigate to="/portal" replace />;
+  }
   const { data: dashboard, isLoading, isError, error, refetch } = useDashboard();
 
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {

@@ -49,6 +49,8 @@ model User {
   passwordHash    String
   name            String
   role            Role             @default(SALES_REP)
+  customerId      String?
+  customer        Customer?        @relation(fields: [customerId], references: [id])
   isActive        Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -57,6 +59,8 @@ model User {
   approvalRequests ApprovalRequest[]
   actedApprovalSteps ApprovalStep[]
   invoices        Invoice[]
+
+  @@index([customerId])
 }
 
 model RefreshSession {
@@ -102,6 +106,7 @@ model Customer {
   updatedAt      DateTime     @updatedAt
   quotations     Quotation[]
   invoices       Invoice[]
+  users          User[]
   
   @@index([tier])
   @@index([status])

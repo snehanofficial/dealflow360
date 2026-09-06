@@ -62,8 +62,27 @@ vi.mock('@dealflow360/db', () => {
         count: vi.fn(async () => 1),
         findMany: vi.fn(async () => []),
       },
+      user: {
+        findFirst: vi.fn(async () => ({
+          id: 'usr-cust-1',
+          email: 'customer@dealflow360.com',
+          customerId: 'cust-acme-001',
+          customer: { id: 'cust-acme-001', name: 'Acme Enterprise Solutions' },
+        })),
+        findUnique: vi.fn(async () => ({
+          id: 'usr-cust-1',
+          email: 'customer@dealflow360.com',
+          customerId: 'cust-acme-001',
+          customer: { id: 'cust-acme-001', name: 'Acme Enterprise Solutions' },
+        })),
+      },
       customer: {
         findFirst: vi.fn(async () => ({
+          id: 'cust-acme-001',
+          name: 'Acme Enterprise Solutions',
+          email: 'customer@dealflow360.com',
+        })),
+        findUnique: vi.fn(async () => ({
           id: 'cust-acme-001',
           name: 'Acme Enterprise Solutions',
           email: 'customer@dealflow360.com',

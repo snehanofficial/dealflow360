@@ -18,6 +18,7 @@ import { ApprovalInboxPage } from '../features/approvals/ApprovalInboxPage.js';
 import { ApprovalDetailPage } from '../features/approvals/ApprovalDetailPage.js';
 import { AuditTrailPage } from '../features/audit/AuditTrailPage.js';
 import { CustomerPortalPage } from '../features/portal/CustomerPortalPage.js';
+import { CustomerPortalDashboardPage } from '../features/portal/CustomerPortalDashboardPage.js';
 import { FulfillmentAllocationPage } from '../features/fulfillment/FulfillmentAllocationPage.js';
 import { BillingSchedulePage, InvoiceListPage, InvoiceDetailPage } from '../features/billing/index.js';
 import { ControlTowerPage } from '../features/control-tower/ControlTowerPage.js';
@@ -52,6 +53,16 @@ export const AppRoutes: React.FC = () => {
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<SignupForm />} />
       <Route path="/portal/quotes/:token" element={<CustomerPortalPage />} />
+      <Route
+        path="/portal"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CustomerPortalDashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/app"

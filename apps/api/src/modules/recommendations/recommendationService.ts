@@ -26,7 +26,7 @@ export class RecommendationService {
       totalDiscount: quotation.totalDiscount,
       netValue: quotation.netValue,
       grossMarginPercent: quotation.grossMarginPercent,
-      lines: quotation.lines.map((line) => ({
+      lines: quotation.lines.map((line: any) => ({
         id: line.id,
         productId: line.productId,
         quantity: line.quantity,

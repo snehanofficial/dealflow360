@@ -1,15 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { CreateInvoiceSchema, InvoiceQuerySchema } from '@dealflow360/contracts';
 import { invoiceService } from './invoiceService.js';
+import { AppError } from '../../middleware/errorHandler.js';
 
 export class InvoiceController {
   async listInvoices(req: Request, res: Response, next: NextFunction) {
     try {
       const queryFilter = InvoiceQuerySchema.parse(req.query);
 
-      // If actor is a CUSTOMER, force customerId filter to own customer identity
-      if (req.user?.role === 'CUSTOMER' && (req.user as any).customerId) {
-        queryFilter.customerId = (req.user as any).customerId;
+      if (req.user?.role === 'CUSTOMER') {
+        if (!req.user.customerId) {
+          throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+        }
+        queryFilter.customerId = req.user.customerId;
       }
 
       const result = await invoiceService.listInvoices(queryFilter);
@@ -17,10 +20,13 @@ export class InvoiceController {
       return res.status(200).json({
         success: true,
         data: result.items,
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
+        message: null,
+        meta: {
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages,
+        },
       });
     } catch (error) {
       return next(error);
@@ -30,13 +36,20 @@ export class InvoiceController {
   async getInvoiceById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const customerIdContext = req.user?.role === 'CUSTOMER' ? (req.user as any).customerId : undefined;
+
+      if (req.user?.role === 'CUSTOMER' && !req.user.customerId) {
+        throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+      }
+
+      const customerIdContext = req.user?.role === 'CUSTOMER' ? req.user.customerId : undefined;
 
       const invoice = await invoiceService.getInvoiceById(id, customerIdContext);
 
       return res.status(200).json({
         success: true,
         data: invoice,
+        message: null,
+        meta: null,
       });
     } catch (error) {
       return next(error);

@@ -25,8 +25,11 @@ export interface PaginatedQuotations {
 }
 
 export class QuoteService {
-  async getQuotationById(quotationId: string): Promise<QuotationWithDetails | null> {
-    return db.quotation.findUnique({
+  async getQuotationById(
+    quotationId: string,
+    actorContext?: { role?: string; customerId?: string },
+  ): Promise<any | null> {
+    const quotation = await db.quotation.findUnique({
       where: { id: quotationId },
       include: {
         customer: true,
@@ -37,6 +40,64 @@ export class QuoteService {
         },
       },
     });
+
+    if (!quotation) return null;
+
+    if (actorContext?.role === 'CUSTOMER') {
+      if (quotation.customerId !== actorContext.customerId) {
+        return null; // Non-disclosure: return null to yield 404
+      }
+      return this.sanitizeQuotationForCustomer(quotation);
+    }
+
+    return quotation;
+  }
+
+  public sanitizeQuotationForCustomer(q: any): any {
+    if (!q) return null;
+    return {
+      id: q.id,
+      quoteNumber: q.quoteNumber,
+      customerId: q.customerId,
+      status: q.status,
+      currency: q.currency,
+      subtotal: q.subtotal,
+      totalDiscount: q.totalDiscount,
+      taxableAmount: q.taxableAmount,
+      taxAmount: q.taxAmount,
+      netValue: q.netValue,
+      createdAt: q.createdAt,
+      updatedAt: q.updatedAt,
+      customer: q.customer
+        ? {
+            id: q.customer.id,
+            code: q.customer.code,
+            name: q.customer.name,
+            tier: q.customer.tier,
+          }
+        : null,
+      lines: (q.lines || []).map((l: any) => ({
+        id: l.id,
+        productId: l.productId,
+        quantity: l.quantity,
+        listPrice: l.listPrice,
+        proposedDiscountPercent: l.proposedDiscountPercent,
+        discountAmount: l.discountAmount,
+        taxRate: l.taxRate,
+        taxAmount: l.taxAmount,
+        netLinePrice: l.netLinePrice,
+        product: l.product
+          ? {
+              id: l.product.id,
+              name: l.product.name,
+              sku: l.product.sku,
+              category: l.product.category,
+              billingType: l.product.billingType,
+              recurringPeriod: l.product.recurringPeriod,
+            }
+          : null,
+      })),
+    };
   }
 
   private async ensureValidUser(userId: string): Promise<string> {
@@ -193,7 +254,7 @@ export class QuoteService {
     return result;
   }
 
-  async listQuotations(query: ListQuotesQuery): Promise<PaginatedQuotations> {
+  async listQuotations(query: ListQuotesQuery, isCustomerView = false): Promise<PaginatedQuotations> {
     const { search, status, riskLevel, customerId, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
@@ -237,8 +298,12 @@ export class QuoteService {
       }),
     ]);
 
+    const sanitizedData = isCustomerView
+      ? data.map((q) => this.sanitizeQuotationForCustomer(q))
+      : data;
+
     return {
-      data,
+      data: sanitizedData,
       meta: {
         total,
         page,
@@ -475,7 +540,7 @@ export class QuoteService {
     const refreshed = await this.getQuotationById(quotationId);
     if (!refreshed) throw new Error(`Quotation not found after recalculation`);
 
-    const linesCalc = refreshed.lines.map((l) =>
+    const linesCalc = refreshed.lines.map((l: any) =>
       calculateLinePricing({
         listPrice: l.listPrice,
         unitPrice: l.unitPrice || l.listPrice,
