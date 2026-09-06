@@ -116,6 +116,10 @@ export class InvoiceController {
         : null;
 
       const invoice = await invoiceService.markInvoicePaid(id, actor);
+      
+      if (!invoice) {
+        throw new Error('Failed to update invoice');
+      }
 
       return res.status(200).json({
         success: true,

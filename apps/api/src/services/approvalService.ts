@@ -6,7 +6,7 @@ import {
   ApprovalRequestStatus,
 } from '@dealflow360/contracts';
 import { canRoleApproveStep, deriveNextRequestState } from '@dealflow360/domain';
-import { db, Role } from '@dealflow360/db';
+import { db, Role, TxClient } from '@dealflow360/db';
 import { approvalRepository, ApprovalFilters } from '../repositories/approvalRepository.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { recordAuditEvent } from './auditService.js';
@@ -53,87 +53,119 @@ function mapRequestToDto(request: any): ApprovalRequestDto {
 export async function createApprovalRequest(
   input: CreateApprovalRequestInput,
   requestedById: string,
+  txClient?: TxClient
 ): Promise<ApprovalRequestDto> {
-  const { evaluation, quotationId } = input;
+  const run = async (tx: TxClient) => {
+    const { evaluation, quotationId } = input;
 
-  const requester = await db.user.findUnique({ where: { id: requestedById } });
-  if (!requester) {
-    throw new AppError('NOT_FOUND', `User with ID '${requestedById}' not found.`, 404);
-  }
-
-  if (quotationId) {
-    const quote = await db.quotation.findUnique({ where: { id: quotationId } });
-    if (!quote) {
-      throw new AppError('NOT_FOUND', `Quotation with ID '${quotationId}' not found.`, 404);
+    const requester = await tx.user.findUnique({ where: { id: requestedById } });
+    if (!requester) {
+      throw new AppError('NOT_FOUND', `User with ID '${requestedById}' not found.`, 404);
     }
-    await approvalRepository.supersedeAllPendingForQuote(quotationId);
-  }
 
-  const requiredRoles = evaluation.requiredApprovalRoles || [];
-
-  const uniqueRoles: Role[] = [];
-  for (const roleStr of requiredRoles) {
-    const role = ((roleStr as string) === 'FINANCE' ? 'FINANCE_OPERATIONS' : roleStr) as Role;
-    if (!uniqueRoles.includes(role)) {
-      uniqueRoles.push(role);
+    if (quotationId) {
+      const quote = await tx.quotation.findUnique({ where: { id: quotationId } });
+      if (!quote) {
+        throw new AppError('NOT_FOUND', `Quotation with ID '${quotationId}' not found.`, 404);
+      }
+      
+      await tx.approvalRequest.updateMany({
+        where: { quotationId, status: 'PENDING' },
+        data: { status: 'SUPERSEDED' },
+      });
+      const supersededRequests = await tx.approvalRequest.findMany({
+        where: { quotationId, status: 'SUPERSEDED' },
+        select: { id: true },
+      });
+      const supersededIds = supersededRequests.map((r: any) => r.id);
+      if (supersededIds.length > 0) {
+        await tx.approvalStep.updateMany({
+          where: { approvalRequestId: { in: supersededIds }, status: 'PENDING' },
+          data: { status: 'SUPERSEDED' },
+        });
+      }
     }
-  }
 
-  const stepsData = uniqueRoles.map((role, idx) => ({
-    sequence: idx + 1,
-    requiredRole: role,
-    status: 'PENDING' as const,
-  }));
+    const requiredRoles = evaluation.requiredApprovalRoles || [];
 
-  const initialStatus: ApprovalRequestStatus =
-    stepsData.length === 0 || !evaluation.requiresApproval ? 'APPROVED' : 'PENDING';
+    const uniqueRoles: Role[] = [];
+    for (const roleStr of requiredRoles) {
+      const role = ((roleStr as string) === 'FINANCE' ? 'FINANCE_OPERATIONS' : roleStr) as Role;
+      if (!uniqueRoles.includes(role)) {
+        uniqueRoles.push(role);
+      }
+    }
 
-  const requestRecord = await approvalRepository.create({
-    quotationId: quotationId || evaluation.quoteId,
-    requestedById,
-    status: initialStatus,
-    riskScore: evaluation.riskScore,
-    riskLevel: evaluation.riskLevel,
-    netTotal: evaluation.netTotal,
-    marginAmount: evaluation.marginAmount,
-    marginPercentage: evaluation.marginPercentage,
-    violations: evaluation.violations,
-    commercialSummary: evaluation.lineEvaluations || null,
-    steps: stepsData,
-  });
+    const stepsData = uniqueRoles.map((role, idx) => ({
+      sequence: idx + 1,
+      requiredRole: role,
+      status: 'PENDING' as const,
+    }));
 
-  if (quotationId && initialStatus === 'PENDING') {
-    const firstRole = stepsData[0]?.requiredRole;
-    const targetStatus = firstRole === 'FINANCE_OPERATIONS' ? 'PENDING_FINANCE' : 'PENDING_MANAGER';
-    await db.quotation.update({
-      where: { id: quotationId },
-      data: { status: targetStatus },
+    const initialStatus =
+      stepsData.length === 0 || !evaluation.requiresApproval ? 'APPROVED' : 'PENDING';
+
+    const requestRecord = await tx.approvalRequest.create({
+      data: {
+        quotationId: quotationId || evaluation.quoteId,
+        requestedById,
+        status: initialStatus,
+        riskScore: evaluation.riskScore,
+        riskLevel: evaluation.riskLevel,
+        netTotal: evaluation.netTotal,
+        marginAmount: evaluation.marginAmount,
+        marginPercentage: evaluation.marginPercentage,
+        violations: evaluation.violations ? (evaluation.violations as any) : undefined,
+        commercialSummary: evaluation.lineEvaluations ? (evaluation.lineEvaluations as any) : undefined,
+        steps: {
+          create: stepsData,
+        },
+      },
+      include: {
+        steps: true,
+        quotation: {
+          include: { customer: true },
+        },
+        requestedBy: true,
+      }
     });
-  } else if (quotationId && initialStatus === 'APPROVED') {
-    await db.quotation.update({
-      where: { id: quotationId },
-      data: { status: 'APPROVED' },
-    });
-  }
 
-  await recordAuditEvent({
-    eventType: 'APPROVAL_REQUESTED',
-    action: `Submitted Commercial Approval Request (Risk Score: ${evaluation.riskScore}, Level: ${evaluation.riskLevel})`,
-    entityType: 'ApprovalRequest',
-    entityId: requestRecord.id,
-    actor: { id: requester.id, name: requester.name, role: requester.role },
-    newState: requestRecord,
-  });
+    if (quotationId && initialStatus === 'PENDING') {
+      const firstRole = stepsData[0]?.requiredRole;
+      const targetStatus = firstRole === 'FINANCE_OPERATIONS' ? 'PENDING_FINANCE' : 'PENDING_MANAGER';
+      await tx.quotation.update({
+        where: { id: quotationId },
+        data: { status: targetStatus },
+      });
+    } else if (quotationId && initialStatus === 'APPROVED') {
+      await tx.quotation.update({
+        where: { id: quotationId },
+        data: { status: 'APPROVED' },
+      });
+    }
 
-  return mapRequestToDto(requestRecord);
+    await recordAuditEvent({
+      eventType: 'APPROVAL_REQUESTED',
+      action: `Submitted Commercial Approval Request (Risk Score: ${evaluation.riskScore}, Level: ${evaluation.riskLevel})`,
+      entityType: 'ApprovalRequest',
+      entityId: requestRecord.id,
+      actor: { id: requester.id, name: requester.name, role: requester.role },
+      newState: requestRecord as any,
+    }, tx as any);
+
+    return mapRequestToDto(requestRecord);
+  };
+
+  return txClient ? run(txClient) : db.$transaction(run);
 }
 
-export async function syncMissingQuoteApprovals(): Promise<void> {
-  if (!db.quotation?.findMany || !db.approvalRequest?.create) {
+export async function syncMissingQuoteApprovals(txClient?: any): Promise<void> {
+  const prismaClient = txClient || db;
+  if (!prismaClient.quotation?.findMany || !prismaClient.approvalRequest?.create) {
     return;
   }
   try {
-    const pendingQuotes = await db.quotation.findMany({
+    const pendingQuotes = await prismaClient.quotation.findMany({
       where: {
         status: { in: ['PENDING_MANAGER', 'PENDING_FINANCE', 'APPROVED', 'REJECTED'] as any[] },
         approvalRequests: { none: {} },
@@ -172,7 +204,7 @@ export async function syncMissingQuoteApprovals(): Promise<void> {
 
       const currentStepSeq = statusStr === 'PENDING_FINANCE' ? 2 : 1;
 
-      await db.approvalRequest.create({
+      await prismaClient.approvalRequest.create({
         data: {
           quotationId: quote.id,
           requestedById: quote.createdById,
@@ -180,7 +212,7 @@ export async function syncMissingQuoteApprovals(): Promise<void> {
           riskScore: quote.riskScore,
           riskLevel: quote.riskLevel,
           netTotal: quote.netValue,
-          marginAmount: (quote.netValue * (quote.grossMarginPercent || 0)) / 100,
+          marginAmount: quote.netValue - quote.lines.reduce((sum: number, l: any) => sum + (l.lineCost || 0), 0),
           marginPercentage: quote.grossMarginPercent,
           currentStepSequence: currentStepSeq,
           violations: [
@@ -316,8 +348,8 @@ export async function approveStep(
         ? await db.user.findUnique({ where: { id: userId } })
         : null;
 
-    await tx.approvalStep.update({
-      where: { id: currentStep.id },
+    const updatedCount = await tx.approvalStep.updateMany({
+      where: { id: currentStep.id, status: 'PENDING' },
       data: {
         status: 'APPROVED',
         actedById: userId,
@@ -325,6 +357,10 @@ export async function approveStep(
         comments: comments || null,
       },
     });
+
+    if (updatedCount.count === 0) {
+      throw new AppError('CONFLICT', 'Approval step was already processed or is no longer pending.', 409);
+    }
 
     const updatedSteps = requestRecord.steps.map((s) =>
       s.id === currentStep.id
@@ -443,8 +479,8 @@ export async function rejectStep(
         ? await db.user.findUnique({ where: { id: userId } })
         : null;
 
-    await tx.approvalStep.update({
-      where: { id: currentStep.id },
+    const updatedCount = await tx.approvalStep.updateMany({
+      where: { id: currentStep.id, status: 'PENDING' },
       data: {
         status: 'REJECTED',
         actedById: userId,
@@ -452,6 +488,10 @@ export async function rejectStep(
         comments: reason,
       },
     });
+
+    if (updatedCount.count === 0) {
+      throw new AppError('CONFLICT', 'Approval step was already processed or is no longer pending.', 409);
+    }
 
     await tx.approvalRequest.update({
       where: { id: requestId },

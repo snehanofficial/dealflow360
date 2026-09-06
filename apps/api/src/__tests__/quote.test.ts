@@ -32,8 +32,7 @@ vi.mock('@dealflow360/db', () => {
   };
   productsMap.set(defaultProduct.id, defaultProduct);
 
-  return {
-    db: {
+  const dbMock: any = {
       user: {
         findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({ id: where.id, email: 'rep@dealflow.com', name: 'Sales Rep' })),
         findFirst: vi.fn(async () => ({ id: 'user-rep-01', email: 'rep@dealflow.com', name: 'Sales Rep' })),

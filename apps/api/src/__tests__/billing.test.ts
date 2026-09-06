@@ -52,8 +52,7 @@ vi.mock('@dealflow360/db', () => {
 
   quotesMap.set(defaultQuote.id, defaultQuote);
 
-  return {
-    db: {
+  const dbMock: any = {
       quotation: {
         findUnique: vi.fn(async ({ where }: { where: { id: string } }) => quotesMap.get(where.id) || null),
         update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {

@@ -74,8 +74,7 @@ vi.mock('@dealflow360/db', () => {
   };
   tokensMap.set(revokedToken.token, revokedToken);
 
-  return {
-    db: {
+  const dbMock: any = {
       portalToken: {
         findUnique: vi.fn(async ({ where }: { where: { token: string } }) => {
           const t = tokensMap.get(where.token);
