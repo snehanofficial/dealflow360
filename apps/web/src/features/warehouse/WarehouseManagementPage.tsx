@@ -37,6 +37,7 @@ export const WarehouseManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWh, setEditingWh] = useState<WarehouseItem | null>(null);
+  const [selectedWhInventoryId, setSelectedWhInventoryId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     code: '',
@@ -160,6 +161,51 @@ export const WarehouseManagementPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>TOTAL FACILITIES</span>
+            <Home className="w-4 h-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{warehouses.length} <span className="text-xs font-normal text-slate-400">warehouses</span></p>
+          <span className="text-[10px] text-slate-400">Configured fulfillment centers</span>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>ACTIVE FOR ALLOCATION</span>
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-green-700">{warehouses.filter((w) => w.isActive).length} <span className="text-xs font-normal text-green-500">active</span></p>
+          <span className="text-[10px] text-green-600">Eligible for automatic allocation</span>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>TOTAL PHYSICAL ON-HAND</span>
+            <Boxes className="w-4 h-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900">
+            {warehouses.reduce((sum, w) => sum + (w.inventory?.reduce((s, i) => s + i.onHandQuantity, 0) || 0), 0)}{' '}
+            <span className="text-xs font-normal text-slate-400">units</span>
+          </p>
+          <span className="text-[10px] text-slate-400">Aggregated physical stock</span>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>RESERVED DEMAND</span>
+            <AlertCircle className="w-4 h-4 text-amber-500" />
+          </div>
+          <p className="text-2xl font-bold text-amber-700">
+            {warehouses.reduce((sum, w) => sum + (w.inventory?.reduce((s, i) => s + i.reservedQuantity, 0) || 0), 0)}{' '}
+            <span className="text-xs font-normal text-amber-500">units</span>
+          </p>
+          <span className="text-[10px] text-amber-600">Committed to active orders</span>
+        </div>
+      </div>
+
       {/* Warehouse Cards Grid */}
       {loading ? (
         <div className="bg-white p-12 rounded-xl border border-slate-200 text-center text-slate-500">
@@ -170,46 +216,75 @@ export const WarehouseManagementPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((wh) => {
             const totalStock = wh.inventory?.reduce((sum, i) => sum + i.onHandQuantity, 0) || 0;
+            const totalReserved = wh.inventory?.reduce((sum, i) => sum + i.reservedQuantity, 0) || 0;
             const totalAvailable = wh.inventory?.reduce((sum, i) => sum + i.availableQuantity, 0) || 0;
+            const isExpanded = selectedWhInventoryId === wh.id;
 
             return (
-              <div key={wh.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
-                      {wh.code}
-                    </span>
-                    <h3 className="text-base font-bold text-slate-900 mt-1">{wh.name}</h3>
+              <div key={wh.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
+                        {wh.code}
+                      </span>
+                      <h3 className="text-base font-bold text-slate-900 mt-1">{wh.name}</h3>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await api.patch(`/warehouses/${wh.id}`, { isActive: !wh.isActive });
+                          fetchWarehouses();
+                        } catch (err) {
+                          console.error('Failed to toggle status', err);
+                        }
+                      }}
+                      className="focus:outline-none"
+                      title="Click to toggle active status"
+                    >
+                      <Badge variant={wh.isActive ? 'success' : 'default'}>
+                        {wh.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </button>
                   </div>
-                  <Badge variant={wh.isActive ? 'success' : 'default'}>
-                    {wh.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+
+                  <div className="space-y-2 text-xs text-slate-600">
+                    <div className="flex items-center">
+                      <MapPin className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+                      <span>Location: {wh.location}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <ListOrdered className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+                      <span>Fulfillment Priority: <strong className="text-slate-900">Rank {wh.priority}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Stock Stats */}
+                  <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">On-Hand</span>
+                      <span className="font-bold text-slate-800">{totalStock}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Reserved</span>
+                      <span className="font-bold text-amber-700">{totalReserved}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Available</span>
+                      <span className="font-bold text-green-700">{totalAvailable}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="flex items-center">
-                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-                    <span>Location: {wh.location}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <ListOrdered className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-                    <span>Priority Ranking: <strong className="text-slate-900">Priority {wh.priority}</strong></span>
-                  </div>
-                </div>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <button
+                    onClick={() => setSelectedWhInventoryId(isExpanded ? null : wh.id)}
+                    className="flex items-center text-xs font-medium text-slate-600 hover:text-[#714B67]"
+                  >
+                    <Boxes className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                    {isExpanded ? 'Hide Stock Breakdown' : `Breakdown (${wh.inventory?.length || 0} SKUs)`}
+                  </button>
 
-                {/* Stock Stats */}
-                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">On-Hand Stock</span>
-                    <span className="font-bold text-slate-800">{totalStock} units</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Available Stock</span>
-                    <span className="font-bold text-green-700">{totalAvailable} units</span>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 flex justify-end">
                   <button
                     onClick={() => openEditModal(wh)}
                     className="flex items-center px-3 py-1.5 text-xs font-medium text-slate-700 hover:text-[#714B67] hover:bg-[#714B67]/5 rounded transition-colors"
@@ -218,6 +293,31 @@ export const WarehouseManagementPage: React.FC = () => {
                     Edit Settings
                   </button>
                 </div>
+
+                {/* Expanded Inventory Breakdown Drawer */}
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-slate-200 bg-slate-50 p-3 rounded-lg space-y-2">
+                    <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Facility Stock Breakdown</h4>
+                    {!wh.inventory || wh.inventory.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">No inventory recorded for this facility.</p>
+                    ) : (
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs custom-scrollbar">
+                        {wh.inventory.map((inv) => (
+                          <div key={inv.id} className="p-2 bg-white rounded border border-slate-200 flex items-center justify-between">
+                            <div>
+                              <span className="font-semibold text-slate-800 block">{inv.product.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">SKU: {inv.product.sku}</span>
+                            </div>
+                            <div className="text-right text-[11px]">
+                              <span className="font-bold text-slate-900">{inv.onHandQuantity} on-hand</span>
+                              <span className="text-[10px] text-green-700 block">Available: {inv.availableQuantity}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -230,7 +330,7 @@ export const WarehouseManagementPage: React.FC = () => {
           <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm">
-                {editingWh ? `Edit Warehouse — ${editingWh.code}` : 'Create New Warehouse'}
+                {editingWh ? `Edit Warehouse - ${editingWh.code}` : 'Create New Warehouse'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
             </div>

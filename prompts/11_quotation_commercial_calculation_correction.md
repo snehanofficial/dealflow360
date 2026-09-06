@@ -14,22 +14,22 @@ Implement revised quotation commercial calculation rules:
 10. Audit event logging for committed line mutations and quotation submission.
 
 ## Relevant Skills Read
-- `skills/domain/SKILL.md` — Framework-independent domain engines (`packages/domain`).
-- `skills/frontend/SKILL.md` — UI guidelines, design tokens, Axios client.
-- `skills/prisma/SKILL.md` — Prisma schema updates and DB safety.
-- `skills/testing/SKILL.md` — Unit and integration test strategy.
+- `skills/domain/SKILL.md` - Framework-independent domain engines (`packages/domain`).
+- `skills/frontend/SKILL.md` - UI guidelines, design tokens, Axios client.
+- `skills/prisma/SKILL.md` - Prisma schema updates and DB safety.
+- `skills/testing/SKILL.md` - Unit and integration test strategy.
 
 ## Code/Config Inspected
-- `packages/db/prisma/schema.prisma` — `Quotation` and `QuoteLine` models.
-- `packages/domain/src/quote/quoteEngine.ts` — Line calculation, quote totals, and risk evaluation functions.
-- `packages/domain/src/margin/marginEngine.ts` — Line margin and deal totals functions.
-- `packages/domain/src/policy/policyEvaluator.ts` — Commercial deal evaluator.
-- `packages/contracts/src/quotes/index.ts` — Zod schemas for quote requests and line mutations.
-- `apps/api/src/modules/quotes/quoteService.ts` — Quote service line CRUD, recalculation, submission logic.
-- `apps/api/src/services/commercialEvaluationService.ts` — A3 commercial evaluation service.
-- `apps/web/src/features/quotes/QuoteBuilderPage.tsx` — Quote creation page.
-- `apps/web/src/features/quotes/QuotationViewPage.tsx` — Quotation detail page.
-- `apps/web/src/features/portal/CustomerPortalPage.tsx` — Customer portal page.
+- `packages/db/prisma/schema.prisma` - `Quotation` and `QuoteLine` models.
+- `packages/domain/src/quote/quoteEngine.ts` - Line calculation, quote totals, and risk evaluation functions.
+- `packages/domain/src/margin/marginEngine.ts` - Line margin and deal totals functions.
+- `packages/domain/src/policy/policyEvaluator.ts` - Commercial deal evaluator.
+- `packages/contracts/src/quotes/index.ts` - Zod schemas for quote requests and line mutations.
+- `apps/api/src/modules/quotes/quoteService.ts` - Quote service line CRUD, recalculation, submission logic.
+- `apps/api/src/services/commercialEvaluationService.ts` - A3 commercial evaluation service.
+- `apps/web/src/features/quotes/QuoteBuilderPage.tsx` - Quote creation page.
+- `apps/web/src/features/quotes/QuotationViewPage.tsx` - Quotation detail page.
+- `apps/web/src/features/portal/CustomerPortalPage.tsx` - Customer portal page.
 
 ## Decisions and Assumptions
 1. `unitPrice` stored in `QuoteLine` represents the final quotation selling price per unit. `listPrice` stored in `QuoteLine` represents the A2 catalog/effective reference price at quotation creation time.

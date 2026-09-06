@@ -184,11 +184,10 @@ export const InvoiceListPage: React.FC = () => {
                 <button
                   key={tab}
                   onClick={() => handleTabChange(tab)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                    isActive
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${isActive
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/50'
-                  }`}
+                    }`}
                 >
                   {tab === 'ALL' ? 'All Invoices' : tab}
                 </button>
@@ -267,7 +266,7 @@ export const InvoiceListPage: React.FC = () => {
                       {new Date(inv.issueDate).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-3 text-slate-600 font-mono">
-                      {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '—'}
+                      {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}
                     </td>
                     <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
                       ${inv.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

@@ -132,6 +132,36 @@ export const BackordersPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>OUTSTANDING BACKORDERS</span>
+            <Boxes className="w-4 h-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-amber-600">{backorders.length} <span className="text-xs font-normal text-amber-400">items</span></p>
+          <span className="text-[10px] text-slate-400">Lines with stock deficits</span>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>UNFULFILLED DEFICIT UNITS</span>
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+          </div>
+          <p className="text-2xl font-bold text-red-600">{backorders.reduce((sum, b) => sum + b.backorderedQuantity, 0)} <span className="text-xs font-normal text-red-400">units</span></p>
+          <span className="text-[10px] text-red-500">Total unfulfilled stock quantity</span>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>READY FOR REALLOCATION</span>
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-green-700">{backorders.filter((b) => b.canReallocate).length} <span className="text-xs font-normal text-green-500">eligible</span></p>
+          <span className="text-[10px] text-green-600">Replenished stock available</span>
+        </div>
+      </div>
+
       {/* Filter */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="relative">
@@ -266,7 +296,7 @@ export const BackordersPage: React.FC = () => {
                     >
                       {proposalData.proposals?.map((p: any) => (
                         <option key={p.warehouseId} value={p.warehouseId}>
-                          {p.warehouseName} ({p.warehouseCode}) — Max Allocable: {p.maxReallocateQuantity}
+                          {p.warehouseName} ({p.warehouseCode}) - Max Allocable: {p.maxReallocateQuantity}
                         </option>
                       ))}
                     </select>

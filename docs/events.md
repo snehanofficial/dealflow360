@@ -1,4 +1,4 @@
-# DealFlow360 — Governance Commercial Events & Audit Specification
+# DealFlow360 - Governance Commercial Events & Audit Specification
 
 ## 1. Overview
 

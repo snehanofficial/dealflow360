@@ -5,6 +5,7 @@ export interface LineRequirementInput {
   productName?: string;
   sku?: string;
   requestedQuantity: number;
+  billingType?: string;
 }
 
 export interface WarehouseStockSnapshot {
@@ -154,6 +155,31 @@ export function calculateAllocationPlan(
   for (const line of lines) {
     const reqQty = Math.max(0, line.requestedQuantity);
     totalRequested += reqQty;
+
+    // Recurring subscription / digital lines do not require physical warehouse stock allocation
+    if (line.billingType === 'RECURRING') {
+      lineResults.push({
+        quoteLineId: line.quoteLineId,
+        productId: line.productId,
+        productVariantId: line.productVariantId,
+        requestedQuantity: reqQty,
+        totalAllocated: reqQty,
+        backorderedQuantity: 0,
+        isFullyFulfilled: true,
+        allocations: [
+          {
+            warehouseId: 'DIGITAL_FULFILLMENT',
+            warehouseCode: 'DIGITAL',
+            warehouseName: 'Digital Subscription Service',
+            allocatedQuantity: reqQty,
+            reasons: ['Recurring subscription service (Auto-fulfilled digitally, no physical warehouse stock required)'],
+          },
+        ],
+      });
+      totalAllocated += reqQty;
+      continue;
+    }
+
     let remainingQty = reqQty;
     const lineAllocations: AllocatedLineDetail[] = [];
 

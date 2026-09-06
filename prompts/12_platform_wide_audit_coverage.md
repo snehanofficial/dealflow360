@@ -1,4 +1,4 @@
-# IMPLEMENTATION PROMPT — DEALFLOW360 PLATFORM-WIDE AUDIT COVERAGE
+# IMPLEMENTATION PROMPT - DEALFLOW360 PLATFORM-WIDE AUDIT COVERAGE
 
 ## Goal
 Expand the DealFlow360 audit subsystem from Developer A (A1-A5) to cover the complete B2B sales-to-cash lifecycle across all application modules (Quotations, Customer Portal/Negotiation, Multi-Warehouse Fulfillment Allocation, Hybrid Billing Schedules, Control Tower Deal Health Alerts, and User Authentication) while preserving append-only immutability, server-derived actor identity, data sanitization, and transactional consistency.
@@ -68,22 +68,22 @@ Expand the DealFlow360 audit subsystem from Developer A (A1-A5) to cover the com
 
 ## Expected Files to Change
 
-1. `packages/contracts/src/audit/index.ts` — Add new `AuditEventTypeEnum` and `AuditEntityTypeEnum` constants.
-2. `apps/api/src/services/auditService.ts` — Add entity allowlists for `Quotation`, `QuoteLine`, `CounterOffer`, `FulfillmentAllocation`, `BillingSchedule`, `DealAlert`, and `User`.
-3. `apps/api/src/modules/quotes/quoteService.ts` — Emit `QUOTE_CREATED`, `QUOTE_LINE_ADDED`, `QUOTE_LINE_UPDATED`, `QUOTE_LINE_DELETED`, and `QUOTE_SUBMITTED` with actor injection.
-4. `apps/api/src/modules/quotes/quoteController.ts` — Pass authenticated `req.user` to `quoteService` methods.
-5. `apps/api/src/modules/portal/portalService.ts` — Emit `PORTAL_TOKEN_GENERATED` and `COUNTEROFFER_SUBMITTED`.
-6. `apps/api/src/modules/portal/portalController.ts` — Pass `req.user` context where available.
-7. `apps/api/src/modules/fulfillment/fulfillmentService.ts` — Emit `FULFILLMENT_ALLOCATED` on allocation overrides.
-8. `apps/api/src/modules/fulfillment/fulfillmentController.ts` — Pass `req.user` context to `fulfillmentService`.
-9. `apps/api/src/modules/billing/billingService.ts` — Emit `BILLING_SCHEDULE_GENERATED` on schedule creation.
-10. `apps/api/src/modules/billing/billingController.ts` — Pass `req.user` context to `billingService`.
-11. `apps/api/src/modules/control-tower/controlTowerService.ts` — Emit `DEAL_ALERT_RESOLVED` when an alert is resolved.
-12. `apps/api/src/modules/control-tower/controlTowerController.ts` — Pass `req.user` context to `controlTowerService`.
-13. `apps/api/src/services/authService.ts` — Emit `USER_LOGGED_IN` event upon successful authentication.
-14. `apps/web/src/features/audit/AuditTrailPage.tsx` — Update dropdown filters to include all entity types and event types.
-15. `docs/events.md` — Document complete canonical event taxonomy and payload schemas.
-16. `apps/api/src/__tests__/auditCoverage.test.ts` — New test suite validating end-to-end audit coverage across all modules.
+1. `packages/contracts/src/audit/index.ts` - Add new `AuditEventTypeEnum` and `AuditEntityTypeEnum` constants.
+2. `apps/api/src/services/auditService.ts` - Add entity allowlists for `Quotation`, `QuoteLine`, `CounterOffer`, `FulfillmentAllocation`, `BillingSchedule`, `DealAlert`, and `User`.
+3. `apps/api/src/modules/quotes/quoteService.ts` - Emit `QUOTE_CREATED`, `QUOTE_LINE_ADDED`, `QUOTE_LINE_UPDATED`, `QUOTE_LINE_DELETED`, and `QUOTE_SUBMITTED` with actor injection.
+4. `apps/api/src/modules/quotes/quoteController.ts` - Pass authenticated `req.user` to `quoteService` methods.
+5. `apps/api/src/modules/portal/portalService.ts` - Emit `PORTAL_TOKEN_GENERATED` and `COUNTEROFFER_SUBMITTED`.
+6. `apps/api/src/modules/portal/portalController.ts` - Pass `req.user` context where available.
+7. `apps/api/src/modules/fulfillment/fulfillmentService.ts` - Emit `FULFILLMENT_ALLOCATED` on allocation overrides.
+8. `apps/api/src/modules/fulfillment/fulfillmentController.ts` - Pass `req.user` context to `fulfillmentService`.
+9. `apps/api/src/modules/billing/billingService.ts` - Emit `BILLING_SCHEDULE_GENERATED` on schedule creation.
+10. `apps/api/src/modules/billing/billingController.ts` - Pass `req.user` context to `billingService`.
+11. `apps/api/src/modules/control-tower/controlTowerService.ts` - Emit `DEAL_ALERT_RESOLVED` when an alert is resolved.
+12. `apps/api/src/modules/control-tower/controlTowerController.ts` - Pass `req.user` context to `controlTowerService`.
+13. `apps/api/src/services/authService.ts` - Emit `USER_LOGGED_IN` event upon successful authentication.
+14. `apps/web/src/features/audit/AuditTrailPage.tsx` - Update dropdown filters to include all entity types and event types.
+15. `docs/events.md` - Document complete canonical event taxonomy and payload schemas.
+16. `apps/api/src/__tests__/auditCoverage.test.ts` - New test suite validating end-to-end audit coverage across all modules.
 
 ---
 

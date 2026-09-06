@@ -289,6 +289,25 @@ export const QuotationViewPage: React.FC = () => {
     }
   };
 
+  const handleCompleteBilling = async () => {
+    try {
+      setIsSubmitting(true);
+      setSubmitMessage(null);
+      const res = await api.post<{ success: boolean; data: QuotationData; message: string }>(
+        `/quotes/${quoteId}/billing/complete`,
+      );
+      if (res.data.success) {
+        setQuotation(res.data.data);
+        setSubmitMessage(res.data.message || 'Billing completed and quotation marked COMPLETED!');
+      }
+    } catch (err: any) {
+      console.error('Failed to complete billing:', err);
+      setError(err.response?.data?.message || 'Failed to complete billing');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleCreateInvoice = async () => {
     if (!quotation) return;
     try {
@@ -414,6 +433,48 @@ export const QuotationViewPage: React.FC = () => {
             </button>
           )}
 
+          {quotation.status === 'FULFILLMENT' && (
+            <button
+              onClick={async () => {
+                try {
+                  setIsSubmitting(true);
+                  await api.post(`/quotes/${quotation.id}/fulfillment/ship-all`);
+                  await fetchQuotationData();
+                } catch (err: any) {
+                  setError(err.response?.data?.error?.message || 'Failed to dispatch shipment');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 text-white bg-[#714B67] hover:bg-[#5b3c53] disabled:opacity-50 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+              title="Dispatch allocated stock and advance to Billing stage"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Truck className="w-3.5 h-3.5" />
+              )}
+              Dispatch Shipment & Advance to Billing
+            </button>
+          )}
+
+          {quotation.status === 'BILLING' && (
+            <button
+              onClick={handleCompleteBilling}
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 text-white bg-[#714B67] hover:bg-[#5b3c53] disabled:opacity-50 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+              title="Complete billing and mark deal COMPLETED"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-3.5 h-3.5" />
+              )}
+              Complete Billing & Mark COMPLETED
+            </button>
+          )}
+
           <button
             onClick={() => navigate(`/quotations/${quotation.id}/fulfillment`)}
             className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
@@ -443,7 +504,7 @@ export const QuotationViewPage: React.FC = () => {
               <button
                 onClick={handleCreateInvoice}
                 disabled={isCreatingInvoice}
-                className="inline-flex items-center gap-1.5 text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                className="inline-flex items-center gap-1.5 text-white bg-[#714B67] hover:bg-[#5b3c53] disabled:opacity-50 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
                 title="Generate Financial Snapshot Invoice"
               >
                 {isCreatingInvoice ? (

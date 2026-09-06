@@ -5,7 +5,7 @@ import { db } from '@dealflow360/db';
 import { recordAuditEvent, getAuditLogs, getEntityAuditLogs } from '../services/auditService.js';
 import { computeStateDiff, sanitizeAuditPayload } from '@dealflow360/domain';
 
-describe('A5 — Audit Trail & Commercial Event History Suite', () => {
+describe('A5 - Audit Trail & Commercial Event History Suite', () => {
   let adminToken: string;
   let managerToken: string;
   let repToken: string;

@@ -4,6 +4,7 @@ import {
   computeFulfillment,
   confirmFulfillment,
   shipAllocation,
+  shipAllAndAdvanceToBilling,
   overrideFulfillment,
   getFulfillmentPlan,
   listWarehouses,
@@ -22,7 +23,8 @@ fulfillmentRoutes.get('/quotes/:id/fulfillment', getFulfillmentPlan);
 fulfillmentRoutes.post('/quotes/:id/fulfillment/compute', computeFulfillment);
 fulfillmentRoutes.post('/quotes/:id/fulfillment/confirm', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), confirmFulfillment);
 fulfillmentRoutes.post('/quotes/:id/fulfillment/override', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), overrideFulfillment);
-fulfillmentRoutes.post('/allocations/:allocationId/ship', requireRole(['ADMIN', 'FINANCE_OPERATIONS']), shipAllocation);
+fulfillmentRoutes.post('/quotes/:id/fulfillment/ship-all', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), shipAllAndAdvanceToBilling);
+fulfillmentRoutes.post('/allocations/:allocationId/ship', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), shipAllocation);
 
 // Backorders endpoints
 fulfillmentRoutes.get('/backorders', listBackorders);
@@ -34,3 +36,4 @@ fulfillmentRoutes.get('/:id/fulfillment', getFulfillmentPlan);
 fulfillmentRoutes.post('/:id/fulfillment/compute', computeFulfillment);
 fulfillmentRoutes.post('/:id/fulfillment/confirm', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), confirmFulfillment);
 fulfillmentRoutes.post('/:id/fulfillment/override', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), overrideFulfillment);
+fulfillmentRoutes.post('/:id/fulfillment/ship-all', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), shipAllAndAdvanceToBilling);

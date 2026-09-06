@@ -1,4 +1,4 @@
-# Implementation Prompt: Developer A Phase A5 — Audit Trail & Commercial Event History
+# Implementation Prompt: Developer A Phase A5 - Audit Trail & Commercial Event History
 
 ## Goal
 Implement Module A5: Audit Trail & Commercial Event History for DealFlow360.

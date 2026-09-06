@@ -224,6 +224,27 @@ export const FulfillmentAllocationPage: React.FC = () => {
           </button>
 
           <button
+            onClick={async () => {
+              try {
+                setIsSaving(true);
+                setError(null);
+                const res = await api.post(`/quotes/${quoteId}/fulfillment/ship-all`);
+                setSuccessMsg(res.data?.message || 'Stock shipped & moved to BILLING stage!');
+                setTimeout(() => navigate(`/quotations/${quoteId}/billing`), 1000);
+              } catch (err: any) {
+                setError(err.response?.data?.error?.message || 'Failed to dispatch shipment');
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] disabled:opacity-50 text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-xs transition-colors"
+          >
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
+            Ship Stock & Move to Billing
+          </button>
+
+          <button
             onClick={handleSavePlan}
             disabled={isSaving}
             className="inline-flex items-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] disabled:opacity-50 text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-xs"

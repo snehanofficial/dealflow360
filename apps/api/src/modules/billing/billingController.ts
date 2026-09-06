@@ -38,6 +38,20 @@ export class BillingController {
       next(err);
     }
   }
+
+  async completeBilling(req: Request, res: Response, next: NextFunction) {
+    try {
+      const quotationId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id || '';
+      const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role } : null;
+      const result = await billingService.completeBillingAndMarkQuoteCompleted(quotationId, actor);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export const billingController = new BillingController();

@@ -66,6 +66,14 @@ export class BillingService {
       throw new AppError('NOT_FOUND', `Quotation ${quotationId} not found`, 404);
     }
 
+    if (!['FULFILLMENT', 'BILLING', 'APPROVED'].includes(quotation.status)) {
+      throw new AppError(
+        'BAD_REQUEST',
+        `Cannot generate billing schedule for quotation ${quotation.quoteNumber} in state ${quotation.status}. Quotation must be in FULFILLMENT stage first.`,
+        400,
+      );
+    }
+
     const startDate = startDateInput ? new Date(startDateInput) : new Date();
 
     const linesInput: QuoteLineBillingInput[] = quotation.lines.map((l) => ({
@@ -132,6 +140,72 @@ export class BillingService {
     return {
       message: 'Hybrid billing schedule generated and locked successfully.',
       billingSchedule: savedSchedule,
+    };
+  }
+
+  async completeBillingAndMarkQuoteCompleted(
+    quotationId: string,
+    actor?: { id?: string; name?: string; role?: string } | null,
+  ) {
+    const quotation = await db.quotation.findUnique({
+      where: { id: quotationId },
+      include: { billingSchedule: { include: { lines: true } } },
+    });
+
+    if (!quotation) {
+      throw new AppError('NOT_FOUND', `Quotation ${quotationId} not found`, 404);
+    }
+
+    if (quotation.status !== 'BILLING') {
+      throw new AppError(
+        'BAD_REQUEST',
+        `Quotation ${quotation.quoteNumber} is in status ${quotation.status} and cannot be completed. It must be in BILLING stage first.`,
+        400,
+      );
+    }
+
+    if (!quotation.billingSchedule) {
+      throw new AppError(
+        'BAD_REQUEST',
+        `Quotation ${quotation.quoteNumber} does not have a locked billing schedule generated yet. Generate a billing schedule before completing billing.`,
+        400,
+      );
+    }
+
+    if (quotation.billingSchedule) {
+      await db.billingLine.updateMany({
+        where: { billingScheduleId: quotation.billingSchedule.id },
+        data: { status: 'BILLED' },
+      });
+
+      await db.billingSchedule.update({
+        where: { id: quotation.billingSchedule.id },
+        data: { status: 'COMPLETED' },
+      });
+    }
+
+    const updatedQuotation = await db.quotation.update({
+      where: { id: quotationId },
+      data: { status: 'COMPLETED' },
+      include: {
+        customer: true,
+        lines: { include: { product: true } },
+        billingSchedule: true,
+      },
+    });
+
+    await recordAuditEvent({
+      eventType: 'ORDER_COMPLETED',
+      action: `Completed billing and marked quotation ${quotation.quoteNumber} as COMPLETED`,
+      entityType: 'Quotation',
+      entityId: quotationId,
+      actor,
+      newState: { status: 'COMPLETED' },
+    });
+
+    return {
+      message: 'Billing completed and quotation status updated to COMPLETED.',
+      quotation: updatedQuotation,
     };
   }
 }

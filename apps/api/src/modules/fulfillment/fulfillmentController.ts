@@ -62,6 +62,16 @@ export async function shipAllocation(req: Request, res: Response, next: NextFunc
   }
 }
 
+export async function shipAllAndAdvanceToBilling(req: Request, res: Response, next: NextFunction) {
+  try {
+    const quotationId = req.params.id as string;
+    const result = await fulfillmentService.shipAllAndAdvanceToBilling(quotationId, req.user);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function overrideFulfillment(req: Request, res: Response, next: NextFunction) {
   try {
     const id = req.params.id as string;

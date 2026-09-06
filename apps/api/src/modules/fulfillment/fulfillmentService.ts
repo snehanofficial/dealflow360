@@ -10,6 +10,7 @@ import { FulfillmentOverrideInput, FulfillmentConfirmInput, BackorderConfirmReal
 import { AppError } from '../../middleware/errorHandler.js';
 import { recordAuditEvent } from '../../services/auditService.js';
 import { warehouseService } from '../warehouse/warehouseService.js';
+import { billingService } from '../billing/billingService.js';
 
 async function syncInventoryReservedQuantity(warehouseId: string, productId: string, tx: any) {
   if (!tx.fulfillmentAllocation?.aggregate || !tx.inventoryItem?.findUnique) return;
@@ -111,6 +112,7 @@ export class FulfillmentService {
       productName: l.product.name,
       sku: l.product.sku,
       requestedQuantity: l.quantity,
+      billingType: l.product.billingType || undefined,
     }));
 
     return calculateAllocationPlan(linesInput, stockSnapshots);
@@ -128,6 +130,14 @@ export class FulfillmentService {
 
     if (!quotation) {
       throw new AppError('NOT_FOUND', `Quotation ${quotationId} not found`, 404);
+    }
+
+    if (['REJECTED', 'COMPLETED'].includes(quotation.status)) {
+      throw new AppError(
+        'BAD_REQUEST',
+        `Quotation ${quotation.quoteNumber} is in status ${quotation.status} and cannot be allocated.`,
+        400,
+      );
     }
 
     const computedPlan = await this.computeFulfillment(quotationId);
@@ -160,7 +170,25 @@ export class FulfillmentService {
         const line = quotation.lines.find((l) => l.id === item.quoteLineId);
         if (!line) continue;
 
-        if (item.allocatedQuantity > 0) {
+        if (item.allocatedQuantity > 0 && item.warehouseId === 'DIGITAL_FULFILLMENT') {
+          // Digital recurring subscription allocation does not touch physical warehouse inventory
+          const defaultWh = await tx.warehouse?.findFirst?.({ where: { isActive: true } });
+          if (defaultWh?.id) {
+            const createdAlloc = await tx.fulfillmentAllocation.create({
+              data: {
+                quotationId,
+                quoteLineId: item.quoteLineId,
+                warehouseId: defaultWh.id,
+                allocatedQuantity: item.allocatedQuantity,
+                backorderedQuantity: 0,
+                status: 'SHIPPED',
+                explanation: item.explanation || ['Digital / Recurring subscription license (Auto-fulfilled digitally)'],
+                isOverride: false,
+              },
+            });
+            createdAllocations.push(createdAlloc);
+          }
+        } else if (item.allocatedQuantity > 0 && item.warehouseId) {
           // Reserve stock in inventory (reservedQuantity increases, onHand unchanged)
           const invItem = await tx.inventoryItem.findUnique({
             where: {
@@ -387,6 +415,82 @@ export class FulfillmentService {
     });
 
     return result;
+  }
+
+  async shipAllAndAdvanceToBilling(
+    quotationId: string,
+    actor?: { id?: string; name?: string; role?: any } | null,
+  ) {
+    const quotation = await db.quotation.findUnique({
+      where: { id: quotationId },
+      include: {
+        fulfillmentAllocations: { include: { quoteLine: true } },
+        lines: true,
+      },
+    });
+
+    if (!quotation) {
+      throw new AppError('NOT_FOUND', `Quotation ${quotationId} not found`, 404);
+    }
+
+    if (!['FULFILLMENT', 'APPROVED'].includes(quotation.status)) {
+      throw new AppError(
+        'BAD_REQUEST',
+        `Quotation ${quotation.quoteNumber} is in status ${quotation.status} and cannot advance to BILLING stage. It must be commercially APPROVED and in FULFILLMENT stage with stock allocated first.`,
+        400,
+      );
+    }
+
+    if (!quotation.fulfillmentAllocations || quotation.fulfillmentAllocations.length === 0) {
+      throw new AppError(
+        'BAD_REQUEST',
+        `Quotation ${quotation.quoteNumber} has no stock allocations confirmed yet. You must allocate and reserve warehouse stock before advancing to BILLING stage.`,
+        400,
+      );
+    }
+
+    const reservedAllocations = quotation.fulfillmentAllocations.filter(
+      (a) => a.status === 'RESERVED' && a.warehouseId,
+    );
+
+    for (const alloc of reservedAllocations) {
+      try {
+        await this.shipAllocation(alloc.id, actor);
+      } catch (err: any) {
+        // Ignore if already shipped
+        if (err.statusCode !== 409) throw err;
+      }
+    }
+
+    const billingResult = await billingService.generateAndSaveBillingSchedule(
+      quotationId,
+      undefined,
+      actor,
+    );
+
+    await recordAuditEvent({
+      eventType: 'FULFILLMENT_COMPLETED_ADVANCED_TO_BILLING',
+      action: `Completed fulfillment shipment and advanced quotation ${quotation.quoteNumber} to BILLING stage`,
+      entityType: 'Quotation',
+      entityId: quotationId,
+      actor,
+      newState: { status: 'BILLING' },
+    });
+
+    const updatedQuotation = await db.quotation.findUnique({
+      where: { id: quotationId },
+      include: {
+        customer: true,
+        lines: { include: { product: true } },
+        billingSchedule: true,
+      },
+    });
+
+    return {
+      message: 'Fulfillment completed successfully! Quotation advanced to BILLING stage.',
+      quotation: updatedQuotation,
+      billingSchedule: billingResult.billingSchedule,
+    };
   }
 
   async overrideFulfillment(

@@ -120,7 +120,14 @@ export const InventoryDashboardPage: React.FC = () => {
   const totalOnHand = stockItems.reduce((sum, i) => sum + i.onHandQuantity, 0);
   const totalReserved = stockItems.reduce((sum, i) => sum + i.reservedQuantity, 0);
   const totalAvailable = stockItems.reduce((sum, i) => sum + (i.onHandQuantity - i.reservedQuantity), 0);
-  const lowStockCount = stockItems.filter((i) => i.onHandQuantity - i.reservedQuantity < 10).length;
+
+  const productAvailableMap = new Map<string, number>();
+  for (const item of stockItems) {
+    const current = productAvailableMap.get(item.productId) || 0;
+    const avail = Math.max(0, item.onHandQuantity - item.reservedQuantity);
+    productAvailableMap.set(item.productId, current + avail);
+  }
+  const lowStockCount = Array.from(productAvailableMap.values()).filter((avail) => avail < 10).length;
 
   const filtered = stockItems.filter(
     (item) =>
@@ -243,6 +250,7 @@ export const InventoryDashboardPage: React.FC = () => {
                 <th className="p-4 text-right">Reserved</th>
                 <th className="p-4 text-right">Available (onHand - reserved)</th>
                 <th className="p-4 text-center">Status</th>
+                <th className="p-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -266,6 +274,24 @@ export const InventoryDashboardPage: React.FC = () => {
                       <Badge variant={available === 0 ? 'danger' : available < 10 ? 'warning' : 'success'} size="sm">
                         {available === 0 ? 'OUT OF STOCK' : available < 10 ? 'LOW STOCK' : 'IN STOCK'}
                       </Badge>
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => {
+                          setAdjustmentData({
+                            warehouseId: item.warehouseId,
+                            productId: item.productId,
+                            quantity: 10,
+                            movementType: 'RECEIPT',
+                            reason: `Stock adjustment for ${item.product.sku}`,
+                          });
+                          setIsAdjustmentModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-medium text-[#714B67] bg-[#714B67]/10 hover:bg-[#714B67]/20 rounded transition-colors inline-flex items-center"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Adjust Stock
+                      </button>
                     </td>
                   </tr>
                 );
@@ -343,8 +369,8 @@ export const InventoryDashboardPage: React.FC = () => {
                     adjustmentData.warehouseId && adjustmentData.productId
                       ? `${adjustmentData.warehouseId}::${adjustmentData.productId}`
                       : stockItems[0]
-                      ? `${stockItems[0].warehouseId}::${stockItems[0].productId}`
-                      : ''
+                        ? `${stockItems[0].warehouseId}::${stockItems[0].productId}`
+                        : ''
                   }
                   onChange={(e) => {
                     const [whId, prodId] = e.target.value.split('::');
@@ -354,7 +380,7 @@ export const InventoryDashboardPage: React.FC = () => {
                 >
                   {stockItems.map((item) => (
                     <option key={item.id} value={`${item.warehouseId}::${item.productId}`}>
-                      {item.product.name} ({item.warehouse.code}) — On-Hand: {item.onHandQuantity}
+                      {item.product.name} ({item.warehouse.code}) - On-Hand: {item.onHandQuantity}
                     </option>
                   ))}
                 </select>

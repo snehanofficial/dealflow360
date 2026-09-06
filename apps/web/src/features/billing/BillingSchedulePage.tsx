@@ -122,6 +122,28 @@ export const BillingSchedulePage: React.FC = () => {
     }
   };
 
+  const handleCompleteBilling = async () => {
+    try {
+      setIsLocking(true);
+      setError(null);
+      setSuccessMsg(null);
+
+      const res = await api.post<{ success: boolean; message: string }>(
+        `/quotes/${quoteId}/billing/complete`,
+      );
+
+      if (res.data.success) {
+        setSuccessMsg(res.data.message || 'Billing completed & deal marked COMPLETED!');
+        await fetchBillingSchedule();
+      }
+    } catch (err: any) {
+      console.error('Failed to complete billing:', err);
+      setError(err.response?.data?.message || 'Failed to complete billing');
+    } finally {
+      setIsLocking(false);
+    }
+  };
+
   if (isLoading && !data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
@@ -223,6 +245,17 @@ export const BillingSchedulePage: React.FC = () => {
             >
               {isLocking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
               Confirm & Lock Billing Schedule
+            </button>
+          )}
+
+          {quotation.status !== 'COMPLETED' && (
+            <button
+              onClick={handleCompleteBilling}
+              disabled={isLocking}
+              className="inline-flex items-center gap-2 bg-[#714B67] hover:bg-[#5c3d54] disabled:opacity-50 text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-xs transition-colors"
+            >
+              {isLocking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+              Complete Billing & Mark COMPLETED
             </button>
           )}
         </div>

@@ -210,7 +210,7 @@ export const InvoiceDetailPage: React.FC = () => {
             <button
               onClick={handleMarkPaid}
               disabled={isActing}
-              className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 bg-[#714B67] hover:bg-[#5b3c53] text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
             >
               {isActing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
               Mark as Paid
