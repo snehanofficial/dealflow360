@@ -14,8 +14,8 @@ interface AuthContextType {
   permissions: Permission[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  signup: (credentials: SignupRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<UserDto>;
+  signup: (credentials: SignupRequest) => Promise<UserDto>;
   logout: () => Promise<void>;
 }
 
@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     bootstrapSession();
   }, []);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async (credentials: LoginRequest): Promise<UserDto> => {
     const response = await api.post<{
       success: boolean;
       data: { accessToken: string; user: UserDto };
@@ -84,10 +84,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(loggedUser);
       setRole(loggedUser.role);
       await fetchCurrentUser();
+      return loggedUser;
     }
+    throw new Error('Login failed');
   };
 
-  const signup = async (credentials: SignupRequest) => {
+  const signup = async (credentials: SignupRequest): Promise<UserDto> => {
     const response = await api.post<{
       success: boolean;
       data: { accessToken: string; user: UserDto };
@@ -99,7 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(newUser);
       setRole(newUser.role);
       await fetchCurrentUser();
+      return newUser;
     }
+    throw new Error('Signup failed');
   };
 
   const logout = async () => {

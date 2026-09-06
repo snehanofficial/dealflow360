@@ -33,8 +33,14 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginRequest) => {
     try {
       setApiError(null);
-      await login(data);
-      navigate(from, { replace: true });
+      const loggedUser = await login(data);
+      if (loggedUser.role === 'CUSTOMER') {
+        const isCustomerPath = from.startsWith('/portal');
+        navigate(isCustomerPath ? from : '/portal', { replace: true });
+      } else {
+        const target = from === '/login' || from.startsWith('/portal') ? '/app' : from;
+        navigate(target, { replace: true });
+      }
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data?.error?.message) {
         setApiError(err.response.data.error.message);
