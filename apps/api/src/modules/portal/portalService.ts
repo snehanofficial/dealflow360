@@ -198,57 +198,12 @@ export class PortalService {
       }
 
       let avgProposedDiscount = input.proposedDiscountPercent || 0;
-
       if (input.lineDiscounts && input.lineDiscounts.length > 0) {
         let sumDiscount = 0;
         for (const ld of input.lineDiscounts) {
-          const line = quotation.lines.find((l) => l.id === ld.lineId);
-          if (line) {
-            const qty = ld.quantity || line.quantity;
-            const discPct = ld.proposedDiscountPercent;
-            sumDiscount += discPct;
-
-            const calc = calculateLinePricing({
-              listPrice: line.listPrice,
-              standardCost: line.product.standardCost,
-              quantity: qty,
-              proposedDiscountPercent: discPct,
-            });
-
-            await tx.quoteLine.update({
-              where: { id: line.id },
-              data: {
-                quantity: calc.quantity,
-                proposedDiscountPercent: calc.proposedDiscountPercent,
-                discountAmount: calc.discountAmount,
-                netLinePrice: calc.netLinePrice,
-                lineCost: calc.lineCost,
-                lineMarginPercent: calc.lineMarginPercent,
-              },
-            });
-          }
+          sumDiscount += ld.proposedDiscountPercent;
         }
         avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
-      } else if (input.proposedDiscountPercent !== undefined) {
-        for (const line of quotation.lines) {
-          const calc = calculateLinePricing({
-            listPrice: line.listPrice,
-            standardCost: line.product.standardCost,
-            quantity: line.quantity,
-            proposedDiscountPercent: input.proposedDiscountPercent,
-          });
-
-          await tx.quoteLine.update({
-            where: { id: line.id },
-            data: {
-              proposedDiscountPercent: calc.proposedDiscountPercent,
-              discountAmount: calc.discountAmount,
-              netLinePrice: calc.netLinePrice,
-              lineCost: calc.lineCost,
-              lineMarginPercent: calc.lineMarginPercent,
-            },
-          });
-        }
       }
 
       const counterOfferRecord = await tx.counterOffer.create({
@@ -395,27 +350,51 @@ export class PortalService {
       }
 
       let avgProposedDiscount = input.proposedDiscountPercent || 0;
+      const isCustomer = !actor || actor.role === 'CUSTOMER';
 
-      if (input.lineDiscounts && input.lineDiscounts.length > 0) {
-        let sumDiscount = 0;
-        for (const ld of input.lineDiscounts) {
-          const line = quotation.lines.find((l) => l.id === ld.lineId);
-          if (line) {
-            const qty = ld.quantity || line.quantity;
-            const discPct = ld.proposedDiscountPercent;
-            sumDiscount += discPct;
+      if (!isCustomer) {
+        if (input.lineDiscounts && input.lineDiscounts.length > 0) {
+          let sumDiscount = 0;
+          for (const ld of input.lineDiscounts) {
+            const line = quotation.lines.find((l) => l.id === ld.lineId);
+            if (line) {
+              const qty = ld.quantity || line.quantity;
+              const discPct = ld.proposedDiscountPercent;
+              sumDiscount += discPct;
 
+              const calc = calculateLinePricing({
+                listPrice: line.listPrice,
+                standardCost: line.product.standardCost,
+                quantity: qty,
+                proposedDiscountPercent: discPct,
+              });
+
+              await tx.quoteLine.update({
+                where: { id: line.id },
+                data: {
+                  quantity: calc.quantity,
+                  proposedDiscountPercent: calc.proposedDiscountPercent,
+                  discountAmount: calc.discountAmount,
+                  netLinePrice: calc.netLinePrice,
+                  lineCost: calc.lineCost,
+                  lineMarginPercent: calc.lineMarginPercent,
+                },
+              });
+            }
+          }
+          avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
+        } else if (input.proposedDiscountPercent !== undefined) {
+          for (const line of quotation.lines) {
             const calc = calculateLinePricing({
               listPrice: line.listPrice,
               standardCost: line.product.standardCost,
-              quantity: qty,
-              proposedDiscountPercent: discPct,
+              quantity: line.quantity,
+              proposedDiscountPercent: input.proposedDiscountPercent,
             });
 
             await tx.quoteLine.update({
               where: { id: line.id },
               data: {
-                quantity: calc.quantity,
                 proposedDiscountPercent: calc.proposedDiscountPercent,
                 discountAmount: calc.discountAmount,
                 netLinePrice: calc.netLinePrice,
@@ -425,26 +404,13 @@ export class PortalService {
             });
           }
         }
-        avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
-      } else if (input.proposedDiscountPercent !== undefined) {
-        for (const line of quotation.lines) {
-          const calc = calculateLinePricing({
-            listPrice: line.listPrice,
-            standardCost: line.product.standardCost,
-            quantity: line.quantity,
-            proposedDiscountPercent: input.proposedDiscountPercent,
-          });
-
-          await tx.quoteLine.update({
-            where: { id: line.id },
-            data: {
-              proposedDiscountPercent: calc.proposedDiscountPercent,
-              discountAmount: calc.discountAmount,
-              netLinePrice: calc.netLinePrice,
-              lineCost: calc.lineCost,
-              lineMarginPercent: calc.lineMarginPercent,
-            },
-          });
+      } else {
+        if (input.lineDiscounts && input.lineDiscounts.length > 0) {
+          let sumDiscount = 0;
+          for (const ld of input.lineDiscounts) {
+            sumDiscount += ld.proposedDiscountPercent;
+          }
+          avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
         }
       }
 

@@ -400,6 +400,18 @@ export const QuotationViewPage: React.FC = () => {
   const isRiskHigh = quotation.riskLevel === 'HIGH';
   const isRiskMedium = quotation.riskLevel === 'MEDIUM';
   const isDraft = quotation.status === 'DRAFT';
+  const isEditable = ['DRAFT', 'NEGOTIATING'].includes(quotation.status);
+  const latestCustomerOffer = quotation.counterOffers?.find(
+    (co) => co.proposedByRole === 'CUSTOMER' && co.status === 'SUBMITTED'
+  );
+
+  const handleApplyCustomerProposal = async () => {
+    if (!latestCustomerOffer || !quotation) return;
+    const discPct = latestCustomerOffer.proposedDiscountPercent;
+    for (const line of quotation.lines) {
+      await handleUpdateLine(line.id, line.quantity, line.unitPrice || line.listPrice, discPct);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -641,6 +653,31 @@ export const QuotationViewPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Pending Customer Negotiation Banner */}
+      {(role as string) !== 'CUSTOMER' && quotation.status === 'NEGOTIATING' && latestCustomerOffer && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-amber-900 text-xs shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <div>
+              <span className="font-bold">Pending Customer Negotiation Request:</span> Requested discount of{' '}
+              <span className="font-bold underline text-amber-800">{latestCustomerOffer.proposedDiscountPercent}%</span>.
+              {latestCustomerOffer.customerNotes && (
+                <span className="italic ml-1 opacity-90">"{latestCustomerOffer.customerNotes}"</span>
+              )}
+              <div className="text-[11px] text-amber-700 mt-0.5">
+                Edit the line item input boxes below manually to set agreed prices.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleApplyCustomerProposal}
+            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-xs transition-colors shrink-0 shadow-xs"
+          >
+            Apply Requested {latestCustomerOffer.proposedDiscountPercent}% Discount
+          </button>
+        </div>
+      )}
+
       {/* Main Grid: Quote Lines + Upsell Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Quote Line Items */}
@@ -669,7 +706,7 @@ export const QuotationViewPage: React.FC = () => {
                     <th className="py-3 px-3 text-right">Disc %</th>
                     <th className="py-3 px-3 text-right">Net Total</th>
                     {role !== 'CUSTOMER' && <th className="py-3 px-3 text-right">Margin %</th>}
-                    {isDraft && role !== 'CUSTOMER' && <th className="py-3 px-2 text-center">Action</th>}
+                    {isEditable && role !== 'CUSTOMER' && <th className="py-3 px-2 text-center">Action</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-mono">
@@ -680,7 +717,7 @@ export const QuotationViewPage: React.FC = () => {
                         <div className="text-slate-400 text-[11px]">SKU: {line.product.sku}</div>
                       </td>
                       <td className="py-3 px-2 text-center">
-                        {isDraft && role !== 'CUSTOMER' ? (
+                        {isEditable && role !== 'CUSTOMER' ? (
                           <input
                             type="number"
                             min="1"
@@ -700,7 +737,7 @@ export const QuotationViewPage: React.FC = () => {
                         )}
                       </td>
                       <td className="py-3 px-3 text-right">
-                        {isDraft && role !== 'CUSTOMER' ? (
+                        {isEditable && role !== 'CUSTOMER' ? (
                           <input
                             type="number"
                             min="0"
@@ -727,7 +764,7 @@ export const QuotationViewPage: React.FC = () => {
                         <div className="text-[10px] text-slate-400">({line.taxRate || 0}%)</div>
                       </td>
                       <td className="py-3 px-3 text-right">
-                        {isDraft && role !== 'CUSTOMER' ? (
+                        {isEditable && role !== 'CUSTOMER' ? (
                           <input
                             type="number"
                             min="0"
@@ -757,7 +794,7 @@ export const QuotationViewPage: React.FC = () => {
                           {line.lineMarginPercent}%
                         </td>
                       )}
-                      {isDraft && role !== 'CUSTOMER' && (
+                      {isEditable && role !== 'CUSTOMER' && (
                         <td className="py-3 px-2 text-center">
                           <button
                             onClick={() => handleDeleteLine(line.id)}

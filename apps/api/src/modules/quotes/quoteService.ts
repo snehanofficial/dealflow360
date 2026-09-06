@@ -41,6 +41,9 @@ export class QuoteService {
             product: true,
           },
         },
+        counterOffers: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
 
@@ -99,6 +102,15 @@ export class QuoteService {
               recurringPeriod: l.product.recurringPeriod,
             }
           : null,
+      })),
+      counterOffers: (q.counterOffers || []).map((co: any) => ({
+        id: co.id,
+        proposedDiscountPercent: co.proposedDiscountPercent,
+        customerNotes: co.customerNotes,
+        proposedByName: co.proposedByName,
+        proposedByRole: co.proposedByRole,
+        status: co.status,
+        createdAt: co.createdAt,
       })),
     };
   }
