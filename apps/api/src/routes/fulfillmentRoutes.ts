@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../middleware/auth.js';
+import { authenticate, requirePermission } from '../middleware/auth.js';
+import { Permissions } from '@dealflow360/contracts';
 import {
   computeFulfillment,
   confirmFulfillment,
@@ -18,22 +19,23 @@ export const fulfillmentRoutes: Router = Router();
 fulfillmentRoutes.use(authenticate);
 
 // Fulfillment Order Allocation & Warehouse Stock endpoints
-fulfillmentRoutes.get('/warehouses', listWarehouses);
-fulfillmentRoutes.get('/quotes/:id/fulfillment', getFulfillmentPlan);
-fulfillmentRoutes.post('/quotes/:id/fulfillment/compute', computeFulfillment);
-fulfillmentRoutes.post('/quotes/:id/fulfillment/confirm', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), confirmFulfillment);
-fulfillmentRoutes.post('/quotes/:id/fulfillment/override', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), overrideFulfillment);
-fulfillmentRoutes.post('/quotes/:id/fulfillment/ship-all', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), shipAllAndAdvanceToBilling);
-fulfillmentRoutes.post('/allocations/:allocationId/ship', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), shipAllocation);
+fulfillmentRoutes.get('/warehouses', requirePermission(Permissions.WAREHOUSE_VIEW), listWarehouses);
+fulfillmentRoutes.get('/quotes/:id/fulfillment', requirePermission(Permissions.FULFILLMENT_VIEW), getFulfillmentPlan);
+fulfillmentRoutes.post('/quotes/:id/fulfillment/compute', requirePermission(Permissions.FULFILLMENT_VIEW), computeFulfillment);
+fulfillmentRoutes.post('/quotes/:id/fulfillment/confirm', requirePermission(Permissions.FULFILLMENT_MANAGE), confirmFulfillment);
+fulfillmentRoutes.post('/quotes/:id/fulfillment/override', requirePermission(Permissions.FULFILLMENT_MANAGE), overrideFulfillment);
+fulfillmentRoutes.post('/quotes/:id/fulfillment/ship-all', requirePermission(Permissions.FULFILLMENT_MANAGE), shipAllAndAdvanceToBilling);
+fulfillmentRoutes.post('/allocations/:allocationId/ship', requirePermission(Permissions.FULFILLMENT_MANAGE), shipAllocation);
 
 // Backorders endpoints
-fulfillmentRoutes.get('/backorders', listBackorders);
-fulfillmentRoutes.get('/backorders/:id/propose', proposeBackorderReallocation);
-fulfillmentRoutes.post('/backorders/:id/reallocate', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER']), confirmBackorderReallocation);
+fulfillmentRoutes.get('/backorders', requirePermission(Permissions.FULFILLMENT_VIEW), listBackorders);
+fulfillmentRoutes.get('/backorders/:id/propose', requirePermission(Permissions.FULFILLMENT_VIEW), proposeBackorderReallocation);
+fulfillmentRoutes.post('/backorders/:id/reallocate', requirePermission(Permissions.FULFILLMENT_MANAGE), confirmBackorderReallocation);
 
 // Support legacy quote path prefixing (e.g. GET /api/v1/fulfillment/:id/fulfillment)
-fulfillmentRoutes.get('/:id/fulfillment', getFulfillmentPlan);
-fulfillmentRoutes.post('/:id/fulfillment/compute', computeFulfillment);
-fulfillmentRoutes.post('/:id/fulfillment/confirm', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), confirmFulfillment);
-fulfillmentRoutes.post('/:id/fulfillment/override', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), overrideFulfillment);
-fulfillmentRoutes.post('/:id/fulfillment/ship-all', requireRole(['ADMIN', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), shipAllAndAdvanceToBilling);
+fulfillmentRoutes.get('/:id/fulfillment', requirePermission(Permissions.FULFILLMENT_VIEW), getFulfillmentPlan);
+fulfillmentRoutes.post('/:id/fulfillment/compute', requirePermission(Permissions.FULFILLMENT_VIEW), computeFulfillment);
+fulfillmentRoutes.post('/:id/fulfillment/confirm', requirePermission(Permissions.FULFILLMENT_MANAGE), confirmFulfillment);
+fulfillmentRoutes.post('/:id/fulfillment/override', requirePermission(Permissions.FULFILLMENT_MANAGE), overrideFulfillment);
+fulfillmentRoutes.post('/:id/fulfillment/ship-all', requirePermission(Permissions.FULFILLMENT_MANAGE), shipAllAndAdvanceToBilling);
+
