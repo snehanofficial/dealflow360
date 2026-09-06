@@ -606,9 +606,6 @@ async function main() {
   });
   console.log('Seeded System Config.');
 
-  console.log('Database seed completed successfully.');
-}
-
 
   // ==========================================
   // 6. WAREHOUSES & INVENTORY LEDGER

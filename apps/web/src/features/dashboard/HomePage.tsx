@@ -288,9 +288,9 @@ export const HomePage: React.FC = () => {
               <h3 className="font-bold text-slate-900">Recent Quotations & Orders</h3>
               <p className="text-xs text-slate-500 mt-0.5">Authoritative status of your latest commercial records</p>
             </div>
-            <a href="/quotations" className="text-sm font-semibold text-indigo-600 flex items-center hover:underline">
+            <Link to="/quotations" className="text-sm font-semibold text-indigo-600 flex items-center hover:underline">
               View all <ArrowRight className="w-4 h-4 ml-1" />
-            </a>
+            </Link>
           </div>
           <div className="overflow-x-auto flex-1">
             {recentQuotations.length > 0 ? (
@@ -341,9 +341,9 @@ export const HomePage: React.FC = () => {
               <h3 className="font-bold text-slate-900">Pending Approvals</h3>
               <p className="text-xs text-slate-500 mt-0.5">Quotations awaiting policy review</p>
             </div>
-            <a href="/approvals" className="text-sm font-semibold text-indigo-600 flex items-center hover:underline">
+            <Link to="/approvals" className="text-sm font-semibold text-indigo-600 flex items-center hover:underline">
               View all <ArrowRight className="w-4 h-4 ml-1" />
-            </a>
+            </Link>
           </div>
           <div className="overflow-x-auto flex-1">
             {pendingApprovals.length > 0 ? (
