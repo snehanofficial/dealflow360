@@ -118,11 +118,10 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* ── Quotations ── */}
         <Route
           path="/quotations"
           element={
-            <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS']}>
+            <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'CUSTOMER']}>
               <DashboardLayout>
                 <QuoteListPage />
               </DashboardLayout>
@@ -144,7 +143,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/quotations/:id"
           element={
-            <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS']}>
+            <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'CUSTOMER']}>
               <DashboardLayout>
                 <QuotationViewPage />
               </DashboardLayout>
@@ -245,22 +244,22 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/invoices"
           element={
-            <InternalRoute>
+            <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'CUSTOMER']}>
               <DashboardLayout>
                 <InvoiceListPage />
               </DashboardLayout>
-            </InternalRoute>
+            </RoleRoute>
           }
         />
 
         <Route
           path="/invoices/:id"
           element={
-            <InternalRoute>
+            <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'FINANCE_OPERATIONS', 'CUSTOMER']}>
               <DashboardLayout>
                 <InvoiceDetailPage />
               </DashboardLayout>
-            </InternalRoute>
+            </RoleRoute>
           }
         />
 

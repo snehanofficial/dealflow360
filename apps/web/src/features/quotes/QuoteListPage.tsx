@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext.js';
 import { api } from '../../lib/api/client.js';
 import {
   FileText,
@@ -20,6 +21,7 @@ import { QuotationKanbanCard, QuotationKanbanItem } from './components/Quotation
 
 export const QuoteListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [quotes, setQuotes] = useState<QuotationKanbanItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -162,12 +164,14 @@ export const QuoteListPage: React.FC = () => {
             </button>
           </div>
 
-          <button
-            onClick={() => navigate('/quotations/new')}
-            className="inline-flex items-center justify-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-xs"
-          >
-            <Plus className="w-4 h-4" /> Create Quotation
-          </button>
+          {role !== 'CUSTOMER' && (
+            <button
+              onClick={() => navigate('/quotations/new')}
+              className="inline-flex items-center justify-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-xs"
+            >
+              <Plus className="w-4 h-4" /> Create Quotation
+            </button>
+          )}
         </div>
       </div>
 

@@ -38,6 +38,7 @@ export const Permissions = {
   INVOICE_VIEW: 'invoice.view',
   INVOICE_MANAGE: 'invoice.manage',
   PAYMENT_RECORD: 'payment.record',
+  PORTAL_VIEW: 'portal.view',
   PORTAL_NEGOTIATE: 'portal.negotiate',
   PORTAL_CONFIRM: 'portal.confirm',
   AUDIT_VIEW: 'audit.view',
@@ -125,13 +126,12 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.REPORT_VIEW,
   ],
   CUSTOMER: [
-    Permissions.DASHBOARD_VIEW,
-    Permissions.QUOTATION_VIEW,
-    Permissions.BILLING_VIEW,
-    Permissions.INVOICE_VIEW,
     Permissions.PROFILE_VIEW,
+    Permissions.PORTAL_VIEW,
     Permissions.PORTAL_NEGOTIATE,
     Permissions.PORTAL_CONFIRM,
+    Permissions.QUOTATION_VIEW,
+    Permissions.INVOICE_VIEW,
   ],
 };
 

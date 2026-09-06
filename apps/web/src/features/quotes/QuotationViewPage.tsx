@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext.js';
 import { api } from '../../lib/api/client.js';
 import { RecommendationItem } from '@dealflow360/contracts';
 import { UpsellPanel } from './components/UpsellPanel.js';
@@ -66,6 +67,7 @@ interface QuotationData {
 export const QuotationViewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { role } = useAuth();
 
   const [quotation, setQuotation] = useState<QuotationData | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
@@ -399,26 +401,28 @@ export const QuotationViewPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           {/* Risk Badge */}
-          <div
-            className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-medium ${isRiskHigh
-                ? 'bg-rose-50 border-rose-200 text-rose-800'
-                : isRiskMedium
-                  ? 'bg-amber-50 border-amber-200 text-amber-800'
-                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              }`}
-          >
-            {isRiskHigh ? (
-              <AlertTriangle className="w-4 h-4 text-rose-600" />
-            ) : (
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-            )}
-            <div>
-              <span className="font-bold">{quotation.riskLevel} RISK</span>
-              <span className="font-mono ml-1.5 opacity-80">({quotation.riskScore}/10)</span>
+          {role !== 'CUSTOMER' && (
+            <div
+              className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-medium ${isRiskHigh
+                  ? 'bg-rose-50 border-rose-200 text-rose-800'
+                  : isRiskMedium
+                    ? 'bg-amber-50 border-amber-200 text-amber-800'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                }`}
+            >
+              {isRiskHigh ? (
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
+              ) : (
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              )}
+              <div>
+                <span className="font-bold">{quotation.riskLevel} RISK</span>
+                <span className="font-mono ml-1.5 opacity-80">({quotation.riskScore}/10)</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          {isDraft && (
+          {isDraft && role !== 'CUSTOMER' && (
             <button
               onClick={handleSubmitQuote}
               disabled={isSubmitting || quotation.lines.length === 0}
@@ -433,7 +437,7 @@ export const QuotationViewPage: React.FC = () => {
             </button>
           )}
 
-          {quotation.status === 'FULFILLMENT' && (
+          {quotation.status === 'FULFILLMENT' && role !== 'CUSTOMER' && (
             <button
               onClick={async () => {
                 try {
@@ -459,7 +463,7 @@ export const QuotationViewPage: React.FC = () => {
             </button>
           )}
 
-          {quotation.status === 'BILLING' && (
+          {quotation.status === 'BILLING' && role !== 'CUSTOMER' && (
             <button
               onClick={handleCompleteBilling}
               disabled={isSubmitting}
@@ -475,21 +479,25 @@ export const QuotationViewPage: React.FC = () => {
             </button>
           )}
 
-          <button
-            onClick={() => navigate(`/quotations/${quotation.id}/fulfillment`)}
-            className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
-            title="View Fulfillment Allocation"
-          >
-            <Truck className="w-3.5 h-3.5 text-[#714B67]" /> Fulfillment Split
-          </button>
+          {role !== 'CUSTOMER' && (
+            <>
+              <button
+                onClick={() => navigate(`/quotations/${quotation.id}/fulfillment`)}
+                className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
+                title="View Fulfillment Allocation"
+              >
+                <Truck className="w-3.5 h-3.5 text-[#714B67]" /> Fulfillment Split
+              </button>
 
-          <button
-            onClick={() => navigate(`/quotations/${quotation.id}/billing`)}
-            className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
-            title="View Billing Schedule"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-[#714B67]" /> Billing Schedule
-          </button>
+              <button
+                onClick={() => navigate(`/quotations/${quotation.id}/billing`)}
+                className="inline-flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-semibold shadow-xs"
+                title="View Billing Schedule"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#714B67]" /> Billing Schedule
+              </button>
+            </>
+          )}
 
           {existingInvoice ? (
             <button
@@ -500,7 +508,7 @@ export const QuotationViewPage: React.FC = () => {
               <FileCheck className="w-3.5 h-3.5" /> View Invoice ({existingInvoice.invoiceNumber})
             </button>
           ) : (
-            ['APPROVED', 'FULFILLMENT', 'BILLING', 'COMPLETED'].includes(quotation.status) && (
+            ['APPROVED', 'FULFILLMENT', 'BILLING', 'COMPLETED'].includes(quotation.status) && role !== 'CUSTOMER' && (
               <button
                 onClick={handleCreateInvoice}
                 disabled={isCreatingInvoice}
@@ -612,8 +620,8 @@ export const QuotationViewPage: React.FC = () => {
                     <th className="py-3 px-3 text-right">Tax</th>
                     <th className="py-3 px-3 text-right">Disc %</th>
                     <th className="py-3 px-3 text-right">Net Total</th>
-                    <th className="py-3 px-3 text-right">Margin %</th>
-                    {isDraft && <th className="py-3 px-2 text-center">Action</th>}
+                    {role !== 'CUSTOMER' && <th className="py-3 px-3 text-right">Margin %</th>}
+                    {isDraft && role !== 'CUSTOMER' && <th className="py-3 px-2 text-center">Action</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-mono">
@@ -624,7 +632,7 @@ export const QuotationViewPage: React.FC = () => {
                         <div className="text-slate-400 text-[11px]">SKU: {line.product.sku}</div>
                       </td>
                       <td className="py-3 px-2 text-center">
-                        {isDraft ? (
+                        {isDraft && role !== 'CUSTOMER' ? (
                           <input
                             type="number"
                             min="1"
@@ -644,7 +652,7 @@ export const QuotationViewPage: React.FC = () => {
                         )}
                       </td>
                       <td className="py-3 px-3 text-right">
-                        {isDraft ? (
+                        {isDraft && role !== 'CUSTOMER' ? (
                           <input
                             type="number"
                             min="0"
@@ -671,7 +679,7 @@ export const QuotationViewPage: React.FC = () => {
                         <div className="text-[10px] text-slate-400">({line.taxRate || 0}%)</div>
                       </td>
                       <td className="py-3 px-3 text-right">
-                        {isDraft ? (
+                        {isDraft && role !== 'CUSTOMER' ? (
                           <input
                             type="number"
                             min="0"
@@ -696,10 +704,12 @@ export const QuotationViewPage: React.FC = () => {
                       <td className="py-3 px-3 text-right font-bold text-slate-900">
                         ${line.netLinePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3 px-3 text-right font-semibold text-purple-700">
-                        {line.lineMarginPercent}%
-                      </td>
-                      {isDraft && (
+                      {role !== 'CUSTOMER' && (
+                        <td className="py-3 px-3 text-right font-semibold text-purple-700">
+                          {line.lineMarginPercent}%
+                        </td>
+                      )}
+                      {isDraft && role !== 'CUSTOMER' && (
                         <td className="py-3 px-2 text-center">
                           <button
                             onClick={() => handleDeleteLine(line.id)}
@@ -719,14 +729,16 @@ export const QuotationViewPage: React.FC = () => {
         </div>
 
         {/* Right Column: Upsell & Cross-Sell Panel */}
-        <div className="lg:col-span-5">
-          <UpsellPanel
-            recommendations={recommendations}
-            isLoading={isRecsLoading}
-            onAddRecommendation={handleAddRecommendation}
-            currencySymbol="$"
-          />
-        </div>
+        {role !== 'CUSTOMER' && (
+          <div className="lg:col-span-5">
+            <UpsellPanel
+              recommendations={recommendations}
+              isLoading={isRecsLoading}
+              onAddRecommendation={handleAddRecommendation}
+              currencySymbol="$"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

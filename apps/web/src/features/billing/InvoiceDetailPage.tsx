@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext.js';
 import { api } from '../../lib/api/client.js';
 import { InvoiceDto, InvoiceStatus } from '@dealflow360/contracts';
 import {
@@ -26,6 +27,7 @@ import { PaymentModal } from './components/PaymentModal.js';
 export const InvoiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { role } = useAuth();
 
   const [invoice, setInvoice] = useState<InvoiceDto | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -238,7 +240,7 @@ export const InvoiceDetailPage: React.FC = () => {
             Export XLSX
           </button>
 
-          {invoice.status === 'DRAFT' && (
+          {invoice.status === 'DRAFT' && role !== 'CUSTOMER' && (
             <button
               onClick={handleIssueInvoice}
               disabled={isActing}
@@ -249,7 +251,7 @@ export const InvoiceDetailPage: React.FC = () => {
             </button>
           )}
 
-          {invoice.status === 'ISSUED' && (
+          {invoice.status === 'ISSUED' && role !== 'CUSTOMER' && (
             <button
               onClick={handleRecordPayment}
               disabled={isActing}
@@ -259,7 +261,7 @@ export const InvoiceDetailPage: React.FC = () => {
             </button>
           )}
 
-          {(invoice.status === 'DRAFT' || invoice.status === 'ISSUED') && (
+          {(invoice.status === 'DRAFT' || invoice.status === 'ISSUED') && role !== 'CUSTOMER' && (
             <button
               onClick={handleVoidInvoice}
               disabled={isActing}

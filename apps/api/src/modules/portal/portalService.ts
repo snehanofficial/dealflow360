@@ -8,6 +8,8 @@ import {
 import { SubmitCounterOfferInput } from '@dealflow360/contracts';
 import { AppError } from '../../middleware/errorHandler.js';
 import { recordAuditEvent } from '../../services/auditService.js';
+import { createApprovalRequest } from '../../services/approvalService.js';
+import { ConfigService } from '../config/configService.js';
 
 export interface SanitizedPortalQuoteLine {
 
@@ -273,7 +275,9 @@ export class PortalService {
       );
 
       const totals = calculateQuoteTotals(linesCalc);
-      const risk = evaluateQuoteRisk(totals);
+      const configService = new ConfigService();
+      const thresholds = await configService.getBusinessThresholds();
+      const risk = evaluateQuoteRisk(totals, thresholds);
       const transition = evaluateSubmitTransition(risk);
       
       const newStatus = transition.targetStatus === 'PENDING_FINANCE' || transition.targetStatus === 'PENDING_MANAGER' 
@@ -300,6 +304,35 @@ export class PortalService {
           where: { quotationId: quotation.id, status: 'PENDING' },
           data: { status: 'SUPERSEDED' },
         });
+
+        if (risk.requiredRoles.length > 0 && (newStatus === 'PENDING_FINANCE' || newStatus === 'PENDING_MANAGER')) {
+          await createApprovalRequest(
+            {
+              quotationId: quotation.id,
+              evaluation: {
+                ...risk,
+                requiresApproval: true,
+                quoteId: quotation.id,
+                netTotal: totals.netValue,
+                marginAmount: totals.netValue - totals.totalCost,
+                marginPercentage: totals.grossMarginPercent || 0,
+                evaluatedAt: new Date().toISOString(),
+                requiredApprovalRoles: risk.requiredRoles,
+                violations: risk.violations.map(v => ({
+                  message: v,
+                  severity: risk.riskLevel === 'HIGH' ? 'VIOLATION' : 'WARNING',
+                  ruleName: 'Commercial Governance',
+                  violatedField: 'MAX_DISCOUNT',
+                  allowedValue: 0,
+                  proposedValue: risk.riskScore,
+                })),
+              },
+              notes: input.customerNotes || undefined,
+            },
+            quotation.createdById,
+            tx as any
+          );
+        }
       }
 
       const finalQuote = await tx.quotation.findUnique({

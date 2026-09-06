@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext.js';
 import { api } from '../../lib/api/client.js';
 import { InvoiceDto, InvoiceStatus } from '@dealflow360/contracts';
 import {
@@ -22,6 +23,7 @@ import { downloadInvoicePdf, downloadInvoiceXlsx, downloadInvoicesListXlsx } fro
 
 export const InvoiceListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentStatusTab = searchParams.get('status') || 'ALL';
 
@@ -165,21 +167,26 @@ export const InvoiceListPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={handleBulkExportXlsx}
-            disabled={isExportingBulk}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
-          >
-            {isExportingBulk ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
-            Export Invoices (.xlsx)
-          </button>
+          {role !== 'CUSTOMER' && (
+            <>
+              <button
+                onClick={handleBulkExportXlsx}
+                disabled={isExportingBulk}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+              >
+                {isExportingBulk ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+                Export Invoices (.xlsx)
+              </button>
 
-          <button
-            onClick={() => navigate('/quotations')}
-            className="inline-flex items-center justify-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Create Invoice from Quote
-          </button>
+              <button
+                onClick={() => navigate('/quotations')}
+                className="inline-flex items-center justify-center gap-2 bg-[#714B67] hover:bg-[#5b3c53] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Issue from Quotation
+              </button>
+            </>
+          )}
         </div>
       </div>
 
