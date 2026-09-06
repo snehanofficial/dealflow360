@@ -6,8 +6,10 @@ import {
   UpdateQuoteLineSchema,
   ListQuotesQuerySchema,
   AddQuoteLineSchema,
+  SubmitCounterOfferSchema,
 } from '@dealflow360/contracts';
 import { quoteService } from './quoteService.js';
+import { portalService } from '../portal/portalService.js';
 import { AppError } from '../../middleware/errorHandler.js';
 
 export async function createQuotation(
@@ -183,6 +185,33 @@ export async function submitQuotation(
       success: true,
       data: result.quotation,
       message: result.transitionMessage,
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function submitCounterOffer(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { id } = QuoteIdParamSchema.parse(req.params);
+    const body = SubmitCounterOfferSchema.parse(req.body);
+
+    if (req.user?.role === 'CUSTOMER' && !req.user.customerId) {
+      throw new AppError('FORBIDDEN', 'User account is not bound to a valid customer account.', 403);
+    }
+
+    const actor = req.user ? { id: req.user.userId, name: req.user.email, role: req.user.role, customerId: req.user.customerId } : null;
+    const result = await portalService.submitCounterOfferByQuoteId(id, body, actor);
+
+    res.status(200).json({
+      success: true,
+      data: result.quote,
+      message: result.message,
       meta: null,
     });
   } catch (error) {

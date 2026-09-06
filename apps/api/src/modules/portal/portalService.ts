@@ -363,6 +363,240 @@ export class PortalService {
 
     return txClient ? run(txClient) : db.$transaction(run);
   }
+
+  async submitCounterOfferByQuoteId(
+    quotationId: string,
+    input: SubmitCounterOfferInput,
+    actor?: { id?: string; name?: string; role?: string; customerId?: string } | null,
+    txClient?: TxClient
+  ): Promise<{ quote: SanitizedPortalQuote; message: string }> {
+    const run = async (tx: TxClient) => {
+      const quotation = await tx.quotation.findUnique({
+        where: { id: quotationId },
+        include: {
+          customer: true,
+          lines: { include: { product: true } },
+          counterOffers: { orderBy: { createdAt: 'desc' } },
+        },
+      });
+
+      if (!quotation) {
+        throw new AppError('NOT_FOUND', 'Quotation not found', 404);
+      }
+      
+      if (actor && actor.role === 'CUSTOMER' && quotation.customerId !== actor.customerId) {
+        throw new AppError('FORBIDDEN', 'Forbidden', 403);
+      }
+
+      if (!['DRAFT', 'NEGOTIATING', 'APPROVED', 'PENDING_CUSTOMER'].includes(quotation.status)) {
+        throw new AppError('INVALID_STATE', `Quotation in status ${quotation.status} cannot be negotiated`, 400);
+      }
+
+      let avgProposedDiscount = input.proposedDiscountPercent || 0;
+
+      if (input.lineDiscounts && input.lineDiscounts.length > 0) {
+        let sumDiscount = 0;
+        for (const ld of input.lineDiscounts) {
+          const line = quotation.lines.find((l) => l.id === ld.lineId);
+          if (line) {
+            const qty = ld.quantity || line.quantity;
+            const discPct = ld.proposedDiscountPercent;
+            sumDiscount += discPct;
+
+            const calc = calculateLinePricing({
+              listPrice: line.listPrice,
+              standardCost: line.product.standardCost,
+              quantity: qty,
+              proposedDiscountPercent: discPct,
+            });
+
+            await tx.quoteLine.update({
+              where: { id: line.id },
+              data: {
+                quantity: calc.quantity,
+                proposedDiscountPercent: calc.proposedDiscountPercent,
+                discountAmount: calc.discountAmount,
+                netLinePrice: calc.netLinePrice,
+                lineCost: calc.lineCost,
+                lineMarginPercent: calc.lineMarginPercent,
+              },
+            });
+          }
+        }
+        avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
+      } else if (input.proposedDiscountPercent !== undefined) {
+        for (const line of quotation.lines) {
+          const calc = calculateLinePricing({
+            listPrice: line.listPrice,
+            standardCost: line.product.standardCost,
+            quantity: line.quantity,
+            proposedDiscountPercent: input.proposedDiscountPercent,
+          });
+
+          await tx.quoteLine.update({
+            where: { id: line.id },
+            data: {
+              proposedDiscountPercent: calc.proposedDiscountPercent,
+              discountAmount: calc.discountAmount,
+              netLinePrice: calc.netLinePrice,
+              lineCost: calc.lineCost,
+              lineMarginPercent: calc.lineMarginPercent,
+            },
+          });
+        }
+      }
+
+      const counterOfferRecord = await tx.counterOffer.create({
+        data: {
+          quotationId: quotation.id,
+          proposedDiscountPercent: avgProposedDiscount,
+          customerNotes: input.customerNotes || null,
+          status: 'SUBMITTED',
+        },
+      });
+
+      const updatedLines = await tx.quoteLine.findMany({
+        where: { quotationId: quotation.id },
+        include: { product: true },
+      });
+
+      const linesCalc = updatedLines.map((l) =>
+        calculateLinePricing({
+          listPrice: l.listPrice,
+          standardCost: l.product.standardCost,
+          quantity: l.quantity,
+          proposedDiscountPercent: l.proposedDiscountPercent,
+        })
+      );
+
+      const totals = calculateQuoteTotals(linesCalc);
+      const configService = new ConfigService();
+      const thresholds = await configService.getBusinessThresholds();
+      const risk = evaluateQuoteRisk(totals, thresholds);
+      const transition = evaluateSubmitTransition(risk);
+      
+      const newStatus = transition.targetStatus === 'PENDING_FINANCE' || transition.targetStatus === 'PENDING_MANAGER' 
+        ? transition.targetStatus 
+        : 'NEGOTIATING';
+
+      await tx.quotation.update({
+        where: { id: quotation.id },
+        data: {
+          status: newStatus,
+          subtotal: totals.subtotal,
+          totalDiscount: totals.totalDiscount,
+          taxableAmount: totals.taxableAmount,
+          taxAmount: totals.taxAmount,
+          netValue: totals.netValue,
+          grossMarginPercent: totals.grossMarginPercent,
+          riskScore: risk.riskScore,
+          riskLevel: risk.riskLevel,
+        },
+      });
+
+      if (quotation.status !== newStatus) {
+        await tx.approvalRequest.updateMany({
+          where: { quotationId: quotation.id, status: 'PENDING' },
+          data: { status: 'SUPERSEDED' },
+        });
+
+        if (risk.requiredRoles.length > 0 && (newStatus === 'PENDING_FINANCE' || newStatus === 'PENDING_MANAGER')) {
+          await createApprovalRequest(
+            {
+              quotationId: quotation.id,
+              evaluation: {
+                ...risk,
+                requiresApproval: true,
+                quoteId: quotation.id,
+                netTotal: totals.netValue,
+                marginAmount: totals.netValue - totals.totalCost,
+                marginPercentage: totals.grossMarginPercent || 0,
+                evaluatedAt: new Date().toISOString(),
+                requiredApprovalRoles: risk.requiredRoles,
+                violations: risk.violations.map(v => ({
+                  message: v,
+                  severity: risk.riskLevel === 'HIGH' ? 'VIOLATION' : 'WARNING',
+                  ruleName: 'Commercial Governance',
+                  violatedField: 'MAX_DISCOUNT',
+                  allowedValue: 0,
+                  proposedValue: risk.riskScore,
+                })),
+              },
+              notes: input.customerNotes || undefined,
+            },
+            quotation.createdById,
+            tx as any
+          );
+        }
+      }
+
+      const finalQuote = await tx.quotation.findUnique({
+        where: { id: quotation.id },
+        include: {
+          customer: true,
+          lines: { include: { product: true } },
+          counterOffers: { orderBy: { createdAt: 'desc' } },
+        },
+      });
+
+      await recordAuditEvent({
+        eventType: 'COUNTEROFFER_SUBMITTED',
+        action: `Customer submitted counteroffer for ${quotation.quoteNumber} (Avg Disc: ${avgProposedDiscount}%)`,
+        entityType: 'Quotation',
+        entityId: quotation.id,
+        actor: actor || { id: quotation.customerId, role: 'CUSTOMER', name: quotation.customer.name },
+        previousState: quotation as any,
+        newState: finalQuote as any,
+      }, tx as any);
+
+      return {
+        quote: this.sanitizePortalQuotation(finalQuote as any),
+        message: 'Counteroffer submitted successfully. Our team will review the new commercial terms.',
+      };
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
+  }
+
+  sanitizePortalQuotation(q: any): SanitizedPortalQuote {
+    return {
+      id: q.id,
+      quoteNumber: q.quoteNumber,
+      status: q.status,
+      subtotal: q.subtotal,
+      totalDiscount: q.totalDiscount,
+      netValue: q.netValue,
+      customer: {
+        id: q.customer.id,
+        name: q.customer.name,
+        code: q.customer.code,
+        tier: q.customer.tier,
+      },
+      lines: q.lines.map((l: any) => ({
+        id: l.id,
+        productId: l.productId,
+        quantity: l.quantity,
+        listPrice: l.listPrice,
+        proposedDiscountPercent: l.proposedDiscountPercent,
+        discountAmount: l.discountAmount,
+        netLinePrice: l.netLinePrice,
+        product: {
+          id: l.product.id,
+          name: l.product.name,
+          sku: l.product.sku,
+          category: l.product.category,
+          billingType: l.product.billingType,
+        },
+      })),
+      counterOffers: (q.counterOffers || []).map((co: any) => ({
+        id: co.id,
+        proposedDiscountPercent: co.proposedDiscountPercent,
+        customerNotes: co.customerNotes,
+        status: co.status,
+        createdAt: co.createdAt,
+      })),
+    };
+  }
 }
 
 export const portalService = new PortalService();

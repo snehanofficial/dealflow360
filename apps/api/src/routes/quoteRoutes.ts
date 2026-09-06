@@ -9,6 +9,7 @@ import {
   updateQuoteLine,
   deleteQuoteLine,
   submitQuotation,
+  submitCounterOffer,
 } from '../modules/quotes/quoteController.js';
 import { getRecommendations } from '../modules/recommendations/recommendationController.js';
 
@@ -23,5 +24,6 @@ quoteRoutes.post('/:id/lines', requirePermission(Permissions.QUOTATION_UPDATE), 
 quoteRoutes.patch('/:id/lines/:lineId', requirePermission(Permissions.QUOTATION_UPDATE), updateQuoteLine);
 quoteRoutes.delete('/:id/lines/:lineId', requirePermission(Permissions.QUOTATION_UPDATE), deleteQuoteLine);
 quoteRoutes.post('/:id/submit', requirePermission(Permissions.QUOTATION_SUBMIT), submitQuotation);
+quoteRoutes.post('/:id/counter-offer', requirePermission(Permissions.PORTAL_NEGOTIATE), submitCounterOffer);
 quoteRoutes.get('/:quotationId/recommendations', requirePermission(Permissions.QUOTATION_VIEW), getRecommendations);
 

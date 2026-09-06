@@ -252,7 +252,7 @@ export class BillingService {
         totalRecurringMonthly: 0,
         totalRecurringAnnual: 0,
         isLocked: false,
-        status: q.status,
+        status: q.status as string,
         billingStartDate: now.toISOString().split('T')[0],
         lineCount: q.lines.length,
       };
@@ -289,7 +289,6 @@ export class BillingService {
         quoteNumber: q.quoteNumber,
         quoteStatus: q.status,
         netValue: q.netValue,
-        currency: q.currency,
         updatedAt: q.updatedAt,
         customer: q.customer ? { id: q.customer.id, name: q.customer.name, tier: q.customer.tier } : null,
         schedule: scheduleInfo,

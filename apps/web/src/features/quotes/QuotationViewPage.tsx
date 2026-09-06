@@ -79,6 +79,10 @@ export const QuotationViewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [existingInvoice, setExistingInvoice] = useState<{ id: string; invoiceNumber: string } | null>(null);
   const [isCreatingInvoice, setIsCreatingInvoice] = useState<boolean>(false);
+  
+  const [isCounterOfferModalOpen, setIsCounterOfferModalOpen] = useState(false);
+  const [proposedDiscount, setProposedDiscount] = useState<number>(0);
+  const [customerNotes, setCustomerNotes] = useState<string>('');
 
   const quoteId = id || 'quote-sample-001';
 
@@ -329,6 +333,32 @@ export const QuotationViewPage: React.FC = () => {
     }
   };
 
+  const handleSubmitCounterOffer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quotation) return;
+
+    try {
+      setIsSubmitting(true);
+      setSubmitMessage(null);
+      setError(null);
+      const res = await api.post(`/quotes/${quoteId}/counter-offer`, {
+        proposedDiscountPercent: proposedDiscount,
+        customerNotes: customerNotes,
+      });
+      if (res.data.success) {
+        setQuotation(res.data.data);
+        setSubmitMessage(res.data.message || 'Counter-offer submitted successfully.');
+        setIsCounterOfferModalOpen(false);
+        setCustomerNotes('');
+      }
+    } catch (err: any) {
+      console.error('Failed to submit counter-offer:', err);
+      setError(err.response?.data?.message || 'Failed to submit counter-offer');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
@@ -523,6 +553,15 @@ export const QuotationViewPage: React.FC = () => {
                 Create Invoice
               </button>
             )
+          )}
+
+          {role === 'CUSTOMER' && ['DRAFT', 'NEGOTIATING', 'APPROVED', 'PENDING_CUSTOMER'].includes(quotation.status) && (
+            <button
+              onClick={() => setIsCounterOfferModalOpen(true)}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs shadow-sm transition-colors"
+            >
+              Negotiate Offer
+            </button>
           )}
 
           <button
@@ -740,6 +779,73 @@ export const QuotationViewPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {isCounterOfferModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-900">Propose Counter-Offer</h3>
+              <button
+                onClick={() => setIsCounterOfferModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSubmitCounterOffer}>
+              <div className="p-5 space-y-4">
+                <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 text-xs rounded-lg">
+                  Counter-offers may be subject to additional management or finance approvals.
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Proposed Overall Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={proposedDiscount}
+                    onChange={(e) => setProposedDiscount(parseFloat(e.target.value) || 0)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-[#714B67] focus:ring-1 focus:ring-[#714B67]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Notes for Sales Team (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={customerNotes}
+                    onChange={(e) => setCustomerNotes(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-[#714B67] focus:ring-1 focus:ring-[#714B67]"
+                    placeholder="Provide justification or context for this counter-offer..."
+                  />
+                </div>
+              </div>
+              <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCounterOfferModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#714B67] hover:bg-[#5b3c53] rounded-lg flex items-center gap-2"
+                >
+                  {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Submit Proposal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

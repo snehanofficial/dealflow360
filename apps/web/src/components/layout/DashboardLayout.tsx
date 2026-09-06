@@ -93,7 +93,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         { name: 'Discount Policies', icon: ShieldAlert, path: '/discount-policies', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_REP'] },
         { name: 'Approvals', icon: CheckSquare, path: '/approvals', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Audit Trail', icon: Activity, path: '/audit', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
-        { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        // { name: 'Risk Analysis', icon: ShieldAlert, path: '/risk-analysis', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
     {
@@ -112,16 +112,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       items: [
         { name: 'Invoices', icon: FileCheck, path: '/invoices', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER', 'SALES_REP', 'CUSTOMER'] },
         { name: 'Billing Schedules', icon: FileSpreadsheet, path: '/billing', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE', 'SALES_MANAGER'] },
-        { name: 'Payments & Credit', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
+        // { name: 'Payments & Credit', icon: CreditCard, path: '/payments', allowedRoles: ['ADMIN', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
     },
-    {
-      title: 'CUSTOMER PORTAL',
-      allowedRoles: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'],
-      items: [
-        { name: 'Customer View', icon: ShoppingCart, path: '/portal', allowedRoles: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'] },
-      ]
-    },
+    // {
+    //   title: 'CUSTOMER PORTAL',
+    //   allowedRoles: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'],
+    //   items: [
+    //     { name: 'Customer View', icon: ShoppingCart, path: '/portal', allowedRoles: ['ADMIN', 'SALES_REP', 'SALES_MANAGER'] },
+    //   ]
+    // },
     {
       title: 'INSIGHTS',
       allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'],
