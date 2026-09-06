@@ -63,8 +63,12 @@ export const SignupForm: React.FC = () => {
 
     try {
       setApiError(null);
-      await signup(data);
-      navigate('/app', { replace: true });
+      const newUser = await signup(data);
+      if (newUser.role === 'CUSTOMER') {
+        navigate('/portal', { replace: true });
+      } else {
+        navigate('/app', { replace: true });
+      }
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data?.error?.message) {
         setApiError(err.response.data.error.message);

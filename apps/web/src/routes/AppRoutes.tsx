@@ -28,6 +28,7 @@ import { WarehouseKanbanPage } from '../features/warehouse/WarehouseKanbanPage.j
 import { WarehouseManagementPage } from '../features/warehouse/WarehouseManagementPage.js';
 import { InventoryDashboardPage } from '../features/inventory/InventoryDashboardPage.js';
 import { BackordersPage } from '../features/inventory/BackordersPage.js';
+import { AdminConfigPage } from '../features/admin/AdminConfigPage.js';
 import { Loader2 } from 'lucide-react';
 
 // ─── Role-aware catch-all ─────────────────────────────────────────────────
@@ -374,6 +375,18 @@ export const AppRoutes: React.FC = () => {
             <RoleRoute allowedRoles={['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS']}>
               <DashboardLayout>
                 <AuditTrailPage />
+              </DashboardLayout>
+            </RoleRoute>
+          }
+        />
+
+        {/* ── System Config (ADMIN only) ── */}
+        <Route
+          path="/admin/config"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <DashboardLayout>
+                <AdminConfigPage />
               </DashboardLayout>
             </RoleRoute>
           }

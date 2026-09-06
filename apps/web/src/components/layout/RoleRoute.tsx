@@ -64,6 +64,9 @@ export const RoleRoute: React.FC<RoleRouteProps> = ({
   if (requiredPermissions && requiredPermissions.length > 0) {
     const hasPermission = requiredPermissions.some((p) => permissions.includes(p));
     if (!hasPermission) {
+      if (role === 'CUSTOMER') {
+        return <Navigate to="/portal" replace />;
+      }
       return <ForbiddenPage />;
     }
   }
@@ -71,6 +74,9 @@ export const RoleRoute: React.FC<RoleRouteProps> = ({
   // 3. Role check
   if (allowedRoles && allowedRoles.length > 0) {
     if (!role || !allowedRoles.includes(role)) {
+      if (role === 'CUSTOMER') {
+        return <Navigate to="/portal" replace />;
+      }
       return <ForbiddenPage />;
     }
   }

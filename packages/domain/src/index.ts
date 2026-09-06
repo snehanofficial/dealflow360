@@ -12,3 +12,4 @@ export * from './control-tower/index.js';
 export * from './shared/index.js';
 export * from './audit/index.js';
 export * from './invoice/index.js';
+export * from './config/index.js';

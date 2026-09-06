@@ -1181,7 +1181,7 @@ The source's quick test explicitly requires recording a payment and checking tha
 ## 26.1 Login and setup
 
 - [ ] Sales rep signs up/logs in.
-- [ ] Admin can configure backend basics.
+- [~] Admin can configure backend basics.
 - [ ] Seed/configure at least one discount tier.
 - [ ] Seed/configure at least one warehouse.
 - [ ] Seed/configure at least one subscription plan.

@@ -129,6 +129,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         { name: 'Control Tower', icon: LayoutDashboard, path: '/control-tower', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
         { name: 'Analytics', icon: BarChart2, path: '/analytics', allowedRoles: ['ADMIN', 'SALES_MANAGER', 'FINANCE_OPERATIONS', 'FINANCE'] },
       ]
+    },
+    {
+      title: 'ADMINISTRATION',
+      allowedRoles: ['ADMIN'],
+      items: [
+        { name: 'System Config', icon: Settings, path: '/admin/config', allowedRoles: ['ADMIN'] },
+      ]
     }
   ];
 
