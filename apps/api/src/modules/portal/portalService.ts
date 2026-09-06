@@ -1,4 +1,4 @@
-import { db } from '@dealflow360/db';
+import { db, TxClient } from '@dealflow360/db';
 import {
   calculateLinePricing,
   calculateQuoteTotals,
@@ -169,33 +169,76 @@ export class PortalService {
   async submitCounterOffer(
     token: string,
     input: SubmitCounterOfferInput,
+    txClient?: TxClient
   ): Promise<{ quote: SanitizedPortalQuote; message: string }> {
-    const record = await this.validateAndGetPortalToken(token);
-    const quotation = record.quotation;
+    const run = async (tx: TxClient) => {
+      const record = await tx.portalToken.findUnique({
+        where: { token },
+        include: {
+          quotation: {
+            include: {
+              customer: true,
+              lines: { include: { product: true } },
+              counterOffers: { orderBy: { createdAt: 'desc' } },
+            },
+          },
+        },
+      });
 
-    // Apply counteroffer line updates or overall discount
-    let avgProposedDiscount = input.proposedDiscountPercent || 0;
+      if (!record || record.expiresAt < new Date()) {
+        throw new AppError('UNAUTHORIZED', 'Invalid or expired portal token', 401);
+      }
+      
+      const quotation = record.quotation;
 
-    if (input.lineDiscounts && input.lineDiscounts.length > 0) {
-      let sumDiscount = 0;
-      for (const ld of input.lineDiscounts) {
-        const line = quotation.lines.find((l) => l.id === ld.lineId);
-        if (line) {
-          const qty = ld.quantity || line.quantity;
-          const discPct = ld.proposedDiscountPercent;
-          sumDiscount += discPct;
+      if (!['DRAFT', 'NEGOTIATING', 'APPROVED'].includes(quotation.status)) {
+        throw new AppError('INVALID_STATE', `Quotation in status ${quotation.status} cannot be negotiated`, 400);
+      }
 
+      let avgProposedDiscount = input.proposedDiscountPercent || 0;
+
+      if (input.lineDiscounts && input.lineDiscounts.length > 0) {
+        let sumDiscount = 0;
+        for (const ld of input.lineDiscounts) {
+          const line = quotation.lines.find((l) => l.id === ld.lineId);
+          if (line) {
+            const qty = ld.quantity || line.quantity;
+            const discPct = ld.proposedDiscountPercent;
+            sumDiscount += discPct;
+
+            const calc = calculateLinePricing({
+              listPrice: line.listPrice,
+              standardCost: line.product.standardCost,
+              quantity: qty,
+              proposedDiscountPercent: discPct,
+            });
+
+            await tx.quoteLine.update({
+              where: { id: line.id },
+              data: {
+                quantity: calc.quantity,
+                proposedDiscountPercent: calc.proposedDiscountPercent,
+                discountAmount: calc.discountAmount,
+                netLinePrice: calc.netLinePrice,
+                lineCost: calc.lineCost,
+                lineMarginPercent: calc.lineMarginPercent,
+              },
+            });
+          }
+        }
+        avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
+      } else if (input.proposedDiscountPercent !== undefined) {
+        for (const line of quotation.lines) {
           const calc = calculateLinePricing({
             listPrice: line.listPrice,
             standardCost: line.product.standardCost,
-            quantity: qty,
-            proposedDiscountPercent: discPct,
+            quantity: line.quantity,
+            proposedDiscountPercent: input.proposedDiscountPercent,
           });
 
-          await db.quoteLine.update({
+          await tx.quoteLine.update({
             where: { id: line.id },
             data: {
-              quantity: calc.quantity,
               proposedDiscountPercent: calc.proposedDiscountPercent,
               discountAmount: calc.discountAmount,
               netLinePrice: calc.netLinePrice,
@@ -205,89 +248,87 @@ export class PortalService {
           });
         }
       }
-      avgProposedDiscount = sumDiscount / input.lineDiscounts.length;
-    } else if (input.proposedDiscountPercent !== undefined) {
-      for (const line of quotation.lines) {
-        const calc = calculateLinePricing({
-          listPrice: line.listPrice,
-          standardCost: line.product.standardCost,
-          quantity: line.quantity,
-          proposedDiscountPercent: input.proposedDiscountPercent,
-        });
 
-        await db.quoteLine.update({
-          where: { id: line.id },
-          data: {
-            proposedDiscountPercent: calc.proposedDiscountPercent,
-            discountAmount: calc.discountAmount,
-            netLinePrice: calc.netLinePrice,
-            lineCost: calc.lineCost,
-            lineMarginPercent: calc.lineMarginPercent,
-          },
+      const counterOfferRecord = await tx.counterOffer.create({
+        data: {
+          quotationId: quotation.id,
+          proposedDiscountPercent: avgProposedDiscount,
+          customerNotes: input.customerNotes || null,
+          status: 'SUBMITTED',
+        },
+      });
+
+      const updatedLines = await tx.quoteLine.findMany({
+        where: { quotationId: quotation.id },
+        include: { product: true },
+      });
+
+      const linesCalc = updatedLines.map((l) =>
+        calculateLinePricing({
+          listPrice: l.listPrice,
+          standardCost: l.product.standardCost,
+          quantity: l.quantity,
+          proposedDiscountPercent: l.proposedDiscountPercent,
+        })
+      );
+
+      const totals = calculateQuoteTotals(linesCalc);
+      const risk = evaluateQuoteRisk(totals);
+      const transition = evaluateSubmitTransition(risk);
+      
+      const newStatus = transition.targetStatus === 'PENDING_FINANCE' || transition.targetStatus === 'PENDING_MANAGER' 
+        ? transition.targetStatus 
+        : 'NEGOTIATING';
+
+      await tx.quotation.update({
+        where: { id: quotation.id },
+        data: {
+          status: newStatus,
+          subtotal: totals.subtotal,
+          totalDiscount: totals.totalDiscount,
+          taxableAmount: totals.taxableAmount,
+          taxAmount: totals.taxAmount,
+          netValue: totals.netValue,
+          grossMarginPercent: totals.grossMarginPercent,
+          riskScore: risk.riskScore,
+          riskLevel: risk.riskLevel,
+        },
+      });
+
+      if (quotation.status !== newStatus) {
+        await tx.approvalRequest.updateMany({
+          where: { quotationId: quotation.id, status: 'PENDING' },
+          data: { status: 'SUPERSEDED' },
         });
       }
-    }
 
-    // Persist counteroffer record
-    const counterOfferRecord = await db.counterOffer.create({
-      data: {
-        quotationId: quotation.id,
-        proposedDiscountPercent: avgProposedDiscount,
-        customerNotes: input.customerNotes || null,
-        status: 'SUBMITTED',
-      },
-    });
+      const finalQuote = await tx.quotation.findUnique({
+        where: { id: quotation.id },
+        include: {
+          customer: true,
+          lines: { include: { product: true } },
+          counterOffers: { orderBy: { createdAt: 'desc' } },
+        },
+      });
 
-    // Fresh recalculation of quote aggregate totals & commercial risk
-    const updatedLines = await db.quoteLine.findMany({
-      where: { quotationId: quotation.id },
-      include: { product: true },
-    });
+      await recordAuditEvent({
+        eventType: 'CUSTOMER_COUNTER_OFFER',
+        action: `Customer submitted counteroffer for ${quotation.quoteNumber} (Avg Disc: ${avgProposedDiscount}%)`,
+        entityType: 'Quotation',
+        entityId: quotation.id,
+        actor: { id: quotation.customerId, role: 'CUSTOMER', name: quotation.customer.name },
+        previousState: quotation as any,
+        newState: finalQuote as any,
+      }, tx as any);
 
-    const linesCalc = updatedLines.map((l) =>
-      calculateLinePricing({
-        listPrice: l.listPrice,
-        standardCost: l.product.standardCost,
-        quantity: l.quantity,
-        proposedDiscountPercent: l.proposedDiscountPercent,
-      }),
-    );
-
-    const totals = calculateQuoteTotals(linesCalc);
-    const risk = evaluateQuoteRisk(totals);
-    const transition = evaluateSubmitTransition(risk);
-
-    const newStatus =
-      transition.targetStatus === 'APPROVED' ? 'NEGOTIATING' : transition.targetStatus;
-
-    await db.quotation.update({
-      where: { id: quotation.id },
-      data: {
-        status: newStatus,
-        subtotal: totals.subtotal,
-        totalDiscount: totals.totalDiscount,
-        netValue: totals.netValue,
-        grossMarginPercent: totals.grossMarginPercent,
-        riskScore: risk.riskScore,
-        riskLevel: risk.riskLevel,
-      },
-    });
-
-    await recordAuditEvent({
-      eventType: 'COUNTEROFFER_SUBMITTED',
-      action: `Customer (${quotation.customer?.name || 'Customer'}) submitted counteroffer on quotation ${quotation.quoteNumber}`,
-      entityType: 'CounterOffer',
-      entityId: counterOfferRecord.id,
-      actor: { id: quotation.customerId, name: quotation.customer?.name || 'Customer', role: 'CUSTOMER' },
-      newState: counterOfferRecord,
-    });
-
-    const updatedQuote = await this.getQuoteByPortalToken(token);
-
-    return {
-      quote: updatedQuote,
-      message: `Counteroffer submitted successfully. Quotation status updated to ${newStatus}.`,
+      const updatedQuote = await this.getQuoteByPortalToken(token);
+      return {
+        quote: updatedQuote,
+        message: 'Counteroffer submitted successfully. Our team will review the new commercial terms.',
+      };
     };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 }
 

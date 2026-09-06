@@ -68,6 +68,89 @@ vi.mock('@dealflow360/db', () => {
   quotationsMap.set(approvedQuote.id, approvedQuote);
   quotationsMap.set(draftQuote.id, draftQuote);
 
+  const mockDb: any = {
+    quotation: {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => quotationsMap.get(where.id) || null),
+      update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+        const q = quotationsMap.get(where.id);
+        if (!q) return null;
+        Object.assign(q, data);
+        return q;
+      }),
+    },
+    invoice: {
+      count: vi.fn(async (params?: any) => {
+        const where = params?.where;
+        if (!where || Object.keys(where).length === 0) return invoicesMap.size;
+        let cnt = 0;
+        for (const inv of invoicesMap.values()) {
+          if (where.status && inv.status !== where.status) continue;
+          if (where.customerId && inv.customerId !== where.customerId) continue;
+          cnt++;
+        }
+        return cnt;
+      }),
+      findMany: vi.fn(async ({ where }: any) => {
+        const res: any[] = [];
+        for (const inv of invoicesMap.values()) {
+          if (where?.status && inv.status !== where.status) continue;
+          if (where?.customerId && inv.customerId !== where.customerId) continue;
+          res.push(inv);
+        }
+        return res;
+      }),
+      findUnique: vi.fn(async ({ where }: { where: { id?: string; quotationId?: string; invoiceNumber?: string } }) => {
+        if (where.id) return invoicesMap.get(where.id) || null;
+        if (where.quotationId) {
+          for (const inv of invoicesMap.values()) {
+            if (inv.quotationId === where.quotationId) return inv;
+          }
+        }
+        return null;
+      }),
+      create: vi.fn(async ({ data }: { data: any }) => {
+        const id = `inv-id-${Date.now()}-${Math.random()}`;
+        const lines = data.lines?.create?.map((l: any, idx: number) => ({
+          id: `inv-line-${idx + 1}`,
+          invoiceId: id,
+          ...l,
+        })) || [];
+
+        const newInvoice = {
+          id,
+          ...data,
+          lines,
+          payments: [],
+          customer: customer1,
+          quotation: approvedQuote,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        delete newInvoice.lines.create;
+        invoicesMap.set(id, newInvoice);
+        return newInvoice;
+      }),
+      update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+        const inv = invoicesMap.get(where.id);
+        if (!inv) return null;
+        Object.assign(inv, data);
+        return inv;
+      }),
+    },
+    payment: {
+      create: vi.fn(async ({ data }: { data: any }) => ({
+        id: `pmt-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        ...data,
+      })),
+      findMany: vi.fn(async () => []),
+    },
+    auditLog: {
+      create: vi.fn(async ({ data }: any) => ({ id: 'audit-01', createdAt: new Date(), ...data })),
+    },
+    $transaction: vi.fn(async (cb: any) => cb(mockDb)),
+  };
+
   return {
     Prisma: {
       JsonNull: null,
@@ -78,78 +161,7 @@ vi.mock('@dealflow360/db', () => {
       PAID: 'PAID',
       VOID: 'VOID',
     },
-    db: {
-      quotation: {
-        findUnique: vi.fn(async ({ where }: { where: { id: string } }) => quotationsMap.get(where.id) || null),
-        update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
-          const q = quotationsMap.get(where.id);
-          if (!q) return null;
-          Object.assign(q, data);
-          return q;
-        }),
-      },
-      invoice: {
-        count: vi.fn(async (params?: any) => {
-          const where = params?.where;
-          if (!where || Object.keys(where).length === 0) return invoicesMap.size;
-          let cnt = 0;
-          for (const inv of invoicesMap.values()) {
-            if (where.status && inv.status !== where.status) continue;
-            if (where.customerId && inv.customerId !== where.customerId) continue;
-            cnt++;
-          }
-          return cnt;
-        }),
-        findMany: vi.fn(async ({ where }: any) => {
-          const res: any[] = [];
-          for (const inv of invoicesMap.values()) {
-            if (where?.status && inv.status !== where.status) continue;
-            if (where?.customerId && inv.customerId !== where.customerId) continue;
-            res.push(inv);
-          }
-          return res;
-        }),
-        findUnique: vi.fn(async ({ where }: { where: { id?: string; quotationId?: string; invoiceNumber?: string } }) => {
-          if (where.id) return invoicesMap.get(where.id) || null;
-          if (where.quotationId) {
-            for (const inv of invoicesMap.values()) {
-              if (inv.quotationId === where.quotationId) return inv;
-            }
-          }
-          return null;
-        }),
-        create: vi.fn(async ({ data }: { data: any }) => {
-          const id = `inv-id-${Date.now()}-${Math.random()}`;
-          const lines = data.lines?.create?.map((l: any, idx: number) => ({
-            id: `inv-line-${idx + 1}`,
-            invoiceId: id,
-            ...l,
-          })) || [];
-
-          const newInvoice = {
-            id,
-            ...data,
-            lines,
-            customer: customer1,
-            quotation: approvedQuote,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          delete newInvoice.lines.create;
-          invoicesMap.set(id, newInvoice);
-          return newInvoice;
-        }),
-        update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
-          const inv = invoicesMap.get(where.id);
-          if (!inv) return null;
-          Object.assign(inv, data);
-          return inv;
-        }),
-      },
-      auditLog: {
-        create: vi.fn(async ({ data }: any) => ({ id: 'audit-01', createdAt: new Date(), ...data })),
-      },
-    },
+    db: mockDb,
   };
 });
 

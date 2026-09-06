@@ -74,8 +74,7 @@ vi.mock('@dealflow360/db', () => {
   };
   tokensMap.set(revokedToken.token, revokedToken);
 
-  return {
-    db: {
+  const dbMock: any = {
       portalToken: {
         findUnique: vi.fn(async ({ where }: { where: { token: string } }) => {
           const t = tokensMap.get(where.token);
@@ -141,9 +140,10 @@ vi.mock('@dealflow360/db', () => {
           return newCo;
         }),
       },
-    },
   };
+  return { db: { ...dbMock, $transaction: async (cb: any) => cb(dbMock) } };
 });
+
 
 describe('Customer Negotiation Portal API (Developer B Phase B2)', () => {
   let repToken: string;

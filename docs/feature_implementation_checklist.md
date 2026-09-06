@@ -10,6 +10,17 @@
 
 ## 0. Product Definition and Success Criteria
 
+### Phase 1: Security & RBAC Foundation
+- [~] Complete Permission Registry mapping all actions to explicit permissions
+- [~] Re-write `AppRoutes.tsx` with rigorous `RoleRoute` wrappers, removing unguarded paths
+- [~] Add `requirePermission` middleware to all internal API routes (replacing generic `authenticate`)
+- [~] Add robust application-level 403 Forbidden and 404 Not Found error pages
+- [~] Scope `GET /quotes` queries strictly to the customer's own ID when `role=CUSTOMER`
+- [~] Restrict Customer portal access strictly to the customer's own token-scoped deals
+
+*Note on Phase 1: Server-side RBAC and API tests passed (102/102). Browser verification is currently BLOCKED due to a Playwright/CDN 404 failure. Frontend/browser RBAC is unverified. Items marked `[~]` (partial).*
+
+
 ### 0.1 Product goal
 
 - [ ] Build DealFlow360 as an intelligent, self-governing B2B sales operations platform.
@@ -1871,6 +1882,7 @@ The source is strong on required behavior but intentionally leaves several exact
 - [ ] Cancellation effective-date rules.
 - [ ] Partial refund calculation.
 - [ ] Credit note issuance rules.
+
 - [ ] Co-purchase recommendation scoring.
 - [ ] Promotion ranking boost.
 - [ ] Historical-average window for discount anomalies.

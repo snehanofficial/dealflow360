@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/auth.js';
+import { authenticate, requirePermission } from '../../middleware/auth.js';
+import { Permissions } from '@dealflow360/contracts';
 import {
   listWarehouses,
   getWarehouseById,
@@ -15,12 +16,13 @@ export const warehouseRoutes: Router = Router();
 warehouseRoutes.use(authenticate);
 
 // Warehouse endpoints
-warehouseRoutes.get('/warehouses', listWarehouses);
-warehouseRoutes.get('/warehouses/:id', getWarehouseById);
-warehouseRoutes.post('/warehouses', requireRole(['ADMIN', 'FINANCE_OPERATIONS']), createWarehouse);
-warehouseRoutes.patch('/warehouses/:id', requireRole(['ADMIN', 'FINANCE_OPERATIONS']), updateWarehouse);
+warehouseRoutes.get('/warehouses', requirePermission(Permissions.WAREHOUSE_VIEW), listWarehouses);
+warehouseRoutes.get('/warehouses/:id', requirePermission(Permissions.WAREHOUSE_VIEW), getWarehouseById);
+warehouseRoutes.post('/warehouses', requirePermission(Permissions.WAREHOUSE_MANAGE), createWarehouse);
+warehouseRoutes.patch('/warehouses/:id', requirePermission(Permissions.WAREHOUSE_MANAGE), updateWarehouse);
 
 // Inventory & Movements endpoints
-warehouseRoutes.get('/inventory', getInventoryStock);
-warehouseRoutes.get('/inventory/movements', getInventoryMovements);
-warehouseRoutes.post('/inventory/adjustments', requireRole(['ADMIN', 'FINANCE', 'FINANCE_OPERATIONS', 'SALES_MANAGER', 'SALES_REP']), adjustInventory);
+warehouseRoutes.get('/inventory', requirePermission(Permissions.INVENTORY_VIEW), getInventoryStock);
+warehouseRoutes.get('/inventory/movements', requirePermission(Permissions.INVENTORY_VIEW), getInventoryMovements);
+warehouseRoutes.post('/inventory/adjustments', requirePermission(Permissions.INVENTORY_MANAGE), adjustInventory);
+

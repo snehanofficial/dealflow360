@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requirePermission } from '../middleware/auth.js';
+import { Permissions } from '@dealflow360/contracts';
 import {
   createQuotation,
   listQuotations,
@@ -15,11 +16,12 @@ export const quoteRoutes: Router = Router();
 
 quoteRoutes.use(authenticate);
 
-quoteRoutes.post('/', createQuotation);
-quoteRoutes.get('/', listQuotations);
-quoteRoutes.get('/:id', getQuotation);
-quoteRoutes.post('/:id/lines', addQuoteLine);
-quoteRoutes.patch('/:id/lines/:lineId', updateQuoteLine);
-quoteRoutes.delete('/:id/lines/:lineId', deleteQuoteLine);
-quoteRoutes.post('/:id/submit', submitQuotation);
-quoteRoutes.get('/:quotationId/recommendations', getRecommendations);
+quoteRoutes.post('/', requirePermission(Permissions.QUOTATION_CREATE), createQuotation);
+quoteRoutes.get('/', requirePermission(Permissions.QUOTATION_VIEW), listQuotations);
+quoteRoutes.get('/:id', requirePermission(Permissions.QUOTATION_VIEW), getQuotation);
+quoteRoutes.post('/:id/lines', requirePermission(Permissions.QUOTATION_UPDATE), addQuoteLine);
+quoteRoutes.patch('/:id/lines/:lineId', requirePermission(Permissions.QUOTATION_UPDATE), updateQuoteLine);
+quoteRoutes.delete('/:id/lines/:lineId', requirePermission(Permissions.QUOTATION_UPDATE), deleteQuoteLine);
+quoteRoutes.post('/:id/submit', requirePermission(Permissions.QUOTATION_SUBMIT), submitQuotation);
+quoteRoutes.get('/:quotationId/recommendations', requirePermission(Permissions.QUOTATION_VIEW), getRecommendations);
+

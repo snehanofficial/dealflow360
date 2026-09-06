@@ -116,12 +116,59 @@ export class InvoiceController {
         ? { id: req.user.userId, name: req.user.email, role: req.user.role }
         : null;
 
-      const invoice = await invoiceService.markInvoicePaid(id, actor);
+      const invoice = await invoiceService.getInvoiceById(id);
+      await invoiceService.recordPayment(
+        id,
+        invoice.totalAmount,
+        'MANUAL_SETTLEMENT',
+        'FULL_PAYMENT',
+        actor,
+      );
+
+      const updatedInvoice = await invoiceService.getInvoiceById(id);
 
       return res.status(200).json({
         success: true,
-        message: `Invoice ${invoice.invoiceNumber} marked as PAID`,
-        data: invoice,
+        message: `Invoice ${updatedInvoice.invoiceNumber} marked as PAID`,
+        data: updatedInvoice,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async recordPayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const { amount, method, reference } = req.body;
+      const actor = req.user
+        ? { id: req.user.userId, name: req.user.email, role: req.user.role }
+        : null;
+
+      if (amount === undefined || !method) {
+        return res.status(400).json({ success: false, error: { message: 'amount and method are required' } });
+      }
+
+      const payment = await invoiceService.recordPayment(id, amount, method, reference, actor);
+      
+      return res.status(201).json({
+        success: true,
+        message: `Payment recorded for Invoice ${id}`,
+        data: payment,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async listPayments(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const payments = await invoiceService.listPayments(id);
+      
+      return res.status(200).json({
+        success: true,
+        data: payments,
       });
     } catch (error) {
       return next(error);

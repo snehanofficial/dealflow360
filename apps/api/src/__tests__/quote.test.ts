@@ -32,8 +32,7 @@ vi.mock('@dealflow360/db', () => {
   };
   productsMap.set(defaultProduct.id, defaultProduct);
 
-  return {
-    db: {
+  const dbMock: any = {
       user: {
         findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({ id: where.id, email: 'rep@dealflow.com', name: 'Sales Rep' })),
         findFirst: vi.fn(async () => ({ id: 'user-rep-01', email: 'rep@dealflow.com', name: 'Sales Rep' })),
@@ -138,9 +137,10 @@ vi.mock('@dealflow360/db', () => {
           return null;
         }),
       },
-    },
   };
+  return { db: { ...dbMock, $transaction: async (cb: any) => cb(dbMock) } };
 });
+
 
 describe('Quotation Management API (Developer B Phase B1)', () => {
   let token: string;

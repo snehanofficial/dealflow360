@@ -12,3 +12,8 @@ const adapter = new PrismaPg(pool);
 
 export const db = new PrismaClient({ adapter });
 export * from '@prisma/client';
+
+export type TxClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;

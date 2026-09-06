@@ -1,4 +1,4 @@
-import { db, Quotation, QuoteLine, Product, Customer } from '@dealflow360/db';
+import { db, TxClient, Quotation, QuoteLine, Product, Customer } from '@dealflow360/db';
 import {
   calculateLinePricing,
   calculateQuoteTotals,
@@ -27,9 +27,11 @@ export interface PaginatedQuotations {
 export class QuoteService {
   async getQuotationById(
     quotationId: string,
-    actorContext?: { role?: string; customerId?: string },
+    actorContext?: { role?: string; customerId?: string } | null,
+    txClient?: TxClient
   ): Promise<any | null> {
-    const quotation = await db.quotation.findUnique({
+    const prisma = txClient || db;
+    const quotation = await prisma.quotation.findUnique({
       where: { id: quotationId },
       include: {
         customer: true,
@@ -100,7 +102,7 @@ export class QuoteService {
     };
   }
 
-  private async ensureValidUser(userId: string): Promise<string> {
+  private async ensureValidUser(userId: string, tx?: TxClient): Promise<string> {
     if (!db.user?.findUnique) {
       return userId || 'user-rep-01';
     }
@@ -131,7 +133,7 @@ export class QuoteService {
     return systemUser.id;
   }
 
-  private async ensureValidCustomer(customerId: string): Promise<Customer> {
+  private async ensureValidCustomer(customerId: string, tx?: TxClient): Promise<Customer> {
     if (!db.customer?.findUnique) {
       return { id: customerId, code: 'CUST-001', name: 'Acme Corp', email: 'acme@example.com', tier: 'ENTERPRISE', status: 'ACTIVE' } as Customer;
     }
@@ -163,7 +165,7 @@ export class QuoteService {
     });
   }
 
-  private async ensureValidProduct(productId: string): Promise<Product> {
+  private async ensureValidProduct(productId: string, tx?: TxClient): Promise<Product> {
     if (!db.product?.findUnique) {
       return { id: productId, sku: 'PROD-001', name: 'Software License', category: 'Software', listPrice: 1000, standardCost: 500, billingType: 'ONE_TIME', isActive: true } as Product;
     }
@@ -209,49 +211,57 @@ export class QuoteService {
     userId: string,
     input: CreateQuoteInput,
     actor?: { id?: string; name?: string; role?: string } | null,
+    txClient?: TxClient,
   ): Promise<QuotationWithDetails> {
-    const customer = await this.ensureValidCustomer(input.customerId);
-    const validUserId = await this.ensureValidUser(userId);
+    const run = async (tx: TxClient) => {
+      const customer = await this.ensureValidCustomer(input.customerId, tx);
+      const validUserId = await this.ensureValidUser(userId, tx);
 
-    const quoteNumber =
-      input.quoteNumber || `QT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+      const quoteNumber =
+        input.quoteNumber || `QT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
 
-    const quotation = await db.quotation.create({
-      data: {
-        quoteNumber,
-        customerId: customer.id,
-        createdById: validUserId,
-        status: 'DRAFT',
-        subtotal: 0,
-        totalDiscount: 0,
-        netValue: 0,
-        grossMarginPercent: 0,
-        riskScore: 1.0,
-        riskLevel: 'LOW',
-      },
-    });
+      const quotation = await tx.quotation.create({
+        data: {
+          quoteNumber,
+          customerId: customer.id,
+          createdById: validUserId,
+          status: 'DRAFT',
+          subtotal: 0,
+          totalDiscount: 0,
+          netValue: 0,
+          grossMarginPercent: 0,
+          riskScore: 1.0,
+          riskLevel: 'LOW',
+        },
+      });
 
-    if (input.initialLines && input.initialLines.length > 0) {
-      for (const lineInput of input.initialLines) {
-        await this.addQuoteLine(quotation.id, lineInput, actor);
+      if (input.initialLines && input.initialLines.length > 0) {
+        for (const lineInput of input.initialLines) {
+          await this.addQuoteLine(quotation.id, lineInput, actor, tx);
+        }
       }
-    }
 
-    const result = await this.getQuotationById(quotation.id);
-    if (!result) {
-      throw new Error(`Failed to create quotation`);
-    }
+      const result = await this.getQuotationById(quotation.id, undefined, tx);
+      if (!result) {
+        throw new Error(`Failed to create quotation`);
+      }
 
-    await recordAuditEvent({
-      eventType: 'QUOTE_CREATED',
-      action: `Created draft quotation ${quotation.quoteNumber}`,
-      entityType: 'Quotation',
-      entityId: quotation.id,
-      actor: actor || { id: validUserId },
-      newState: result,
-    });
+      await recordAuditEvent(
+        {
+          eventType: 'QUOTE_CREATED',
+          action: `Created draft quotation ${quotation.quoteNumber}`,
+          entityType: 'Quotation',
+          entityId: quotation.id,
+          actor: actor || { id: validUserId },
+          newState: result,
+        },
+        tx as any
+      );
 
-    return result;
+      return result;
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 
   async listQuotations(query: ListQuotesQuery, isCustomerView = false): Promise<PaginatedQuotations> {
@@ -322,97 +332,105 @@ export class QuoteService {
       proposedDiscountPercent?: number;
     },
     actor?: { id?: string; name?: string; role?: string } | null,
+    txClient?: TxClient,
   ): Promise<QuotationWithDetails> {
-    const quotation = await db.quotation.findUnique({
-      where: { id: quotationId },
-      include: { lines: true },
-    });
-
-    if (!quotation) {
-      throw new Error(`Quotation with ID ${quotationId} not found`);
-    }
-
-    const product = await this.ensureValidProduct(input.productId);
-
-    const existingLine = quotation.lines.find((l) => l.productId === input.productId);
-    const qty = existingLine ? existingLine.quantity + (input.quantity || 1) : input.quantity || 1;
-    const discountPct =
-      input.proposedDiscountPercent !== undefined
-        ? input.proposedDiscountPercent
-        : existingLine
-        ? existingLine.proposedDiscountPercent
-        : 0;
-    const unitPrice =
-      input.unitPrice !== undefined
-        ? input.unitPrice
-        : existingLine && existingLine.unitPrice > 0
-        ? existingLine.unitPrice
-        : product.listPrice;
-    const taxRate = product.taxRate || 0;
-
-    const calc = calculateLinePricing({
-      listPrice: product.listPrice,
-      unitPrice,
-      standardCost: product.standardCost,
-      quantity: qty,
-      proposedDiscountPercent: discountPct,
-      taxRate,
-    });
-
-    let targetLineId = existingLine?.id;
-
-    if (existingLine) {
-      await db.quoteLine.update({
-        where: { id: existingLine.id },
-        data: {
-          quantity: calc.quantity,
-          unitPrice: calc.unitPrice,
-          proposedDiscountPercent: calc.proposedDiscountPercent,
-          discountAmount: calc.discountAmount,
-          taxRate: calc.taxRate,
-          taxAmount: calc.taxAmount,
-          netLinePrice: calc.netLinePrice,
-          lineCost: calc.lineCost,
-          lineMarginPercent: calc.lineMarginPercent,
-        },
+    const run = async (tx: TxClient) => {
+      const quotation = await tx.quotation.findUnique({
+        where: { id: quotationId },
+        include: { lines: true },
       });
-    } else {
-      const newLine = await db.quoteLine.create({
-        data: {
-          quotationId,
-          productId: product.id,
-          quantity: calc.quantity,
-          listPrice: calc.listPrice,
-          unitPrice: calc.unitPrice,
-          proposedDiscountPercent: calc.proposedDiscountPercent,
-          discountAmount: calc.discountAmount,
-          taxRate: calc.taxRate,
-          taxAmount: calc.taxAmount,
-          netLinePrice: calc.netLinePrice,
-          lineCost: calc.lineCost,
-          lineMarginPercent: calc.lineMarginPercent,
-        },
+
+      if (!quotation) {
+        throw new Error(`Quotation with ID ${quotationId} not found`);
+      }
+
+      const product = await this.ensureValidProduct(input.productId, tx);
+
+      const existingLine = quotation.lines.find((l) => l.productId === input.productId);
+      const qty = existingLine ? existingLine.quantity + (input.quantity || 1) : input.quantity || 1;
+      const discountPct =
+        input.proposedDiscountPercent !== undefined
+          ? input.proposedDiscountPercent
+          : existingLine
+          ? existingLine.proposedDiscountPercent
+          : 0;
+      const unitPrice =
+        input.unitPrice !== undefined
+          ? input.unitPrice
+          : existingLine && existingLine.unitPrice > 0
+          ? existingLine.unitPrice
+          : product.listPrice;
+      const taxRate = product.taxRate || 0;
+
+      const calc = calculateLinePricing({
+        listPrice: product.listPrice,
+        unitPrice,
+        standardCost: product.standardCost,
+        quantity: qty,
+        proposedDiscountPercent: discountPct,
+        taxRate,
       });
-      targetLineId = newLine.id;
-    }
 
-    await this.recalculateQuotation(quotationId);
+      let targetLineId = existingLine?.id;
 
-    const updated = await this.getQuotationById(quotationId);
-    if (!updated) {
-      throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
-    }
+      if (existingLine) {
+        await tx.quoteLine.update({
+          where: { id: existingLine.id },
+          data: {
+            quantity: calc.quantity,
+            unitPrice: calc.unitPrice,
+            proposedDiscountPercent: calc.proposedDiscountPercent,
+            discountAmount: calc.discountAmount,
+            taxRate: calc.taxRate,
+            taxAmount: calc.taxAmount,
+            netLinePrice: calc.netLinePrice,
+            lineCost: calc.lineCost,
+            lineMarginPercent: calc.lineMarginPercent,
+          },
+        });
+      } else {
+        const newLine = await tx.quoteLine.create({
+          data: {
+            quotationId,
+            productId: product.id,
+            quantity: calc.quantity,
+            listPrice: calc.listPrice,
+            unitPrice: calc.unitPrice,
+            proposedDiscountPercent: calc.proposedDiscountPercent,
+            discountAmount: calc.discountAmount,
+            taxRate: calc.taxRate,
+            taxAmount: calc.taxAmount,
+            netLinePrice: calc.netLinePrice,
+            lineCost: calc.lineCost,
+            lineMarginPercent: calc.lineMarginPercent,
+          },
+        });
+        targetLineId = newLine.id;
+      }
 
-    await recordAuditEvent({
-      eventType: 'QUOTE_LINE_ADDED',
-      action: `Added item (${product.name}, qty: ${calc.quantity}, disc: ${calc.proposedDiscountPercent}%) to ${quotation.quoteNumber}`,
-      entityType: 'QuoteLine',
-      entityId: targetLineId || quotationId,
-      actor,
-      newState: { quotationId, productId: product.id, ...calc },
-    });
+      await this.recalculateQuotation(quotationId, tx);
 
-    return updated;
+      const updated = await this.getQuotationById(quotationId, undefined, tx);
+      if (!updated) {
+        throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
+      }
+
+      await recordAuditEvent(
+        {
+          eventType: 'QUOTE_LINE_ADDED',
+          action: `Added item (${product.name}, qty: ${calc.quantity}, disc: ${calc.proposedDiscountPercent}%) to ${quotation.quoteNumber}`,
+          entityType: 'QuoteLine',
+          entityId: targetLineId || quotationId,
+          actor,
+          newState: { quotationId, productId: product.id, ...calc },
+        },
+        tx as any
+      );
+
+      return updated;
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 
   async updateQuoteLine(
@@ -420,209 +438,238 @@ export class QuoteService {
     lineId: string,
     input: UpdateQuoteLineInput,
     actor?: { id?: string; name?: string; role?: string } | null,
+    txClient?: TxClient,
   ): Promise<QuotationWithDetails> {
-    const line = await db.quoteLine.findFirst({
-      where: { id: lineId, quotationId },
-      include: { product: true },
-    });
+    const run = async (tx: TxClient) => {
+      const line = await tx.quoteLine.findFirst({
+        where: { id: lineId, quotationId },
+        include: { product: true },
+      });
 
-    if (!line) {
-      throw new Error(`Quote line ${lineId} not found on quotation ${quotationId}`);
-    }
+      if (!line) {
+        throw new Error(`Quote line ${lineId} not found on quotation ${quotationId}`);
+      }
 
-    const qty = input.quantity !== undefined ? input.quantity : line.quantity;
-    const discountPct =
-      input.proposedDiscountPercent !== undefined
-        ? input.proposedDiscountPercent
-        : line.proposedDiscountPercent;
-    const unitPrice =
-      input.unitPrice !== undefined ? input.unitPrice : line.unitPrice || line.listPrice;
-    const taxRate = line.taxRate || line.product.taxRate || 0;
+      const qty = input.quantity !== undefined ? input.quantity : line.quantity;
+      const discountPct =
+        input.proposedDiscountPercent !== undefined
+          ? input.proposedDiscountPercent
+          : line.proposedDiscountPercent;
+      const unitPrice =
+        input.unitPrice !== undefined ? input.unitPrice : line.unitPrice || line.listPrice;
+      const taxRate = line.taxRate || line.product.taxRate || 0;
 
-    const calc = calculateLinePricing({
-      listPrice: line.listPrice,
-      unitPrice,
-      standardCost: line.product.standardCost,
-      quantity: qty,
-      proposedDiscountPercent: discountPct,
-      taxRate,
-    });
+      const calc = calculateLinePricing({
+        listPrice: line.listPrice,
+        unitPrice,
+        standardCost: line.product.standardCost,
+        quantity: qty,
+        proposedDiscountPercent: discountPct,
+        taxRate,
+      });
 
-    await db.quoteLine.update({
-      where: { id: lineId },
-      data: {
-        quantity: calc.quantity,
-        unitPrice: calc.unitPrice,
-        proposedDiscountPercent: calc.proposedDiscountPercent,
-        discountAmount: calc.discountAmount,
-        taxRate: calc.taxRate,
-        taxAmount: calc.taxAmount,
-        netLinePrice: calc.netLinePrice,
-        lineCost: calc.lineCost,
-        lineMarginPercent: calc.lineMarginPercent,
-      },
-    });
+      await tx.quoteLine.update({
+        where: { id: lineId },
+        data: {
+          quantity: calc.quantity,
+          unitPrice: calc.unitPrice,
+          proposedDiscountPercent: calc.proposedDiscountPercent,
+          discountAmount: calc.discountAmount,
+          taxRate: calc.taxRate,
+          taxAmount: calc.taxAmount,
+          netLinePrice: calc.netLinePrice,
+          lineCost: calc.lineCost,
+          lineMarginPercent: calc.lineMarginPercent,
+        },
+      });
 
-    await this.recalculateQuotation(quotationId);
+      await this.recalculateQuotation(quotationId, tx);
 
-    const updated = await this.getQuotationById(quotationId);
-    if (!updated) {
-      throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
-    }
+      const updated = await this.getQuotationById(quotationId, undefined, tx);
+      if (!updated) {
+        throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
+      }
 
-    await recordAuditEvent({
-      eventType: 'QUOTE_LINE_UPDATED',
-      action: `Updated line item ${lineId} on quotation ${quotationId}`,
-      entityType: 'QuoteLine',
-      entityId: lineId,
-      actor,
-      previousState: line,
-      newState: { lineId, ...calc },
-    });
+      await recordAuditEvent(
+        {
+          eventType: 'QUOTE_LINE_UPDATED',
+          action: `Updated line item ${lineId} on quotation ${quotationId}`,
+          entityType: 'QuoteLine',
+          entityId: lineId,
+          actor,
+          previousState: line as any,
+          newState: { lineId, ...calc },
+        },
+        tx as any
+      );
 
-    return updated;
+      return updated;
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 
   async deleteQuoteLine(
     quotationId: string,
     lineId: string,
     actor?: { id?: string; name?: string; role?: string } | null,
+    txClient?: TxClient,
   ): Promise<QuotationWithDetails> {
-    const line = await db.quoteLine.findFirst({
-      where: { id: lineId, quotationId },
-    });
+    const run = async (tx: TxClient) => {
+      const line = await tx.quoteLine.findFirst({
+        where: { id: lineId, quotationId },
+      });
 
-    if (!line) {
-      throw new Error(`Quote line ${lineId} not found on quotation ${quotationId}`);
-    }
+      if (!line) {
+        throw new Error(`Quote line ${lineId} not found on quotation ${quotationId}`);
+      }
 
-    await db.quoteLine.delete({
-      where: { id: lineId },
-    });
+      await tx.quoteLine.delete({
+        where: { id: lineId },
+      });
 
-    await this.recalculateQuotation(quotationId);
+      await this.recalculateQuotation(quotationId, tx);
 
-    const updated = await this.getQuotationById(quotationId);
-    if (!updated) {
-      throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
-    }
+      const updated = await this.getQuotationById(quotationId, undefined, tx);
+      if (!updated) {
+        throw new Error(`Failed to retrieve updated quotation ${quotationId}`);
+      }
 
-    await recordAuditEvent({
-      eventType: 'QUOTE_LINE_DELETED',
-      action: `Deleted line item ${lineId} from quotation ${quotationId}`,
-      entityType: 'QuoteLine',
-      entityId: lineId,
-      actor,
-      previousState: line,
-    });
+      await recordAuditEvent(
+        {
+          eventType: 'QUOTE_LINE_DELETED',
+          action: `Deleted line item ${lineId} from quotation ${quotationId}`,
+          entityType: 'QuoteLine',
+          entityId: lineId,
+          actor,
+          previousState: line as any,
+        },
+        tx as any
+      );
 
-    return updated;
+      return updated;
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 
   async submitQuotation(
     quotationId: string,
     actor?: { id?: string; name?: string; role?: string } | null,
+    txClient?: TxClient,
   ): Promise<{ quotation: QuotationWithDetails; transitionMessage: string }> {
-    const quotation = await this.getQuotationById(quotationId);
-    if (!quotation) {
-      throw new Error(`Quotation ${quotationId} not found`);
-    }
+    const run = async (tx: TxClient) => {
+      const quotation = await this.getQuotationById(quotationId, undefined, tx);
+      if (!quotation) {
+        throw new Error(`Quotation ${quotationId} not found`);
+      }
 
-    if (quotation.status !== 'DRAFT') {
-      throw new Error(`Only DRAFT quotations can be submitted. Current status: ${quotation.status}`);
-    }
+      if (quotation.status !== 'DRAFT') {
+        throw new Error(`Only DRAFT quotations can be submitted. Current status: ${quotation.status}`);
+      }
 
-    if (quotation.lines.length === 0) {
-      throw new Error(`Cannot submit a quotation with zero line items`);
-    }
+      if (quotation.lines.length === 0) {
+        throw new Error(`Cannot submit a quotation with zero line items`);
+      }
 
-    await this.recalculateQuotation(quotationId);
-    const refreshed = await this.getQuotationById(quotationId);
-    if (!refreshed) throw new Error(`Quotation not found after recalculation`);
+      await this.recalculateQuotation(quotationId, tx);
+      const refreshed = await this.getQuotationById(quotationId, undefined, tx);
+      if (!refreshed) throw new Error(`Quotation not found after recalculation`);
 
-    const linesCalc = refreshed.lines.map((l: any) =>
-      calculateLinePricing({
-        listPrice: l.listPrice,
-        unitPrice: l.unitPrice || l.listPrice,
-        standardCost: l.product.standardCost,
-        quantity: l.quantity,
-        proposedDiscountPercent: l.proposedDiscountPercent,
-        taxRate: l.taxRate || l.product.taxRate || 0,
-      }),
-    );
+      const linesCalc = refreshed.lines.map((l: any) =>
+        calculateLinePricing({
+          listPrice: l.listPrice,
+          unitPrice: l.unitPrice || l.listPrice,
+          standardCost: l.product.standardCost,
+          quantity: l.quantity,
+          proposedDiscountPercent: l.proposedDiscountPercent,
+          taxRate: l.taxRate || l.product.taxRate || 0,
+        }),
+      );
 
-    const totals = calculateQuoteTotals(linesCalc);
-    const risk = evaluateQuoteRisk(totals);
-    const transition = evaluateSubmitTransition(risk);
+      const totals = calculateQuoteTotals(linesCalc);
+      const risk = evaluateQuoteRisk(totals);
+      const transition = evaluateSubmitTransition(risk);
 
-    const updatedQuotation = await db.quotation.update({
-      where: { id: quotationId },
-      data: {
-        status: transition.targetStatus,
-        riskScore: risk.riskScore,
-        riskLevel: risk.riskLevel,
-      },
-      include: {
-        customer: true,
-        lines: {
-          include: {
-            product: true,
+      const updatedQuotation = await tx.quotation.update({
+        where: { id: quotationId },
+        data: {
+          status: transition.targetStatus,
+          riskScore: risk.riskScore,
+          riskLevel: risk.riskLevel,
+        },
+        include: {
+          customer: true,
+          lines: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    await syncMissingQuoteApprovals();
+      // Pass tx to syncMissingQuoteApprovals if it needs it (will update next)
+      await syncMissingQuoteApprovals(tx);
 
-    await recordAuditEvent({
-      eventType: 'QUOTE_SUBMITTED',
-      action: `Submitted quotation ${updatedQuotation.quoteNumber} for approval (Status: ${transition.targetStatus}, Risk Score: ${risk.riskScore})`,
-      entityType: 'Quotation',
-      entityId: quotationId,
-      actor,
-      previousState: quotation,
-      newState: updatedQuotation,
-    });
+      await recordAuditEvent(
+        {
+          eventType: 'QUOTE_SUBMITTED',
+          action: `Submitted quotation ${updatedQuotation.quoteNumber} for approval (Status: ${transition.targetStatus}, Risk Score: ${risk.riskScore})`,
+          entityType: 'Quotation',
+          entityId: quotationId,
+          actor,
+          previousState: quotation as any,
+          newState: updatedQuotation as any,
+        },
+        tx as any
+      );
 
-    return {
-      quotation: updatedQuotation,
-      transitionMessage: transition.message,
+      return {
+        quotation: updatedQuotation as QuotationWithDetails,
+        transitionMessage: transition.message,
+      };
     };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 
-  async recalculateQuotation(quotationId: string): Promise<void> {
-    const lines = await db.quoteLine.findMany({
-      where: { quotationId },
-      include: { product: true },
-    });
+  async recalculateQuotation(quotationId: string, txClient?: TxClient): Promise<void> {
+    const run = async (tx: TxClient) => {
+      const lines = await tx.quoteLine.findMany({
+        where: { quotationId },
+        include: { product: true },
+      });
 
-    const linesCalc = lines.map((l) =>
-      calculateLinePricing({
-        listPrice: l.listPrice,
-        unitPrice: l.unitPrice || l.listPrice,
-        standardCost: l.product.standardCost,
-        quantity: l.quantity,
-        proposedDiscountPercent: l.proposedDiscountPercent,
-        taxRate: l.taxRate || l.product.taxRate || 0,
-      }),
-    );
+      const linesCalc = lines.map((l) =>
+        calculateLinePricing({
+          listPrice: l.listPrice,
+          unitPrice: l.unitPrice || l.listPrice,
+          standardCost: l.product.standardCost,
+          quantity: l.quantity,
+          proposedDiscountPercent: l.proposedDiscountPercent,
+          taxRate: l.taxRate || l.product.taxRate || 0,
+        }),
+      );
 
-    const totals = calculateQuoteTotals(linesCalc);
-    const risk = evaluateQuoteRisk(totals);
+      const totals = calculateQuoteTotals(linesCalc);
+      const risk = evaluateQuoteRisk(totals);
 
-    await db.quotation.update({
-      where: { id: quotationId },
-      data: {
-        subtotal: totals.subtotal,
-        totalDiscount: totals.totalDiscount,
-        taxableAmount: totals.taxableAmount,
-        taxAmount: totals.taxAmount,
-        netValue: totals.netValue,
-        grossMarginPercent: totals.grossMarginPercent,
-        riskScore: risk.riskScore,
-        riskLevel: risk.riskLevel,
-      },
-    });
+      await tx.quotation.update({
+        where: { id: quotationId },
+        data: {
+          subtotal: totals.subtotal,
+          totalDiscount: totals.totalDiscount,
+          taxableAmount: totals.taxableAmount,
+          taxAmount: totals.taxAmount,
+          netValue: totals.netValue,
+          grossMarginPercent: totals.grossMarginPercent,
+          riskScore: risk.riskScore,
+          riskLevel: risk.riskLevel,
+        },
+      });
+    };
+
+    return txClient ? run(txClient) : db.$transaction(run);
   }
 }
 
