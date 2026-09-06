@@ -270,11 +270,17 @@ export class CategoryRepository {
     ];
 
     for (const cat of defaults) {
-      await db.category.upsert({
-        where: { code: cat.code },
-        update: {},
-        create: cat,
+      const existing = await db.category.findFirst({
+        where: { OR: [{ code: cat.code }, { name: cat.name }] },
       });
+      if (existing) {
+        await db.category.update({
+          where: { id: existing.id },
+          data: { code: cat.code, description: cat.description },
+        });
+      } else {
+        await db.category.create({ data: cat });
+      }
     }
   }
 }

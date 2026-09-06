@@ -46,7 +46,7 @@ function mapRequestToDto(request: any): ApprovalRequestDto {
     currentStepSequence: request.currentStepSequence,
     createdAt: request.createdAt.toISOString(),
     updatedAt: request.updatedAt.toISOString(),
-    steps: (request.steps || []).map(mapStepToDto),
+    steps: Array.isArray(request?.steps) ? request.steps.map(mapStepToDto) : [],
   };
 }
 
