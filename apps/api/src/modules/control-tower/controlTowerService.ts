@@ -7,6 +7,7 @@ import {
   DetectedAlert,
 } from '@dealflow360/domain';
 import { recordAuditEvent } from '../../services/auditService.js';
+import { ConfigService } from '../config/configService.js';
 
 export interface ControlTowerFilterOptions {
   status?: string;
@@ -54,8 +55,10 @@ export class ControlTowerService {
     });
 
     // Detect deal alerts via domain engine
-    const stalledAlerts = detectStalledDeals(quotationSummaries, 7);
-    const leakageAlerts = detectMarginLeakage(quotationSummaries, 25.0);
+    const configService = new ConfigService();
+    const thresholds = await configService.getBusinessThresholds();
+    const stalledAlerts = detectStalledDeals(quotationSummaries, thresholds.stalledDaysThreshold);
+    const leakageAlerts = detectMarginLeakage(quotationSummaries, thresholds.minMarginThreshold);
     const detectedAlerts: DetectedAlert[] = [...stalledAlerts, ...leakageAlerts];
 
     // Sync detected alerts into database

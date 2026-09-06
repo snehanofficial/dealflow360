@@ -8,6 +8,7 @@ import {
 import { CreateQuoteInput, ListQuotesQuery, UpdateQuoteLineInput } from '@dealflow360/contracts';
 import { syncMissingQuoteApprovals } from '../../services/approvalService.js';
 import { recordAuditEvent } from '../../services/auditService.js';
+import { ConfigService } from '../config/configService.js';
 
 export type QuotationWithDetails = Quotation & {
   customer: Customer;
@@ -588,7 +589,9 @@ export class QuoteService {
       );
 
       const totals = calculateQuoteTotals(linesCalc);
-      const risk = evaluateQuoteRisk(totals);
+      const configService = new ConfigService();
+      const thresholds = await configService.getBusinessThresholds();
+      const risk = evaluateQuoteRisk(totals, thresholds);
       const transition = evaluateSubmitTransition(risk);
 
       const updatedQuotation = await tx.quotation.update({
@@ -652,7 +655,9 @@ export class QuoteService {
       );
 
       const totals = calculateQuoteTotals(linesCalc);
-      const risk = evaluateQuoteRisk(totals);
+      const configService = new ConfigService();
+      const thresholds = await configService.getBusinessThresholds();
+      const risk = evaluateQuoteRisk(totals, thresholds);
 
       await tx.quotation.update({
         where: { id: quotationId },

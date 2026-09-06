@@ -1,4 +1,5 @@
 import { roundMoney } from '../margin/marginEngine.js';
+import { BusinessThresholds, DEFAULT_BUSINESS_THRESHOLDS } from '../config/types.js';
 
 export interface LineCalculationInput {
   listPrice: number;
@@ -136,30 +137,35 @@ export function calculateQuoteTotals(lines: LineCalculationResult[]): QuoteTotal
 /**
  * Deterministically evaluates risk score, risk level, policy violations, and required approvals
  */
-export function evaluateQuoteRisk(totals: QuoteTotalsResult): RiskEvaluationResult {
+export function evaluateQuoteRisk(
+  totals: QuoteTotalsResult,
+  thresholds: BusinessThresholds = DEFAULT_BUSINESS_THRESHOLDS
+): RiskEvaluationResult {
   let riskScore = 1.0;
   const violations: string[] = [];
   const requiredRoles: ('SALES_MANAGER' | 'FINANCE_OPERATIONS')[] = [];
 
-  if (totals.avgDiscountPercent > 20) {
+  const doubleDiscount = thresholds.discountThreshold * 2;
+
+  if (totals.avgDiscountPercent > doubleDiscount) {
     riskScore += 4.0;
-    violations.push(`Average discount (${totals.avgDiscountPercent}%) exceeds 20% limit`);
+    violations.push(`Average discount (${totals.avgDiscountPercent}%) exceeds ${doubleDiscount}% limit`);
     requiredRoles.push('SALES_MANAGER');
-  } else if (totals.avgDiscountPercent > 10) {
+  } else if (totals.avgDiscountPercent > thresholds.discountThreshold) {
     riskScore += 2.0;
-    violations.push(`Average discount (${totals.avgDiscountPercent}%) exceeds 10% threshold`);
+    violations.push(`Average discount (${totals.avgDiscountPercent}%) exceeds ${thresholds.discountThreshold}% threshold`);
     requiredRoles.push('SALES_MANAGER');
   }
 
-  if (totals.grossMarginPercent < 20) {
+  if (totals.grossMarginPercent < thresholds.marginMinimum) {
     riskScore += 5.0;
-    violations.push(`Gross margin (${totals.grossMarginPercent}%) is below 20% minimum threshold`);
+    violations.push(`Gross margin (${totals.grossMarginPercent}%) is below ${thresholds.marginMinimum}% minimum threshold`);
     if (!requiredRoles.includes('FINANCE_OPERATIONS')) {
       requiredRoles.push('FINANCE_OPERATIONS');
     }
-  } else if (totals.grossMarginPercent < 30) {
+  } else if (totals.grossMarginPercent < thresholds.marginWarning) {
     riskScore += 2.5;
-    violations.push(`Gross margin (${totals.grossMarginPercent}%) is below 30% warning threshold`);
+    violations.push(`Gross margin (${totals.grossMarginPercent}%) is below ${thresholds.marginWarning}% warning threshold`);
     if (!requiredRoles.includes('SALES_MANAGER')) {
       requiredRoles.push('SALES_MANAGER');
     }

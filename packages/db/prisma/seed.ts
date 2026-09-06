@@ -339,6 +339,32 @@ async function main() {
   }
   console.log('Seeded discount policy rules.');
 
+  // Seed System Config
+  await prisma.systemConfig.upsert({
+    where: { configKey: 'BUSINESS_THRESHOLDS' },
+    update: {
+      configValue: {
+        discountThreshold: 10,
+        marginMinimum: 20,
+        marginWarning: 30,
+        stalledDaysThreshold: 7,
+        minMarginThreshold: 25,
+      }
+    },
+    create: {
+      id: 'default',
+      configKey: 'BUSINESS_THRESHOLDS',
+      configValue: {
+        discountThreshold: 10,
+        marginMinimum: 20,
+        marginWarning: 30,
+        stalledDaysThreshold: 7,
+        minMarginThreshold: 25,
+      }
+    }
+  });
+  console.log('Seeded System Config.');
+
   console.log('Database seed completed successfully.');
 }
 
