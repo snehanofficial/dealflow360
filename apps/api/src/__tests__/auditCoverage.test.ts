@@ -122,6 +122,10 @@ describe('Platform-Wide Audit Coverage Suite (A1-A5 + B Modules)', () => {
       .send({ quotationId, expiresInHours: 48 });
     expect(tokenRes.status).toBe(201);
     const token = tokenRes.body.data.token;
+    const tokenRecord = await db.portalToken.findUnique({ where: { token } });
+    if (tokenRecord) {
+      await db.quotation.update({ where: { id: tokenRecord.quotationId }, data: { status: 'NEGOTIATING' } });
+    }
 
     const tokenLogs = await db.auditLog.findMany({
       where: { eventType: 'PORTAL_TOKEN_GENERATED' },
@@ -147,6 +151,7 @@ describe('Platform-Wide Audit Coverage Suite (A1-A5 + B Modules)', () => {
       .get('/api/v1/quotes')
       .set('Authorization', `Bearer ${managerToken}`);
     const quote = listRes.body.data[0];
+    await db.quotation.update({ where: { id: quote.id }, data: { status: 'APPROVED' } });
 
     const wh = await db.warehouse.findFirst({ where: { isActive: true } });
     const quoteLineId = quote.lines[0]?.id;

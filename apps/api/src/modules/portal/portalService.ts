@@ -312,7 +312,7 @@ export class PortalService {
       });
 
       await recordAuditEvent({
-        eventType: 'CUSTOMER_COUNTER_OFFER',
+        eventType: 'COUNTEROFFER_SUBMITTED',
         action: `Customer submitted counteroffer for ${quotation.quoteNumber} (Avg Disc: ${avgProposedDiscount}%)`,
         entityType: 'Quotation',
         entityId: quotation.id,

@@ -24,8 +24,16 @@ vi.mock('@dealflow360/db', () => {
     db: {
       $transaction: vi.fn(async (callback: (tx: any) => Promise<any>) => {
         return callback({
+          user: {
+            findUnique: vi.fn(async ({ where }: { where: { id: string } }) => usersMap.get(where.id) || { id: where.id, name: 'Test User', role: 'SALES_REP' }),
+          },
           approvalRequest: {
-            findUnique: vi.fn(async ({ where }: { where: { id: string } }) => approvalRequestsMap.get(where.id) || null),
+            findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
+              const req = approvalRequestsMap.get(where.id);
+              if (!req) return null;
+              const steps = Array.from(approvalStepsMap.values()).filter((s) => s.approvalRequestId === where.id);
+              return { ...req, steps };
+            }),
             update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
               const existing = approvalRequestsMap.get(where.id);
               if (!existing) return null;
@@ -33,8 +41,49 @@ vi.mock('@dealflow360/db', () => {
               approvalRequestsMap.set(where.id, updated);
               return updated;
             }),
+            updateMany: vi.fn(async () => ({ count: 0 })),
+            findMany: vi.fn(async () => []),
+            create: vi.fn(async ({ data }: { data: any }) => {
+              const id = data.id || `appreq-${Date.now()}`;
+              const steps = Array.isArray(data.steps?.create)
+                ? data.steps.create.map((s: any, idx: number) => ({
+                    id: `step-${id}-${idx + 1}`,
+                    approvalRequestId: id,
+                    sequence: s.sequence || idx + 1,
+                    requiredRole: s.requiredRole,
+                    status: s.status || 'PENDING',
+                    actedById: null,
+                    actedBy: null,
+                    actedAt: null,
+                    comments: null,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  }))
+                : [];
+              steps.forEach((st: any) => approvalStepsMap.set(st.id, st));
+              const record = { ...data, id, steps, currentStepSequence: data.currentStepSequence ?? 1, createdAt: new Date(), updatedAt: new Date() };
+              approvalRequestsMap.set(id, record);
+              return record;
+            }),
           },
           approvalStep: {
+            updateMany: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+              const existing = approvalStepsMap.get(where.id);
+              if (existing) {
+                const updated = { ...existing, ...data, updatedAt: new Date() };
+                approvalStepsMap.set(where.id, updated);
+                const req = approvalRequestsMap.get(existing.approvalRequestId);
+                if (req && Array.isArray(req.steps)) {
+                  const stepIdx = req.steps.findIndex((s: any) => s.id === where.id);
+                  if (stepIdx !== -1) req.steps[stepIdx] = updated;
+                }
+              }
+              return { count: 1 };
+            }),
+            findMany: vi.fn(async ({ where }: { where: { approvalRequestId: string } }) =>
+              Array.from(approvalStepsMap.values()).filter((s) => s.approvalRequestId === where.approvalRequestId)
+            ),
+            findUnique: vi.fn(async ({ where }: { where: { id: string } }) => approvalStepsMap.get(where.id) || null),
             update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
               const existing = approvalStepsMap.get(where.id);
               if (!existing) return null;
@@ -54,7 +103,10 @@ vi.mock('@dealflow360/db', () => {
             }),
           },
           quotation: {
+            findUnique: vi.fn(async () => ({ id: 'q-1', status: 'DRAFT' })),
             update: vi.fn(async () => ({})),
+            updateMany: vi.fn(async () => ({ count: 0 })),
+            findMany: vi.fn(async () => []),
           },
         });
       }),

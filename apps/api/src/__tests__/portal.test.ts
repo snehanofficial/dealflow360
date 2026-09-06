@@ -140,6 +140,11 @@ vi.mock('@dealflow360/db', () => {
           return newCo;
         }),
       },
+      approvalRequest: {
+        updateMany: vi.fn(async () => ({ count: 0 })),
+        create: vi.fn(async () => ({ id: `appreq-${Date.now()}` })),
+        findMany: vi.fn(async () => []),
+      },
   };
   return { db: { ...dbMock, $transaction: async (cb: any) => cb(dbMock) } };
 });
