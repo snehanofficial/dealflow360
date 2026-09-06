@@ -38,6 +38,8 @@ interface CounterOfferHistory {
   id: string;
   proposedDiscountPercent: number;
   customerNotes: string | null;
+  proposedByName?: string;
+  proposedByRole?: string;
   status: string;
   createdAt: string;
 }
@@ -347,12 +349,22 @@ export const CustomerPortalPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between font-semibold">
                     <span className="text-slate-900">
-                      Counteroffer Request (Avg Disc: {co.proposedDiscountPercent}%)
+                      Counteroffer Proposal (Avg Disc: {co.proposedDiscountPercent}%)
                     </span>
                     <Badge variant="default">{new Date(co.createdAt).toLocaleDateString()}</Badge>
                   </div>
+                  {co.proposedByName && (
+                    <div className="text-[11px] text-slate-500 font-medium">
+                      Proposed by: <span className="font-semibold text-slate-700">{co.proposedByName}</span>
+                      {co.proposedByRole && (
+                        <span className="ml-1 px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] uppercase font-bold">
+                          {co.proposedByRole.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {co.customerNotes && (
-                    <p className="text-slate-600 italic mt-1">"{co.customerNotes}"</p>
+                    <p className="text-slate-600 italic mt-1 bg-white p-2 rounded border border-slate-200">"{co.customerNotes}"</p>
                   )}
                 </div>
               ))}

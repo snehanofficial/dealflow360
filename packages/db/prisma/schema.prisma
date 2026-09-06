@@ -295,6 +295,8 @@ model CounterOffer {
   quotation               Quotation          @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   proposedDiscountPercent Float
   customerNotes           String?
+  proposedByRole          String?            @default("CUSTOMER")
+  proposedByName          String?
   status                  CounterOfferStatus @default(SUBMITTED)
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt

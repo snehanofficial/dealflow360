@@ -62,6 +62,15 @@ interface QuotationData {
     region: string;
   };
   lines: QuoteLineData[];
+  counterOffers?: {
+    id: string;
+    proposedDiscountPercent: number;
+    customerNotes: string | null;
+    proposedByRole?: string;
+    proposedByName?: string;
+    status: string;
+    createdAt: string;
+  }[];
 }
 
 export const QuotationViewPage: React.FC = () => {
@@ -555,7 +564,7 @@ export const QuotationViewPage: React.FC = () => {
             )
           )}
 
-          {role === 'CUSTOMER' && ['DRAFT', 'NEGOTIATING', 'APPROVED', 'PENDING_CUSTOMER'].includes(quotation.status) && (
+          {['DRAFT', 'NEGOTIATING', 'APPROVED', 'PENDING_CUSTOMER'].includes(quotation.status) && (
             <button
               onClick={() => setIsCounterOfferModalOpen(true)}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs shadow-sm transition-colors"
@@ -779,6 +788,59 @@ export const QuotationViewPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Negotiation History */}
+      {quotation.counterOffers && quotation.counterOffers.length > 0 && (
+        <div className="mt-8 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+            <h2 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-slate-600" />
+              Negotiation History
+            </h2>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {quotation.counterOffers.map((co: any) => (
+              <div key={co.id} className="p-4 flex flex-col md:flex-row gap-4 justify-between hover:bg-slate-50/50 transition-colors">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-slate-900">Discount Proposed: {co.proposedDiscountPercent}%</span>
+                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                      co.status === 'SUBMITTED' ? 'bg-amber-100 text-amber-800' : 
+                      co.status === 'SUPERSEDED' ? 'bg-slate-100 text-slate-500' : 
+                      'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {co.status}
+                    </span>
+                  </div>
+                  {co.proposedByName && (
+                    <div className="text-[11px] text-slate-500 mb-2 flex items-center gap-1.5 flex-wrap">
+                      <span>Proposed by:</span>
+                      <span className="font-semibold text-slate-800">{co.proposedByName}</span> 
+                      {co.proposedByRole && (
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
+                          co.proposedByRole === 'CUSTOMER' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {co.proposedByRole === 'CUSTOMER' ? 'Customer' : `Company (${co.proposedByRole.replace(/_/g, ' ')})`}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {co.customerNotes && (
+                    <p className="text-sm text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200 mt-2 shadow-xs italic">
+                      "{co.customerNotes}"
+                    </p>
+                  )}
+                </div>
+                <div className="text-xs text-slate-400 font-mono whitespace-nowrap flex items-start pt-1">
+                  {new Date(co.createdAt).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isCounterOfferModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">

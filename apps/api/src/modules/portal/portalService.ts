@@ -256,6 +256,8 @@ export class PortalService {
           quotationId: quotation.id,
           proposedDiscountPercent: avgProposedDiscount,
           customerNotes: input.customerNotes || null,
+          proposedByRole: 'CUSTOMER',
+          proposedByName: quotation.customer.name,
           status: 'SUBMITTED',
         },
       });
@@ -451,6 +453,8 @@ export class PortalService {
           quotationId: quotation.id,
           proposedDiscountPercent: avgProposedDiscount,
           customerNotes: input.customerNotes || null,
+          proposedByRole: actor?.role || 'CUSTOMER',
+          proposedByName: actor?.name || quotation.customer.name,
           status: 'SUBMITTED',
         },
       });
@@ -592,6 +596,8 @@ export class PortalService {
         id: co.id,
         proposedDiscountPercent: co.proposedDiscountPercent,
         customerNotes: co.customerNotes,
+        proposedByRole: co.proposedByRole,
+        proposedByName: co.proposedByName,
         status: co.status,
         createdAt: co.createdAt,
       })),

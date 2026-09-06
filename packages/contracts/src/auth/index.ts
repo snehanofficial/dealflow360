@@ -79,6 +79,9 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.DISCOUNT_CONFIGURE,
     Permissions.CONTROL_TOWER_VIEW,
     Permissions.REPORT_VIEW,
+    Permissions.PORTAL_NEGOTIATE,
+    Permissions.INVOICE_MANAGE,
+    Permissions.PAYMENT_RECORD
   ],
   SALES_REP: [
     Permissions.DASHBOARD_VIEW,
@@ -99,6 +102,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.INVOICE_VIEW,
     Permissions.DISCOUNT_VIEW,
     Permissions.DISCOUNT_EVALUATE,
+    Permissions.PORTAL_NEGOTIATE,
   ],
   FINANCE_OPERATIONS: [
     Permissions.DASHBOARD_VIEW,
@@ -124,6 +128,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     Permissions.DISCOUNT_CONFIGURE,
     Permissions.CONTROL_TOWER_VIEW,
     Permissions.REPORT_VIEW,
+    Permissions.PORTAL_NEGOTIATE,
   ],
   CUSTOMER: [
     Permissions.PROFILE_VIEW,
