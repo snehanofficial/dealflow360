@@ -52,6 +52,20 @@ export class BillingController {
       next(err);
     }
   }
+
+  async getAllBillingSchedules(req: Request, res: Response, next: NextFunction) {
+    try {
+      const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const result = await billingService.getAllBillingSchedules({ search, status });
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export const billingController = new BillingController();

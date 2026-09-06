@@ -7,6 +7,9 @@ export const billingRoutes: Router = Router();
 
 billingRoutes.use(authenticate);
 
+billingRoutes.get('/', requirePermission(Permissions.BILLING_VIEW), (req, res, next) => billingController.getAllBillingSchedules(req, res, next));
+billingRoutes.get('/schedules', requirePermission(Permissions.BILLING_VIEW), (req, res, next) => billingController.getAllBillingSchedules(req, res, next));
+
 // Quote-nested endpoints (e.g. GET /api/v1/quotes/:id/billing)
 billingRoutes.get('/:id/billing', requirePermission(Permissions.BILLING_VIEW), (req, res, next) => billingController.getBillingSchedule(req, res, next));
 billingRoutes.post('/:id/billing/generate', requirePermission(Permissions.BILLING_MANAGE), (req, res, next) => billingController.generateBillingSchedule(req, res, next));
@@ -17,4 +20,5 @@ billingRoutes.post('/:id/complete', requirePermission(Permissions.BILLING_MANAGE
 billingRoutes.get('/quotes/:id', requirePermission(Permissions.BILLING_VIEW), (req, res, next) => billingController.getBillingSchedule(req, res, next));
 billingRoutes.post('/quotes/:id/generate', requirePermission(Permissions.BILLING_MANAGE), (req, res, next) => billingController.generateBillingSchedule(req, res, next));
 billingRoutes.post('/quotes/:id/complete', requirePermission(Permissions.BILLING_MANAGE), (req, res, next) => billingController.completeBilling(req, res, next));
+
 

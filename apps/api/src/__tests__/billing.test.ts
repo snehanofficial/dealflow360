@@ -55,6 +55,7 @@ vi.mock('@dealflow360/db', () => {
   const dbMock: any = {
       quotation: {
         findUnique: vi.fn(async ({ where }: { where: { id: string } }) => quotesMap.get(where.id) || null),
+        findMany: vi.fn(async () => Array.from(quotesMap.values())),
         update: vi.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
           const q = quotesMap.get(where.id);
           if (!q) return null;
@@ -91,6 +92,17 @@ describe('Subscription & Hybrid Billing API (Developer B Phase B4)', () => {
     token = generateAccessToken({ sub: 'user-finance-ops', email: 'finance@dealflow.com', role: 'FINANCE_OPERATIONS' });
   });
 
+  it('fetches universal billing schedules list across deals', async () => {
+    const res = await request(app)
+      .get('/api/v1/billing')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.summary).toBeDefined();
+    expect(res.body.data.items.length).toBeGreaterThan(0);
+  });
+
   it('computes hybrid billing schedule for quote containing one-time and recurring lines', async () => {
     const res = await request(app)
       .get('/api/v1/quotes/quote-bill-01/billing')
@@ -116,3 +128,4 @@ describe('Subscription & Hybrid Billing API (Developer B Phase B4)', () => {
     expect(res.body.data.billingSchedule.lines.length).toBeGreaterThan(0);
   });
 });
+

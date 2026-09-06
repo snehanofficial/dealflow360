@@ -213,6 +213,100 @@ export class BillingService {
 
     return txClient ? run(txClient) : db.$transaction(run);
   }
+
+  async getAllBillingSchedules(query?: { search?: string; status?: string }) {
+    const where: any = {};
+    if (query?.status) {
+      where.status = query.status;
+    }
+    if (query?.search) {
+      where.OR = [
+        { quoteNumber: { contains: query.search, mode: 'insensitive' } },
+        { customer: { name: { contains: query.search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const quotations = await db.quotation.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        customer: true,
+        lines: {
+          include: { product: true },
+        },
+        billingSchedule: {
+          include: { lines: true },
+        },
+      },
+    });
+
+    const now = new Date();
+    let totalOneTimeAmount = 0;
+    let totalRecurringMonthly = 0;
+    let totalRecurringAnnual = 0;
+    let activeSchedulesCount = 0;
+
+    const items = quotations.map((q) => {
+      let scheduleInfo = {
+        totalOneTimeAmount: 0,
+        totalRecurringMonthly: 0,
+        totalRecurringAnnual: 0,
+        isLocked: false,
+        status: q.status,
+        billingStartDate: now.toISOString().split('T')[0],
+        lineCount: q.lines.length,
+      };
+
+      if (q.billingSchedule) {
+        scheduleInfo.totalOneTimeAmount = q.billingSchedule.totalOneTimeAmount;
+        scheduleInfo.totalRecurringMonthly = q.billingSchedule.totalRecurringMonthly;
+        scheduleInfo.totalRecurringAnnual = q.billingSchedule.totalRecurringAnnual;
+        scheduleInfo.isLocked = true;
+        scheduleInfo.billingStartDate = q.billingSchedule.billingStartDate ? new Date(q.billingSchedule.billingStartDate).toISOString().split('T')[0] : now.toISOString().split('T')[0];
+        scheduleInfo.status = q.billingSchedule.status;
+        activeSchedulesCount++;
+      } else {
+        const linesInput: QuoteLineBillingInput[] = q.lines.map((l) => ({
+          quoteLineId: l.id,
+          productName: l.product?.name || 'Product Item',
+          billingType: l.product?.billingType === 'RECURRING' ? 'RECURRING' : 'ONE_TIME',
+          recurringPeriod: l.product?.recurringPeriod || null,
+          netLinePrice: l.netLinePrice,
+          quantity: l.quantity,
+        }));
+        const computed = calculateHybridBillingSchedule(linesInput, now, 12);
+        scheduleInfo.totalOneTimeAmount = computed.totalOneTimeAmount;
+        scheduleInfo.totalRecurringMonthly = computed.totalRecurringMonthly;
+        scheduleInfo.totalRecurringAnnual = computed.totalRecurringAnnual;
+      }
+
+      totalOneTimeAmount += scheduleInfo.totalOneTimeAmount;
+      totalRecurringMonthly += scheduleInfo.totalRecurringMonthly;
+      totalRecurringAnnual += scheduleInfo.totalRecurringAnnual;
+
+      return {
+        quotationId: q.id,
+        quoteNumber: q.quoteNumber,
+        quoteStatus: q.status,
+        netValue: q.netValue,
+        currency: q.currency,
+        updatedAt: q.updatedAt,
+        customer: q.customer ? { id: q.customer.id, name: q.customer.name, tier: q.customer.tier } : null,
+        schedule: scheduleInfo,
+      };
+    });
+
+    return {
+      summary: {
+        totalDeals: quotations.length,
+        activeSchedulesCount,
+        totalOneTimeAmount,
+        totalRecurringMonthly,
+        totalRecurringAnnual,
+      },
+      items,
+    };
+  }
 }
 
 export const billingService = new BillingService();
